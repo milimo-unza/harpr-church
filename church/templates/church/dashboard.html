@@ -1,0 +1,25 @@
+{% extends "church/base.html" %}
+{% block title %}Weekly programme · Harpr Church{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><p class="eyebrow">{{ church.name }} · Programme Coordinator</p><h1>Weekly programme</h1><p class="muted">{{ week_start|date:"d M" }} — {{ week_end|date:"d M Y" }}</p></div>
+  <div class="button-row"><a class="btn btn-primary" href="{% url 'service_create' %}">New service</a><a class="btn btn-ghost" href="{% url 'event_create' %}">New event</a></div>
+</div>
+<section class="stat-grid">
+  <div class="stat-card"><strong>{{ service_count }}</strong><span>Services this month</span></div>
+  <div class="stat-card"><strong>{{ pending_request_count }}</strong><span>Pending requests</span></div>
+  <div class="stat-card"><strong>{{ recent_activity|length }}</strong><span>Recent actions</span></div>
+</section>
+<section class="week-grid" aria-label="Weekly calendar">
+  {% for day in days %}
+    <article class="week-col {% if day.date == today %}today{% endif %}">
+      <header class="week-col-head"><strong>{{ day.date|date:"D" }}</strong><small>{{ day.date|date:"d M" }}</small></header>
+      <div class="week-col-body">
+        {% for service in day.services %}<a class="event-chip service-chip" href="{% url 'service_detail' service.pk %}"><strong>{{ service.name }}</strong><small>Service · {{ service.get_status_display }}</small></a>{% endfor %}
+        {% for event in day.events %}<a class="event-chip" href="{% url 'event_edit' event.pk %}"><strong>{{ event.title }}</strong><small>{{ event.get_event_type_display }} · {{ event.start_time|time:"H:i" }}</small></a>{% endfor %}
+        {% if not day.services and not day.events %}<span class="empty-day">Nothing scheduled</span>{% endif %}
+      </div>
+    </article>
+  {% endfor %}
+</section>
+{% endblock %}

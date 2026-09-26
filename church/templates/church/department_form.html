@@ -1,0 +1,3 @@
+{% extends "church/base.html" %}
+{% block title %}{{ title }} · Harpr Church{% endblock %}
+{% block content %}<div class="narrow-page"><p class="eyebrow">People and teams</p><h1>{{ title }}</h1><div class="card form-card"><form method="post">{% csrf_token %}{{ form.as_p }}<button class="btn btn-primary" type="submit">Save department</button></form></div></div>{% endblock %}

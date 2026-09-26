@@ -1,0 +1,3 @@
+{% extends "church/base.html" %}
+{% block title %}{{ title }} · Harpr Church{% endblock %}
+{% block content %}<div class="narrow-page"><p class="eyebrow">{{ service.name }}</p><h1>{{ title }}</h1><div class="card form-card"><form method="post">{% csrf_token %}{{ form.as_p }}<div class="form-actions"><a class="btn btn-ghost" href="{% url 'service_detail' service.pk %}">Cancel</a><button class="btn btn-primary" type="submit">Save item</button></div></form></div></div>{% endblock %}

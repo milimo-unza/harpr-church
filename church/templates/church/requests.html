@@ -1,0 +1,3 @@
+{% extends "church/base.html" %}
+{% block title %}Requests · Harpr Church{% endblock %}
+{% block content %}<div class="page-head"><div><p class="eyebrow">Inbox</p><h1>Requests</h1></div></div><div class="card table-wrap"><table class="data-table"><thead><tr><th>Status</th><th>Title</th><th>Type</th><th>Submitted</th><th></th></tr></thead><tbody>{% for item in requests %}<tr><td>{{ item.get_status_display }}</td><td>{{ item.title }}</td><td>{{ item.get_type_display }}</td><td>{{ item.created_at|date:"d M Y" }}</td><td><a href="{% url 'request_respond' item.pk %}">Respond</a></td></tr>{% empty %}<tr><td colspan="5" class="empty-state">No requests.</td></tr>{% endfor %}</tbody></table></div>{% endblock %}

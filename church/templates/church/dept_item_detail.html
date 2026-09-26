@@ -1,0 +1,3 @@
+{% extends "church/base.html" %}
+{% block title %}{{ item.title }} · Harpr Church{% endblock %}
+{% block content %}<div class="narrow-page"><p class="eyebrow">{{ item.service.name }} · {{ item.planned_start|date:"d M Y H:i" }}</p><h1>{{ item.title }}</h1><div class="card"><h2>Assignments</h2>{% for assignment in item.assignments.all %}<p>{{ assignment.person_name }} · {{ assignment.role }}</p>{% empty %}<p class="muted">No assignments yet.</p>{% endfor %}</div><div class="card form-card"><h2>Add assignment</h2><form method="post" action="{% url 'dept_assignment_create' item.pk %}">{% csrf_token %}{{ form.as_p }}<button class="btn btn-primary" type="submit">Add person</button></form></div></div>{% endblock %}

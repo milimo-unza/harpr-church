@@ -1,0 +1,1 @@
+web: gunicorn harpr_church.wsgi:application

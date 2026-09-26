@@ -1,0 +1,111 @@
+from django.urls import path
+
+from church.views import admin_views, api_views, dept_views, public_views
+
+urlpatterns = [
+    path("", admin_views.admin_dashboard, name="home"),
+    path("dashboard/", admin_views.admin_dashboard, name="admin_dashboard"),
+    path("services/", admin_views.service_list, name="service_list"),
+    path("services/new/", admin_views.service_create, name="service_create"),
+    path("services/<int:pk>/", admin_views.service_detail, name="service_detail"),
+    path("services/<int:pk>/freeze/", admin_views.service_freeze, name="service_freeze"),
+    path("services/<int:pk>/unfreeze/", admin_views.service_unfreeze, name="service_unfreeze"),
+    path(
+        "services/<int:pk>/items/new/",
+        admin_views.service_item_create,
+        name="service_item_create",
+    ),
+    path(
+        "services/<int:pk>/items/<int:item_pk>/edit/",
+        admin_views.service_item_edit,
+        name="service_item_edit",
+    ),
+    path(
+        "services/<int:pk>/items/<int:item_pk>/recalculate/",
+        admin_views.service_item_recalculate,
+        name="service_item_recalculate",
+    ),
+    path(
+        "services/<int:pk>/items/<int:item_pk>/assignments/new/",
+        admin_views.assignment_create,
+        name="assignment_create",
+    ),
+    path("events/new/", admin_views.event_create, name="event_create"),
+    path("events/<int:pk>/edit/", admin_views.event_edit, name="event_edit"),
+    path("events/<int:pk>/delete/", admin_views.event_delete, name="event_delete"),
+    path("requests/", admin_views.request_list, name="request_list"),
+    path(
+        "requests/<int:pk>/respond/",
+        admin_views.request_respond,
+        name="request_respond",
+    ),
+    path("departments/", admin_views.department_list, name="department_list"),
+    path(
+        "departments/new/",
+        admin_views.department_create,
+        name="department_create",
+    ),
+    path(
+        "departments/<int:pk>/edit/",
+        admin_views.department_edit,
+        name="department_edit",
+    ),
+    path("members/", admin_views.member_list, name="member_list"),
+    path("members/invite/", admin_views.member_invite, name="member_invite"),
+    path("members/<int:pk>/edit/", admin_views.member_edit, name="member_edit"),
+    path(
+        "members/<int:pk>/deactivate/",
+        admin_views.member_deactivate,
+        name="member_deactivate",
+    ),
+    path("announcements/", admin_views.announcement_list, name="announcement_list"),
+    path(
+        "announcements/new/",
+        admin_views.announcement_create,
+        name="announcement_create",
+    ),
+    path(
+        "announcements/<int:pk>/edit/",
+        admin_views.announcement_edit,
+        name="announcement_edit",
+    ),
+    path("ai-insights/", admin_views.ai_insights, name="ai_insights"),
+    path("settings/", admin_views.church_settings, name="church_settings"),
+    path("dept/", dept_views.dept_dashboard, name="dept_dashboard"),
+    path("dept/items/<int:pk>/", dept_views.dept_item_detail, name="dept_item_detail"),
+    path(
+        "dept/items/<int:pk>/assignments/new/",
+        dept_views.dept_assignment_create,
+        name="dept_assignment_create",
+    ),
+    path(
+        "dept/requests/new/",
+        dept_views.dept_request_create,
+        name="dept_request_create",
+    ),
+    path("dept/requests/", dept_views.dept_request_list, name="dept_request_list"),
+    path("api/notifications/", api_views.api_notifications, name="api_notifications"),
+    path(
+        "api/notifications/<int:pk>/read/",
+        api_views.api_notification_read,
+        name="api_notification_read",
+    ),
+    path(
+        "api/notifications/mark-all-read/",
+        api_views.api_notifications_mark_all_read,
+        name="api_notifications_mark_all_read",
+    ),
+    path("c/<slug>/", public_views.public_schedule, name="public_schedule"),
+    path(
+        "c/<slug>/<int:year>-<int:month>-<int:day>/",
+        public_views.public_schedule_date,
+        name="public_schedule_date",
+    ),
+    path("c/<slug>/request/", public_views.public_request, name="public_request"),
+    path(
+        "c/<slug>/bulletin/<int:year>-<int:month>-<int:day>.pdf",
+        public_views.public_bulletin_pdf,
+        name="public_bulletin_pdf",
+    ),
+    path("c/<slug>/qr.png", public_views.church_qr, name="church_qr"),
+]
