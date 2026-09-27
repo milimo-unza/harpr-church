@@ -5,6 +5,7 @@ from django.utils import timezone
 
 from church.models import Invitation, Membership
 
+
 def accept_invitation(request, token):
     invitation = get_object_or_404(Invitation, token=token)
 

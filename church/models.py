@@ -39,7 +39,8 @@ class Membership(models.Model):
     church = models.ForeignKey(
         Church, on_delete=models.CASCADE, related_name="memberships"
     )
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="dept_head")
+    role = models.CharField(
+        max_length=20, choices=ROLE_CHOICES, default="dept_head")
     department = models.ForeignKey(
         "Department", on_delete=models.SET_NULL, null=True, blank=True
     )
@@ -159,7 +160,8 @@ class Service(models.Model):
     )
     name = models.CharField(max_length=200)
     date = models.DateField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default="draft")
     frozen_at = models.DateTimeField(null=True, blank=True)
     frozen_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True
@@ -184,7 +186,8 @@ class ServiceItem(models.Model):
         ("changed", "Changed"),
     ]
 
-    service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name="items")
+    service = models.ForeignKey(
+        Service, on_delete=models.CASCADE, related_name="items")
     # Kept as a direct tenant key; save() derives it from the owning service.
     church = models.ForeignKey(
         Church, on_delete=models.CASCADE, related_name="service_items", editable=False
@@ -194,8 +197,10 @@ class ServiceItem(models.Model):
     planned_start = models.DateTimeField()
     planned_duration_minutes = models.PositiveIntegerField(default=10)
     actual_start = models.DateTimeField(null=True, blank=True)
-    actual_duration_minutes = models.PositiveIntegerField(null=True, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="planned")
+    actual_duration_minutes = models.PositiveIntegerField(
+        null=True, blank=True)
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default="planned")
     responsible_department = models.ForeignKey(
         Department, on_delete=models.SET_NULL, null=True, blank=True
     )
@@ -238,7 +243,8 @@ class Assignment(models.Model):
 
 
 class Person(models.Model):
-    church = models.ForeignKey(Church, on_delete=models.CASCADE, related_name="people")
+    church = models.ForeignKey(
+        Church, on_delete=models.CASCADE, related_name="people")
     name = models.CharField(max_length=200)
     phone = models.CharField(max_length=20, blank=True)
     email = models.EmailField(blank=True)
@@ -283,7 +289,8 @@ class Request(models.Model):
     )
     title = models.CharField(max_length=200)
     body = models.TextField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default="pending")
     admin_response = models.TextField(blank=True)
     responded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -315,8 +322,10 @@ class ServiceLog(models.Model):
         ("request_rejected", "Request Rejected"),
     ]
 
-    church = models.ForeignKey(Church, on_delete=models.CASCADE, related_name="logs")
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    church = models.ForeignKey(
+        Church, on_delete=models.CASCADE, related_name="logs")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.SET_NULL, null=True)
     service = models.ForeignKey(
         Service, on_delete=models.SET_NULL, null=True, blank=True
     )
@@ -336,7 +345,8 @@ class ServiceLog(models.Model):
 
 
 class Bulletin(models.Model):
-    service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name="bulletins")
+    service = models.ForeignKey(
+        Service, on_delete=models.CASCADE, related_name="bulletins")
     # Direct tenant key for church-scoped queries; derived from service.
     church = models.ForeignKey(
         Church, on_delete=models.CASCADE, related_name="bulletins", editable=False

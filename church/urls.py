@@ -6,8 +6,8 @@ from church.views import (
     dept_views,
     home as home_views,
     public_views,
-        invitation_views,
-        signup_views,
+    invitation_views,
+    signup_views,
 )
 
 urlpatterns = [
@@ -16,8 +16,10 @@ urlpatterns = [
     path("services/", admin_views.service_list, name="service_list"),
     path("services/new/", admin_views.service_create, name="service_create"),
     path("services/<int:pk>/", admin_views.service_detail, name="service_detail"),
-    path("services/<int:pk>/freeze/", admin_views.service_freeze, name="service_freeze"),
-    path("services/<int:pk>/unfreeze/", admin_views.service_unfreeze, name="service_unfreeze"),
+    path("services/<int:pk>/freeze/",
+         admin_views.service_freeze, name="service_freeze"),
+    path("services/<int:pk>/unfreeze/",
+         admin_views.service_unfreeze, name="service_unfreeze"),
     path(
         "services/<int:pk>/items/new/",
         admin_views.service_item_create,
@@ -80,7 +82,8 @@ urlpatterns = [
     path("ai-insights/", admin_views.ai_insights, name="ai_insights"),
     path("settings/", admin_views.church_settings, name="church_settings"),
     path("dept/", dept_views.dept_dashboard, name="dept_dashboard"),
-    path("dept/items/<int:pk>/", dept_views.dept_item_detail, name="dept_item_detail"),
+    path("dept/items/<int:pk>/", dept_views.dept_item_detail,
+         name="dept_item_detail"),
     path(
         "dept/items/<int:pk>/assignments/new/",
         dept_views.dept_assignment_create,
@@ -92,7 +95,8 @@ urlpatterns = [
         name="dept_request_create",
     ),
     path("dept/requests/", dept_views.dept_request_list, name="dept_request_list"),
-    path("api/notifications/", api_views.api_notifications, name="api_notifications"),
+    path("api/notifications/", api_views.api_notifications,
+         name="api_notifications"),
     path(
         "api/notifications/<int:pk>/read/",
         api_views.api_notification_read,
@@ -117,6 +121,6 @@ urlpatterns = [
     ),
     path("c/<slug>/qr.png", public_views.church_qr, name="church_qr"),
     path("signup/", signup_views.church_signup, name="church_signup"),
-        path("invite/<str:token>/", invitation_views.accept_invitation,
-             name="accept_invitation"),
+    path("invite/<str:token>/", invitation_views.accept_invitation,
+         name="accept_invitation"),
 ]

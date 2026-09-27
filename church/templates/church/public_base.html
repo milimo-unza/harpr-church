@@ -1,51 +1,54 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}{{ church.name }} · Harpr Church{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'css/harpr.css' %}">
-</head>
-<body>
-  <main class="public-shell">
-    <header class="public-head">
-      <div>
-        <p class="eyebrow">Harpr Church</p>
-        <h1>{{ church.name }}</h1>
-      </div>
-      <button class="btn btn-ghost" data-save-church data-slug="{{ church.slug }}">Save this church</button>
-    </header>
-    {% block content %}{% endblock %}
-  </main>
 
-  {% block scripts %}
-  <script>
-    (function () {
-      var btn = document.querySelector("[data-save-church]");
-      if (!btn) return;
-      var churchSlug = btn.dataset.slug;
-      var churchName = "{{ church.name|escapejs }}";
-      try {
-        var saved = JSON.parse(localStorage.getItem("harpr-saved-churches") || "[]");
-        if (saved.some(function (c) { return c.slug === churchSlug; })) {
-          btn.textContent = "Saved";
-          btn.disabled = true;
-        }
-      } catch (e) {}
-      btn.addEventListener("click", function () {
-        try {
-          var saved = JSON.parse(localStorage.getItem("harpr-saved-churches") || "[]");
-          if (!saved.some(function (c) { return c.slug === churchSlug; })) {
-            saved.push({ slug: churchSlug, name: churchName });
-            localStorage.setItem("harpr-saved-churches", JSON.stringify(saved));
-          }
-        } catch (e) {}
-        this.textContent = "Saved";
-        this.disabled = true;
-      });
-    })();
-  </script>
-  {% endblock %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{{ church.name }} · Harpr Church{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/harpr.css' %}">
+</head>
+
+<body>
+    <main class="public-shell">
+        <header class="public-head">
+            <div>
+                <p class="eyebrow">Harpr Church</p>
+                <h1>{{ church.name }}</h1>
+            </div>
+            <button class="btn btn-ghost" data-save-church data-slug="{{ church.slug }}">Save this church</button>
+        </header>
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block scripts %}
+    <script>
+        (function () {
+            var btn = document.querySelector("[data-save-church]");
+            if (!btn) return;
+            var churchSlug = btn.dataset.slug;
+            var churchName = "{{ church.name|escapejs }}";
+            try {
+                var saved = JSON.parse(localStorage.getItem("harpr-saved-churches") || "[]");
+                if (saved.some(function (c) { return c.slug === churchSlug; })) {
+                    btn.textContent = "Saved";
+                    btn.disabled = true;
+                }
+            } catch (e) { }
+            btn.addEventListener("click", function () {
+                try {
+                    var saved = JSON.parse(localStorage.getItem("harpr-saved-churches") || "[]");
+                    if (!saved.some(function (c) { return c.slug === churchSlug; })) {
+                        saved.push({ slug: churchSlug, name: churchName });
+                        localStorage.setItem("harpr-saved-churches", JSON.stringify(saved));
+                    }
+                } catch (e) { }
+                this.textContent = "Saved";
+                this.disabled = true;
+            });
+        })();
+    </script>
+    {% endblock %}
 </body>
+
 </html>

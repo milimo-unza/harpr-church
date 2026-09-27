@@ -106,7 +106,8 @@ def service_list(request):
     return render(
         request,
         "church/service_list.html",
-        {"services": services, "active_filter": filter_name, "current_year": timezone.localdate().year},
+        {"services": services, "active_filter": filter_name,
+            "current_year": timezone.localdate().year},
     )
 
 
@@ -129,7 +130,8 @@ def service_create(request):
         service.save()
         if service.template:
             start = timezone.make_aware(
-                datetime.combine(service.date, service.template.default_start_time)
+                datetime.combine(
+                    service.date, service.template.default_start_time)
             )
             for template_item in service.template.items.select_related(
                 "responsible_department"
@@ -171,7 +173,8 @@ def service_item_create(request, pk):
     if request.method == "POST" and form.is_valid():
         item = form.save(commit=False)
         item.service = service
-        item.order = (service.items.order_by("-order").first().order + 1) if service.items.exists() else 0
+        item.order = (service.items.order_by(
+            "-order").first().order + 1) if service.items.exists() else 0
         item.save()
         notify_department(
             request.church,
@@ -188,7 +191,8 @@ def service_item_create(request, pk):
 def service_item_edit(request, pk, item_pk):
     service = get_object_or_404(request.church.services, pk=pk)
     item = get_object_or_404(service.items, pk=item_pk)
-    form = ServiceItemForm(request.POST or None, instance=item, church=request.church)
+    form = ServiceItemForm(request.POST or None,
+                           instance=item, church=request.church)
     if request.method == "POST" and form.is_valid():
         item = form.save()
         notify_department(
@@ -289,7 +293,8 @@ def event_create(request):
 @admin_required
 def event_edit(request, pk):
     event = get_object_or_404(request.church.events, pk=pk)
-    form = ChurchEventForm(request.POST or None, instance=event, church=request.church)
+    form = ChurchEventForm(request.POST or None,
+                           instance=event, church=request.church)
     if request.method == "POST" and form.is_valid():
         form.save()
         messages.success(request, "Event updated.")
@@ -366,7 +371,8 @@ def department_edit(request, pk):
 
 @admin_required
 def member_list(request):
-    memberships = request.church.memberships.select_related("user", "department", "invited_by")
+    memberships = request.church.memberships.select_related(
+        "user", "department", "invited_by")
     return render(request, "church/members.html", {"memberships": memberships})
 
 
@@ -410,7 +416,8 @@ def member_invite(request):
 
 @admin_required
 def member_edit(request, pk):
-    membership = get_object_or_404(request.church.memberships.select_related("user"), pk=pk)
+    membership = get_object_or_404(
+        request.church.memberships.select_related("user"), pk=pk)
     form = MemberEditForm(
         request.POST or None,
         church=request.church,
@@ -427,7 +434,8 @@ def member_edit(request, pk):
         membership.user.email = data["email"]
         membership.user.first_name = data["first_name"]
         membership.user.last_name = data["last_name"]
-        membership.user.save(update_fields=["email", "first_name", "last_name"])
+        membership.user.save(
+            update_fields=["email", "first_name", "last_name"])
         membership.role = data["role"]
         membership.department = data["department"]
         membership.save(update_fields=["role", "department"])
@@ -467,7 +475,8 @@ def announcement_create(request):
 @admin_required
 def announcement_edit(request, pk):
     announcement = get_object_or_404(request.church.announcements, pk=pk)
-    form = AnnouncementForm(request.POST or None, instance=announcement, church=request.church)
+    form = AnnouncementForm(request.POST or None,
+                            instance=announcement, church=request.church)
     if request.method == "POST" and form.is_valid():
         form.save()
         messages.success(request, "Announcement updated.")
@@ -489,7 +498,8 @@ def gather_church_stats(church):
         service_overran = False
         for item in service.items.all():
             if item.actual_start and item.planned_start:
-                delay = (item.actual_start - item.planned_start).total_seconds() / 60
+                delay = (item.actual_start -
+                         item.planned_start).total_seconds() / 60
                 delays.append(delay)
                 item_delays.setdefault(item.title, []).append(delay)
             if item.actual_duration_minutes is not None:
@@ -502,7 +512,8 @@ def gather_church_stats(church):
     if item_delays:
         most_delayed = max(
             item_delays,
-            key=lambda title: sum(item_delays[title]) / len(item_delays[title]),
+            key=lambda title: sum(
+                item_delays[title]) / len(item_delays[title]),
         )
     return {
         "service_count": len(services),
@@ -516,7 +527,8 @@ def gather_church_stats(church):
 @admin_required
 def ai_insights(request):
     cutoff = timezone.now() - timedelta(hours=24)
-    cached = request.church.ai_insights.filter(generated_at__gte=cutoff).first()
+    cached = request.church.ai_insights.filter(
+        generated_at__gte=cutoff).first()
     if cached:
         return render(
             request,
@@ -575,7 +587,8 @@ def ai_insights(request):
 
 @admin_required
 def church_settings(request):
-    form = ChurchSettingsForm(request.POST or None, request.FILES or None, instance=request.church)
+    form = ChurchSettingsForm(request.POST or None,
+                              request.FILES or None, instance=request.church)
     if request.method == "POST" and form.is_valid():
         form.save()
         messages.success(request, "Church settings saved.")

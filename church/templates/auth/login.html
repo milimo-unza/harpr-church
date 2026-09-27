@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,9 +9,12 @@
   <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/harpr.css' %}">
 </head>
+
 <body>
   <main class="auth-page">
     <div class="auth-card">
@@ -18,7 +22,7 @@
       <p class="eyebrow">Harpr</p>
       <h1>Sign in</h1>
       {% if form.errors %}
-        <p class="form-error" role="alert">Please check your username and password.</p>
+      <p class="form-error" role="alert">Please check your username and password.</p>
       {% endif %}
       <form method="post">
         {% csrf_token %}
@@ -33,11 +37,12 @@
         </p>
         <button class="btn btn-primary btn-block" type="submit">Sign in</button>
       </form>
-      </div>
-      <div class="auth-foot">
-        <a href="{% url 'password_reset' %}">Forgot password?</a> ·
-        New church? <a href="{% url 'church_signup' %}">Create an account</a>
-      </div>
+    </div>
+    <div class="auth-foot">
+      <a href="{% url 'password_reset' %}">Forgot password?</a> ·
+      New church? <a href="{% url 'church_signup' %}">Create an account</a>
+    </div>
   </main>
 </body>
+
 </html>

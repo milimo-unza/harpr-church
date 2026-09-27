@@ -3,6 +3,7 @@ from django.shortcuts import redirect, render
 
 from church.forms import ChurchSignupForm
 
+
 def church_signup(request):
     """Public signup: creates a church and its first coordinator."""
     if request.user.is_authenticated:

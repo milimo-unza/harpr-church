@@ -1,90 +1,94 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Harpr — Church programmes</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/harpr.css' %}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Harpr — Church programmes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/harpr.css' %}">
 </head>
+
 <body class="public-body">
-  <main class="public-shell">
-    <header class="public-head">
-      <div>
-        <p class="eyebrow">Harpr</p>
-        <h1>Church programmes, at a glance</h1>
-      </div>
-      <a class="btn btn-ghost" href="{% url 'login' %}">Sign in</a>
-    </header>
+    <main class="public-shell">
+        <header class="public-head">
+            <div>
+                <p class="eyebrow">Harpr</p>
+                <h1>Church programmes, at a glance</h1>
+            </div>
+            <a class="btn btn-ghost" href="{% url 'login' %}">Sign in</a>
+        </header>
 
-    <section class="public-card">
-      <h2>Find a church</h2>
-      <p class="muted">Enter the church's code, or scan the QR code at the
-      entrance.</p>
-      <form id="find-church-form" class="inline-form">
-        <input id="church-slug-input" placeholder="e.g. grace-covenant"
-               autocomplete="off">
-        <button class="btn btn-primary" type="submit">Find</button>
-      </form>
-      <p id="find-error" class="form-error" hidden>
-        We couldn't find that church. Check the code and try again.
-      </p>
-    </section>
+        <section class="public-card">
+            <h2>Find a church</h2>
+            <p class="muted">Enter the church's code, or scan the QR code at the
+                entrance.</p>
+            <form id="find-church-form" class="inline-form">
+                <input id="church-slug-input" placeholder="e.g. grace-covenant" autocomplete="off">
+                <button class="btn btn-primary" type="submit">Find</button>
+            </form>
+            <p id="find-error" class="form-error" hidden>
+                We couldn't find that church. Check the code and try again.
+            </p>
+        </section>
 
-    <section id="saved-churches-section" class="public-card" hidden>
-      <h2>Your saved churches</h2>
-      <ul id="saved-churches-list" class="saved-list"></ul>
-    </section>
+        <section id="saved-churches-section" class="public-card" hidden>
+            <h2>Your saved churches</h2>
+            <ul id="saved-churches-list" class="saved-list"></ul>
+        </section>
 
-    <section class="public-card">
-      <h2>Scan a QR code</h2>
-      <p class="muted">Open your phone's camera, point it at the QR code on
-      the church door or notice board, and tap the link. Your saved churches
-      will appear here next time you open Harpr.</p>
-    </section>
-  </main>
+        <section class="public-card">
+            <h2>Scan a QR code</h2>
+            <p class="muted">Open your phone's camera, point it at the QR code on
+                the church door or notice board, and tap the link. Your saved churches
+                will appear here next time you open Harpr.</p>
+        </section>
+    </main>
 
-  <script>
-    (function () {
-      var KEY = "harpr-saved-churches";
-      var form = document.getElementById("find-church-form");
-      var input = document.getElementById("church-slug-input");
-      var error = document.getElementById("find-error");
-      var section = document.getElementById("saved-churches-section");
-      var list = document.getElementById("saved-churches-list");
+    <script>
+        (function () {
+            var KEY = "harpr-saved-churches";
+            var form = document.getElementById("find-church-form");
+            var input = document.getElementById("church-slug-input");
+            var error = document.getElementById("find-error");
+            var section = document.getElementById("saved-churches-section");
+            var list = document.getElementById("saved-churches-list");
 
-      function getSaved() {
-        try { return JSON.parse(localStorage.getItem(KEY) || "[]"); }
-        catch (e) { return []; }
-      }
+            function getSaved() {
+                try { return JSON.parse(localStorage.getItem(KEY) || "[]"); }
+                catch (e) { return []; }
+            }
 
-      function renderSaved() {
-        var saved = getSaved();
-        if (!saved.length) { section.hidden = true; return; }
-        section.hidden = false;
-        list.innerHTML = saved.map(function (c) {
-          return '<li><a class="btn btn-ghost" href="/c/' + c.slug + '/">' +
-                 c.name + '</a></li>';
-        }).join("");
-      }
+            function renderSaved() {
+                var saved = getSaved();
+                if (!saved.length) { section.hidden = true; return; }
+                section.hidden = false;
+                list.innerHTML = saved.map(function (c) {
+                    return '<li><a class="btn btn-ghost" href="/c/' + c.slug + '/">' +
+                        c.name + '</a></li>';
+                }).join("");
+            }
 
-      form.addEventListener("submit", function (e) {
-        e.preventDefault();
-        var slug = (input.value || "").trim().toLowerCase().replace(/[^a-z0-9-]/g, "");
-        if (!slug) return;
-        fetch("/c/" + slug + "/", { method: "HEAD" })
-          .then(function (r) {
-            if (r.ok) { window.location.href = "/c/" + slug + "/"; }
-            else { error.hidden = false; }
-          })
-          .catch(function () { error.hidden = false; });
-      });
+            form.addEventListener("submit", function (e) {
+                e.preventDefault();
+                var slug = (input.value || "").trim().toLowerCase().replace(/[^a-z0-9-]/g, "");
+                if (!slug) return;
+                fetch("/c/" + slug + "/", { method: "HEAD" })
+                    .then(function (r) {
+                        if (r.ok) { window.location.href = "/c/" + slug + "/"; }
+                        else { error.hidden = false; }
+                    })
+                    .catch(function () { error.hidden = false; });
+            });
 
-      renderSaved();
-    })();
-  </script>
+            renderSaved();
+        })();
+    </script>
 </body>
+
 </html>

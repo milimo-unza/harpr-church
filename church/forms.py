@@ -37,7 +37,8 @@ class ServiceForm(forms.ModelForm):
     def __init__(self, *args, church=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["template"].queryset = (
-            church.service_templates.filter(is_active=True) if church else ServiceTemplate.objects.none()
+            church.service_templates.filter(
+                is_active=True) if church else ServiceTemplate.objects.none()
         )
         _style_fields(self)
 
@@ -113,7 +114,8 @@ class DepartmentForm(forms.ModelForm):
     class Meta:
         model = Department
         fields = ["name", "slug", "description", "color"]
-        widgets = {"description": forms.Textarea(attrs={"rows": 3}), "color": forms.TextInput(attrs={"type": "color"})}
+        widgets = {"description": forms.Textarea(
+            attrs={"rows": 3}), "color": forms.TextInput(attrs={"type": "color"})}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -126,7 +128,8 @@ class MemberInviteForm(forms.Form):
     first_name = forms.CharField(max_length=150, required=False)
     last_name = forms.CharField(max_length=150, required=False)
     role = forms.ChoiceField(choices=Membership.ROLE_CHOICES)
-    department = forms.ModelChoiceField(queryset=Department.objects.none(), required=False)
+    department = forms.ModelChoiceField(
+        queryset=Department.objects.none(), required=False)
 
     def __init__(self, *args, church=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -147,7 +150,8 @@ class MemberEditForm(forms.Form):
     first_name = forms.CharField(max_length=150, required=False)
     last_name = forms.CharField(max_length=150, required=False)
     role = forms.ChoiceField(choices=Membership.ROLE_CHOICES)
-    department = forms.ModelChoiceField(queryset=Department.objects.none(), required=False)
+    department = forms.ModelChoiceField(
+        queryset=Department.objects.none(), required=False)
 
     def __init__(self, *args, church=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -233,11 +237,13 @@ class ChurchSettingsForm(forms.ModelForm):
         ("Africa/Cairo", "Africa/Cairo"),
         ("Africa/Lagos", "Africa/Lagos"),
     ]
-    timezone = forms.ChoiceField(choices=AFRICAN_TIMEZONES, initial="Africa/Lusaka")
+    timezone = forms.ChoiceField(
+        choices=AFRICAN_TIMEZONES, initial="Africa/Lusaka")
 
     class Meta:
         model = Church
-        fields = ["name", "slug", "worship_day", "timezone", "address", "phone", "email", "logo"]
+        fields = ["name", "slug", "worship_day",
+                  "timezone", "address", "phone", "email", "logo"]
         widgets = {"address": forms.Textarea(attrs={"rows": 3})}
 
     def __init__(self, *args, **kwargs):
@@ -280,7 +286,8 @@ class ChurchSignupForm(forms.Form):
         if p1 and p2 and p1 != p2:
             raise forms.ValidationError("The two passwords don't match.")
         if p1 and len(p1) < 8:
-            raise forms.ValidationError("Password must be at least 8 characters.")
+            raise forms.ValidationError(
+                "Password must be at least 8 characters.")
         return cleaned
 
     def save(self):

@@ -8,6 +8,7 @@ from church.models import (
     Church, Service, ServiceItem, ServiceTemplate,
 )
 
+
 class Command(BaseCommand):
     help = "Generate a year of services for a church from its active templates."
 
@@ -39,7 +40,8 @@ class Command(BaseCommand):
                     if was_created:
                         start_dt = timezone.make_aware(
                             # Use template default start time on the date
-                            timezone.datetime.combine(d, template.default_start_time)
+                            timezone.datetime.combine(
+                                d, template.default_start_time)
                         )
                         # Create service items from template items
                         for item in template.items.all():
