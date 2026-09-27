@@ -6,6 +6,8 @@ from church.views import (
     dept_views,
     home as home_views,
     public_views,
+        invitation_views,
+        signup_views,
 )
 
 urlpatterns = [
@@ -114,4 +116,7 @@ urlpatterns = [
         name="public_bulletin_pdf",
     ),
     path("c/<slug>/qr.png", public_views.church_qr, name="church_qr"),
+    path("signup/", signup_views.church_signup, name="church_signup"),
+        path("invite/<str:token>/", invitation_views.accept_invitation,
+             name="accept_invitation"),
 ]

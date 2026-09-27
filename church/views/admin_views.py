@@ -10,6 +10,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from django.core.management import call_command
 
 from church.forms import (
     AnnouncementForm,
@@ -32,6 +33,7 @@ from church.models import (
     Membership,
     Service,
     ServiceItem,
+    Invitation,
 )
 from church.services.notifications import notify_department, notify_user
 from church.services.recalculation import (
@@ -104,8 +106,17 @@ def service_list(request):
     return render(
         request,
         "church/service_list.html",
-        {"services": services, "active_filter": filter_name},
+        {"services": services, "active_filter": filter_name, "current_year": timezone.localdate().year},
     )
+
+
+@admin_required
+@require_POST
+def generate_year(request):
+    year = int(request.POST.get("year", timezone.localdate().year))
+    call_command("generate_year", church=request.church.slug, year=year)
+    messages.success(request, f"Generated services for {year}.")
+    return redirect("service_list")
 
 
 @admin_required
@@ -361,26 +372,38 @@ def member_list(request):
 
 @admin_required
 def member_invite(request):
+    import secrets
+    from django.core.mail import send_mail
+    from django.urls import reverse
+
     form = MemberInviteForm(request.POST or None, church=request.church)
     if request.method == "POST" and form.is_valid():
         data = form.cleaned_data
-        with transaction.atomic():
-            user = User.objects.create_user(
-                username=data["username"],
-                email=data["email"],
-                first_name=data["first_name"],
-                last_name=data["last_name"],
-            )
-            user.set_unusable_password()
-            user.save(update_fields=["password"])
-            Membership.objects.create(
-                user=user,
-                church=request.church,
-                role=data["role"],
-                department=data["department"],
-                invited_by=request.user,
-            )
-        messages.success(request, "Member added. Ask them to reset their password.")
+        token = secrets.token_urlsafe(32)
+        Invitation.objects.create(
+            church=request.church,
+            email=data["email"],
+            role=data["role"],
+            department=data.get("department"),
+            token=token,
+            invited_by=request.user,
+        )
+        accept_url = request.build_absolute_uri(
+            reverse("accept_invitation", kwargs={"token": token})
+        )
+        send_mail(
+            subject=f"You're invited to join {request.church.name} on Harpr",
+            message=(
+                f"{request.user.get_full_name() or request.user.username} "
+                f"has invited you to join {request.church.name} on Harpr.\n\n"
+                f"Click this link to set your password and accept:\n{accept_url}\n\n"
+                f"This link expires in 7 days."
+            ),
+            from_email="harpr@localhost",
+            recipient_list=[data["email"]],
+            fail_silently=False,
+        )
+        messages.success(request, f"Invitation sent to {data['email']}.")
         return redirect("member_list")
     return render(request, "church/member_form.html", {"form": form, "title": "Invite member"})
 

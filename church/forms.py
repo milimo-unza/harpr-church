@@ -237,9 +237,70 @@ class ChurchSettingsForm(forms.ModelForm):
 
     class Meta:
         model = Church
-        fields = ["name", "slug", "timezone", "address", "phone", "email", "logo"]
+        fields = ["name", "slug", "worship_day", "timezone", "address", "phone", "email", "logo"]
         widgets = {"address": forms.Textarea(attrs={"rows": 3})}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         _style_fields(self)
+
+
+class ChurchSignupForm(forms.Form):
+    church_name = forms.CharField(max_length=200)
+    church_slug = forms.SlugField(max_length=100)
+    church_address = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 2}), required=False
+    )
+    worship_day = forms.ChoiceField(
+        choices=Church.WORSHIP_DAY_CHOICES, initial=6
+    )
+    coordinator_username = forms.CharField(max_length=150)
+    coordinator_email = forms.EmailField()
+    coordinator_first_name = forms.CharField(max_length=150)
+    coordinator_last_name = forms.CharField(max_length=150)
+    password1 = forms.CharField(widget=forms.PasswordInput)
+    password2 = forms.CharField(widget=forms.PasswordInput)
+
+    def clean_church_slug(self):
+        slug = self.cleaned_data["church_slug"]
+        if Church.objects.filter(slug=slug).exists():
+            raise forms.ValidationError("That church URL is already taken.")
+        return slug
+
+    def clean_coordinator_username(self):
+        username = self.cleaned_data["coordinator_username"]
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError("That username is already taken.")
+        return username
+
+    def clean(self):
+        cleaned = super().clean()
+        p1 = cleaned.get("password1")
+        p2 = cleaned.get("password2")
+        if p1 and p2 and p1 != p2:
+            raise forms.ValidationError("The two passwords don't match.")
+        if p1 and len(p1) < 8:
+            raise forms.ValidationError("Password must be at least 8 characters.")
+        return cleaned
+
+    def save(self):
+        from django.db import transaction
+        with transaction.atomic():
+            church = Church.objects.create(
+                name=self.cleaned_data["church_name"],
+                slug=self.cleaned_data["church_slug"],
+                address=self.cleaned_data.get("church_address", ""),
+                worship_day=int(self.cleaned_data["worship_day"]),
+                timezone="Africa/Lusaka",
+            )
+            user = User.objects.create_user(
+                username=self.cleaned_data["coordinator_username"],
+                email=self.cleaned_data["coordinator_email"],
+                first_name=self.cleaned_data["coordinator_first_name"],
+                last_name=self.cleaned_data["coordinator_last_name"],
+                password=self.cleaned_data["password1"],
+            )
+            Membership.objects.create(user=user, church=church, role="admin")
+            for slug, name in Department.DEFAULT_DEPARTMENTS:
+                Department.objects.create(church=church, slug=slug, name=name)
+        return church, user

@@ -9,6 +9,14 @@ class Church(models.Model):
     address = models.TextField(blank=True)
     phone = models.CharField(max_length=20, blank=True)
     email = models.EmailField(blank=True)
+    WORSHIP_DAY_CHOICES = [
+        (0, "Monday"), (1, "Tuesday"), (2, "Wednesday"),
+        (3, "Thursday"), (4, "Friday"), (5, "Saturday"), (6, "Sunday"),
+    ]
+    worship_day = models.PositiveSmallIntegerField(
+        choices=WORSHIP_DAY_CHOICES, default=6,
+        help_text="The church's main day of worship.",
+    )
     logo = models.ImageField(upload_to="church_logos/", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
@@ -453,3 +461,105 @@ class ChurchEvent(models.Model):
 
     def __str__(self):
         return f"{self.title} — {self.date}"
+
+
+class Resource(models.Model):
+    """A bookable space or asset in a church."""
+    church = models.ForeignKey(
+        Church, on_delete=models.CASCADE, related_name="resources"
+    )
+    name = models.CharField(max_length=100)
+    description = models.CharField(max_length=200, blank=True)
+    capacity = models.PositiveIntegerField(null=True, blank=True)
+    requires_approval = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = [("church", "name")]
+        ordering = ["name"]
+
+    def __str__(self):
+        return f"{self.church.name} — {self.name}"
+
+
+class ResourceBooking(models.Model):
+    """A request to use a resource for a period of time."""
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    church = models.ForeignKey(
+        Church, on_delete=models.CASCADE, related_name="bookings"
+    )
+    resource = models.ForeignKey(
+        Resource, on_delete=models.CASCADE, related_name="bookings"
+    )
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True
+    )
+    department = models.ForeignKey(
+        Department, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    purpose = models.CharField(max_length=200)
+    notes = models.TextField(blank=True)
+    starts_at = models.DateTimeField()
+    ends_at = models.DateTimeField()
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default="pending"
+    )
+    decided_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="decided_bookings",
+    )
+    decided_at = models.DateTimeField(null=True, blank=True)
+    decision_note = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["starts_at"]
+
+    def __str__(self):
+        return f"{self.resource.name} — {self.purpose} ({self.starts_at:%d %b %H:%M})"
+
+    def has_conflict(self):
+        """Return the first conflicting approved booking, if any."""
+        others = ResourceBooking.objects.filter(
+            resource=self.resource, status="approved"
+        ).exclude(pk=self.pk)
+        for other in others:
+            if self.starts_at < other.ends_at and self.ends_at > other.starts_at:
+                return other
+        return None
+
+
+class Invitation(models.Model):
+    """A one-time invitation for a department head to join a church."""
+    church = models.ForeignKey(
+        Church, on_delete=models.CASCADE, related_name="invitations"
+    )
+    email = models.EmailField()
+    role = models.CharField(
+        max_length=20, choices=Membership.ROLE_CHOICES, default="dept_head"
+    )
+    department = models.ForeignKey(
+        Department, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    token = models.CharField(max_length=64, unique=True)
+    invited_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    accepted_at = models.DateTimeField(null=True, blank=True)
+
+    def is_valid(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        if self.accepted_at:
+            return False
+        return timezone.now() - self.created_at < timedelta(days=7)
+
+    def __str__(self):
+        return f"Invitation for {self.email} to {self.church.name}"

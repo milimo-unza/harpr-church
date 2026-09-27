@@ -1,0 +1,90 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create a church account · Harpr</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/harpr.css' %}">
+</head>
+<body class="auth-body">
+  <main class="auth-card auth-card--wide">
+    <div class="auth-brand">
+      <span class="brand-mark" aria-hidden="true">H</span>
+      <span class="brand-text">
+        <span class="brand-name">Harpr</span>
+        <span class="brand-tagline">Create a church account</span>
+      </span>
+    </div>
+
+    <h1>Set up your church</h1>
+    <p class="muted">Any church can create a Harpr account. You'll be the
+    Programme Coordinator and can invite department heads afterwards.</p>
+
+    <form method="post">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+
+      <fieldset class="form-section">
+        <legend>Your church</legend>
+        <div class="form-row">
+          <label for="{{ form.church_name.id_for_label }}">Church name</label>
+          {{ form.church_name }} {{ form.church_name.errors }}
+        </div>
+        <div class="form-row">
+          <label for="{{ form.church_slug.id_for_label }}">Church URL</label>
+          {{ form.church_slug }} {{ form.church_slug.errors }}
+          <small class="muted">Becomes /c/<em>your-slug</em>/ — lowercase letters and hyphens.</small>
+        </div>
+        <div class="form-row">
+          <label for="{{ form.worship_day.id_for_label }}">Main worship day</label>
+          {{ form.worship_day }} {{ form.worship_day.errors }}
+        </div>
+        <div class="form-row">
+          <label for="{{ form.church_address.id_for_label }}">Address (optional)</label>
+          {{ form.church_address }}
+        </div>
+      </fieldset>
+
+      <fieldset class="form-section">
+        <legend>Your coordinator account</legend>
+        <div class="form-row">
+          <label for="{{ form.coordinator_username.id_for_label }}">Username</label>
+          {{ form.coordinator_username }} {{ form.coordinator_username.errors }}
+        </div>
+        <div class="form-row">
+          <label for="{{ form.coordinator_email.id_for_label }}">Email</label>
+          {{ form.coordinator_email }} {{ form.coordinator_email.errors }}
+        </div>
+        <div class="form-row two-up">
+          <div>
+            <label for="{{ form.coordinator_first_name.id_for_label }}">First name</label>
+            {{ form.coordinator_first_name }}
+          </div>
+          <div>
+            <label for="{{ form.coordinator_last_name.id_for_label }}">Last name</label>
+            {{ form.coordinator_last_name }}
+          </div>
+        </div>
+        <div class="form-row">
+          <label for="{{ form.password1.id_for_label }}">Password</label>
+          {{ form.password1 }} {{ form.password1.errors }}
+        </div>
+        <div class="form-row">
+          <label for="{{ form.password2.id_for_label }}">Confirm password</label>
+          {{ form.password2 }} {{ form.password2.errors }}
+        </div>
+      </fieldset>
+
+      <button class="btn btn-primary btn-block" type="submit">Create church account</button>
+    </form>
+
+    <div class="auth-foot">
+      Already have an account? <a href="{% url 'login' %}">Sign in</a>
+    </div>
+  </main>
+</body>
+</html>

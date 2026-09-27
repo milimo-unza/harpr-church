@@ -1,0 +1,11 @@
+{% load static %}
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Invitation expired · Harpr</title>
+<link rel="stylesheet" href="{% static 'css/harpr.css' %}"></head>
+<body class="auth-body">
+  <main class="auth-card">
+    <h1>This invitation has expired</h1>
+    <p>The link is either too old or has already been used. Ask the church's coordinator to send a new one.</p>
+    <p><a class="btn btn-primary btn-block" href="{% url 'login' %}">Back to sign in</a></p>
+  </main>
+</body></html>

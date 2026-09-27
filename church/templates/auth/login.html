@@ -33,7 +33,11 @@
         </p>
         <button class="btn btn-primary btn-block" type="submit">Sign in</button>
       </form>
-    </div>
+      </div>
+      <div class="auth-foot">
+        <a href="{% url 'password_reset' %}">Forgot password?</a> ·
+        New church? <a href="{% url 'church_signup' %}">Create an account</a>
+      </div>
   </main>
 </body>
 </html>
