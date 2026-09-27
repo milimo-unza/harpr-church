@@ -4,13 +4,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Harpr Church{% endblock %}</title>
+  <title>{% block title %}Harpr{% endblock %}</title>
   <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/cosmos.css' %}">
-  <link rel="stylesheet" href="{% static 'css/church.css' %}">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/harpr.css' %}">
   <script>
     (function () {
       var theme = localStorage.getItem("harpr-theme") ||
@@ -23,60 +22,75 @@
 <body>
   <div class="layout">
     <aside class="sidebar">
-      <div class="sidebar-brand">
-        <div class="brand-mark"><img src="{% static 'favicon.svg' %}" alt="" width="20" height="20"></div>
-        <div class="brand-text">
-          <div class="brand-name">Harpr Church</div>
-          <div class="brand-tagline">{{ request.user.church_memberships.first.church.name|default:"Church operations" }}</div>
-        </div>
-      </div>
-      <nav class="sidenav">
-        <a class="navlink" href="{% url 'admin_dashboard' %}"><span class="nav-dot"></span>Dashboard</a>
-        <a class="navlink" href="{% url 'service_list' %}"><span class="nav-dot"></span>Services</a>
-        <a class="navlink" href="{% url 'event_create' %}"><span class="nav-dot"></span>New event</a>
-        <a class="navlink" href="{% url 'request_list' %}"><span class="nav-dot"></span>Requests</a>
-        <a class="navlink" href="{% url 'department_list' %}"><span class="nav-dot"></span>Departments</a>
-        <a class="navlink" href="{% url 'member_list' %}"><span class="nav-dot"></span>Members</a>
-        <a class="navlink" href="{% url 'announcement_list' %}"><span class="nav-dot"></span>Announcements</a>
-        <a class="navlink" href="{% url 'ai_insights' %}"><span class="nav-dot"></span>AI insights</a>
-        <a class="navlink" href="{% url 'church_settings' %}"><span class="nav-dot"></span>Settings</a>
-        <hr>
-        <a class="navlink" href="{% url 'dept_dashboard' %}"><span class="nav-dot"></span>My department</a>
-        <a class="navlink" href="{% url 'dept_request_list' %}"><span class="nav-dot"></span>My requests</a>
+      <a class="sidebar-brand" href="{% url 'home' %}">
+        <span class="brand-mark" aria-hidden="true">H</span>
+        <span class="brand-text">
+          <span class="brand-name">Harpr</span>
+          <span class="brand-tagline">{{ current_church.name|default:"Church operations" }}</span>
+        </span>
+      </a>
+
+      <nav class="sidenav" aria-label="Primary">
+        {% if is_coordinator %}
+          <a class="navlink {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}" href="{% url 'admin_dashboard' %}">Dashboard</a>
+          <a class="navlink {% if request.resolver_match.url_name == 'service_list' or request.resolver_match.url_name == 'service_detail' %}active{% endif %}" href="{% url 'service_list' %}">Services</a>
+          <a class="navlink {% if request.resolver_match.url_name == 'event_create' or request.resolver_match.url_name == 'event_edit' %}active{% endif %}" href="{% url 'event_create' %}">New event</a>
+          <a class="navlink {% if request.resolver_match.url_name == 'request_list' or request.resolver_match.url_name == 'request_respond' %}active{% endif %}" href="{% url 'request_list' %}">Requests</a>
+          <a class="navlink {% if request.resolver_match.url_name == 'department_list' or request.resolver_match.url_name == 'department_create' or request.resolver_match.url_name == 'department_edit' %}active{% endif %}" href="{% url 'department_list' %}">Departments</a>
+          <a class="navlink {% if request.resolver_match.url_name == 'member_list' or request.resolver_match.url_name == 'member_invite' or request.resolver_match.url_name == 'member_edit' %}active{% endif %}" href="{% url 'member_list' %}">Members</a>
+          <a class="navlink {% if request.resolver_match.url_name == 'announcement_list' or request.resolver_match.url_name == 'announcement_create' or request.resolver_match.url_name == 'announcement_edit' %}active{% endif %}" href="{% url 'announcement_list' %}">Announcements</a>
+          <a class="navlink {% if request.resolver_match.url_name == 'ai_insights' %}active{% endif %}" href="{% url 'ai_insights' %}">Insights</a>
+          <a class="navlink {% if request.resolver_match.url_name == 'church_settings' %}active{% endif %}" href="{% url 'church_settings' %}">Settings</a>
+        {% elif is_dept_head %}
+          <a class="navlink {% if request.resolver_match.url_name == 'dept_dashboard' %}active{% endif %}" href="{% url 'dept_dashboard' %}">My department</a>
+          <a class="navlink {% if request.resolver_match.url_name == 'dept_request_list' or request.resolver_match.url_name == 'dept_request_create' %}active{% endif %}" href="{% url 'dept_request_list' %}">My requests</a>
+        {% endif %}
       </nav>
+
       <div class="sidebar-footer">
         <div class="user-chip">
-          <div class="user-avatar mono">{{ request.user.username|slice:":2"|upper }}</div>
-          <div class="user-meta">
-            <div class="user-name">{{ request.user.username }}</div>
-            <div class="user-version mono">Harpr Church</div>
-          </div>
+          <span class="user-avatar">{{ request.user.username|slice:":2"|upper }}</span>
+          <span class="user-meta">
+            <span class="user-name">{{ request.user.get_full_name|default:request.user.username }}</span>
+            <span class="user-role">
+              {% if is_coordinator %}Programme Coordinator{% elif is_dept_head %}Department Head{% endif %}
+            </span>
+          </span>
         </div>
         <div class="footer-actions">
-          <button class="icon-btn" id="theme-toggle" type="button" aria-label="Toggle theme">☀</button>
-          <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="icon-btn" type="submit" aria-label="Sign out">⏻</button></form>
+          <button class="icon-btn" id="theme-toggle" type="button" aria-label="Toggle theme">◐</button>
+          <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+            <button class="icon-btn" type="submit" aria-label="Sign out" title="Sign out">⏻</button>
+          </form>
         </div>
       </div>
     </aside>
+
     <main class="main">
-      <header class="church-topbar">
-        <div></div>
+      <header class="topbar">
+        <div class="topbar-spacer"></div>
         <div class="topbar-actions">
           <div class="notif-bell" data-notification-root>
-            <button class="icon-btn" type="button" data-notification-toggle aria-label="Notifications">♢ <span class="notif-badge" data-notification-badge hidden>0</span></button>
+            <button class="icon-btn" type="button" data-notification-toggle aria-label="Notifications">
+              <span aria-hidden="true">◔</span>
+              <span class="notif-badge" data-notification-badge hidden>0</span>
+            </button>
             <div class="notif-dropdown" data-notification-dropdown hidden></div>
           </div>
-          <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn btn-ghost" type="submit">Sign out</button></form>
         </div>
       </header>
-      {% if messages %}
-        <div class="messages">
-          {% for message in messages %}<div class="message" data-tag="{{ message.tags }}">{{ message }}</div>{% endfor %}
-        </div>
-      {% endif %}
+
       {% block content %}{% endblock %}
     </main>
   </div>
+
+  <div id="toast-stack" class="toast-stack" aria-live="polite" aria-atomic="true"></div>
+  {% if messages %}
+    {% for message in messages %}
+      <span data-toast="{{ message }}" data-toast-kind="{{ message.tags }}" hidden></span>
+    {% endfor %}
+  {% endif %}
+
   <script>
     (function () {
       var toggle = document.getElementById("theme-toggle");
@@ -86,6 +100,26 @@
         localStorage.setItem("harpr-theme", next);
       });
     })();
+
+    window.harprToast = function (message, kind) {
+      kind = kind || "success";
+      var stack = document.getElementById("toast-stack");
+      if (!stack || !message) return;
+      var el = document.createElement("div");
+      el.className = "toast toast--" + kind;
+      el.setAttribute("role", kind === "error" ? "alert" : "status");
+      el.textContent = message;
+      stack.appendChild(el);
+      requestAnimationFrame(function () { el.classList.add("show"); });
+      setTimeout(function () {
+        el.classList.remove("show");
+        setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 200);
+      }, 4000);
+    };
+
+    document.querySelectorAll("[data-toast]").forEach(function (n) {
+      window.harprToast(n.dataset.toast, n.dataset.toastKind || "success");
+    });
   </script>
   <script src="{% static 'js/notifications.js' %}"></script>
   {% block scripts %}{% endblock %}

@@ -1,9 +1,15 @@
 from django.urls import path
 
-from church.views import admin_views, api_views, dept_views, public_views
+from church.views import (
+    admin_views,
+    api_views,
+    dept_views,
+    home as home_views,
+    public_views,
+)
 
 urlpatterns = [
-    path("", admin_views.admin_dashboard, name="home"),
+    path("", home_views.home, name="home"),
     path("dashboard/", admin_views.admin_dashboard, name="admin_dashboard"),
     path("services/", admin_views.service_list, name="service_list"),
     path("services/new/", admin_views.service_create, name="service_create"),
