@@ -864,6 +864,35 @@ fieldset.form-section {
     flex-wrap: wrap;
 }
 
+/* ============================================================
+     Row actions — inline by default, wrap only when needed
+     ============================================================ */
+
+.row-actions-inline {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    flex-wrap: nowrap;
+}
+.row-actions-inline > .inline-form {
+    display: inline-flex;
+    margin: 0;
+    padding: 0;
+}
+.row-actions-inline .btn-small {
+    padding: 4px 10px;
+    font-size: 0.78rem;
+    line-height: 1.3;
+}
+
+@media (max-width: 480px) {
+    .row-actions-inline {
+        flex-wrap: wrap;
+        white-space: normal;
+    }
+}
+
 .auth-body {
     min-height: 100vh;
     display: flex;
@@ -987,6 +1016,238 @@ fieldset.form-section {
 
     .main {
         padding: var(--space-4);
+    }
+}
+
+/* ============================================================
+     MOBILE — defensive rules for every page type
+     ============================================================ */
+
+@media (max-width: 768px) {
+    .layout {
+        grid-template-columns: 1fr;
+        display: block;
+    }
+    .sidebar {
+        position: static;
+        height: auto;
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding: var(--space-4);
+    }
+    .sidenav {
+        flex-direction: row;
+        flex-wrap: wrap;
+        overflow-x: auto;
+        gap: var(--space-1);
+        margin: 0;
+    }
+    .navlink {
+        padding: 6px 12px;
+        font-size: 0.82rem;
+        white-space: nowrap;
+    }
+    .sidebar-footer {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: var(--space-3);
+    }
+    .main {
+        padding: var(--space-4);
+    }
+
+    .page-head {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--space-3);
+        padding-bottom: var(--space-3);
+    }
+    .page-head h1 {
+        font-size: 1.4rem;
+    }
+    .page-head .button-row {
+        display: flex;
+        gap: var(--space-2);
+        flex-wrap: wrap;
+    }
+    .page-head .button-row .btn {
+        flex: 1 1 auto;
+    }
+
+    .week-grid {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        border-radius: var(--radius);
+    }
+    .week-col {
+        flex: 0 0 200px;
+        scroll-snap-align: start;
+    }
+
+    .stat-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .stat-card {
+        padding: var(--space-3);
+    }
+    .stat-value {
+        font-size: 1.4rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 calc(var(--space-3) * -1);
+        padding: 0 var(--space-3);
+    }
+    .data-table,
+    .public-table {
+        font-size: 0.78rem;
+        min-width: 540px;
+    }
+    .data-table th,
+    .data-table td,
+    .public-table th,
+    .public-table td {
+        padding: 6px 8px;
+        white-space: nowrap;
+    }
+    .data-table th,
+    .public-table th {
+        font-size: 0.66rem;
+    }
+
+    .form-row.two-up {
+        grid-template-columns: 1fr;
+        gap: var(--space-2);
+    }
+    .form-row input,
+    .form-row select,
+    .form-row textarea {
+        font-size: 16px;
+        padding: 10px 12px;
+    }
+
+    .row-actions-inline {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    .row-actions-inline .btn-small {
+        padding: 4px 8px;
+        font-size: 0.72rem;
+    }
+
+    .modal-backdrop {
+        align-items: flex-end;
+        padding: 0;
+    }
+    .modal {
+        max-width: none;
+        margin: 0;
+        border-radius: var(--radius) var(--radius) 0 0;
+        max-height: 92vh;
+    }
+    .modal-head {
+        padding: var(--space-3) var(--space-4);
+    }
+    .modal-body {
+        padding: var(--space-4);
+    }
+    .modal .form-actions {
+        flex-direction: column-reverse;
+        gap: var(--space-2);
+    }
+    .modal .form-actions .btn {
+        width: 100%;
+        padding: 12px;
+    }
+
+    .btn {
+        padding: 10px 16px;
+        font-size: 0.86rem;
+    }
+    .btn-small {
+        padding: 6px 10px;
+        font-size: 0.78rem;
+    }
+
+    .public-shell {
+        padding: var(--space-4) var(--space-3) var(--space-6);
+    }
+    .public-head {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--space-3);
+    }
+    .public-head h1 {
+        font-size: 1.5rem;
+    }
+    .public-card {
+        padding: var(--space-4) var(--space-3);
+    }
+    .public-table {
+        font-size: 0.8rem;
+    }
+    .public-links {
+        text-align: left;
+    }
+
+    .auth-page {
+        padding: var(--space-3);
+    }
+    .auth-form-card,
+    .auth-form-card--wide {
+        max-width: none;
+        padding: var(--space-5) var(--space-4);
+    }
+    .auth-form-header h1 {
+        font-size: 1.4rem;
+    }
+    .auth-topbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-2);
+    }
+    .auth-topbar-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .public-footer .footer-contacts {
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .notif-dropdown {
+        position: fixed;
+        left: var(--space-3);
+        right: var(--space-3);
+        top: 60px;
+        width: auto;
+        max-width: none;
+    }
+
+    .section-label {
+        font-size: 0.68rem;
+    }
+}
+
+@media (max-width: 400px) {
+    .stat-grid {
+        grid-template-columns: 1fr;
+    }
+    .page-head h1 {
+        font-size: 1.25rem;
+    }
+    .btn {
+        font-size: 0.8rem;
+        padding: 9px 14px;
     }
 }
 

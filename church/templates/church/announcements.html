@@ -30,81 +30,269 @@
                 <td class="row-actions-inline">
                     <a class="btn btn-small" href="{% url 'announcement_edit' announcement.pk %}">Edit</a>
                     <form method="post" action="{% url 'announcement_pause' announcement.pk %}" class="inline-form">
-                        {% csrf_token %}
-                        <button class="btn btn-small" type="submit">{% if announcement.is_paused %}Resume{% else
-                            %}Pause{% endif %}</button>
-                    </form>
-                    <form method="post" action="{% url 'announcement_delete' announcement.pk %}" class="inline-form"
-                        onsubmit="return confirm('Delete this announcement?');">
-                        {% csrf_token %}
-                        <button class="btn btn-small btn-danger" type="submit">Delete</button>
-                    </form>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="4" class="empty-state">Nothing active right now.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+                        {% extends "church/base.html" %}
+                        {% block title %}Announcements · Harpr{% endblock %}
+                        {% block content %}
+                        <div class="page-head">
+                            <div>
+                                <p class="eyebrow">Public information</p>
+                                <h1>Announcements</h1>
+                            </div>
+                            <button type="button" class="btn btn-primary" data-modal-open="announcement-create-modal">New announcement</button>
+                        </div>
 
-<h2 class="section-label">Upcoming</h2>
-<div class="card table-wrap">
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Announcement</th>
-                <th>Starts</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for announcement in upcoming_announcements %}
-            <tr>
-                <td>{{ announcement.body|truncatechars:80 }}</td>
-                <td class="mono">{{ announcement.start_date|date:"d M Y" }}</td>
-                <td class="row-actions-inline">
-                    <a class="btn btn-small" href="{% url 'announcement_edit' announcement.pk %}">Edit</a>
-                    <form method="post" action="{% url 'announcement_delete' announcement.pk %}" class="inline-form"
-                        onsubmit="return confirm('Delete this announcement?');">
-                        {% csrf_token %}
-                        <button class="btn btn-small btn-danger" type="submit">Delete</button>
-                    </form>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="3" class="empty-state">Nothing scheduled.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+                        <h2 class="section-label">Active</h2>
+                        <div class="card table-wrap">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Announcement</th>
+                                        <th>Runs</th>
+                                        <th>Public</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for announcement in active_announcements %}
+                                        <tr>
+                                            <td>{{ announcement.body|truncatechars:80 }}</td>
+                                            <td class="mono">{{ announcement.start_date|date:"d M" }} → {{ announcement.end_date|date:"d M Y" }}</td>
+                                            <td>{{ announcement.show_on_public|yesno:"Yes,No" }}</td>
+                                            <td class="row-actions-inline">
+                                                <button type="button" class="btn btn-small" data-modal-open="announcement-edit-{{ announcement.pk }}">Edit</button>
+                                                <form method="post" action="{% url 'announcement_pause' announcement.pk %}" class="inline-form">
+                                                    {% csrf_token %}
+                                                    <button class="btn btn-small" type="submit">{% if announcement.is_paused %}Resume{% else %}Pause{% endif %}</button>
+                                                </form>
+                                                <form method="post" action="{% url 'announcement_delete' announcement.pk %}" class="inline-form" onsubmit="return confirm('Delete this announcement?');">
+                                                    {% csrf_token %}
+                                                    <button class="btn btn-small btn-danger" type="submit">Delete</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr><td colspan="4" class="empty-state">Nothing active right now.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
 
-<h2 class="section-label">Older</h2>
-<div class="card table-wrap">
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Announcement</th>
-                <th>Ran</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for announcement in older_announcements %}
-            <tr>
-                <td>{{ announcement.body|truncatechars:80 }}</td>
-                <td class="mono">{{ announcement.start_date|date:"d M" }} → {{ announcement.end_date|date:"d M Y" }}
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="2" class="empty-state">No past announcements.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-{% endblock %}
+                        <h2 class="section-label">Upcoming</h2>
+                        <div class="card table-wrap">
+                            <table class="data-table">
+                                <thead>
+                                    <tr><th>Announcement</th><th>Starts</th><th></th></tr>
+                                </thead>
+                                <tbody>
+                                    {% for announcement in upcoming_announcements %}
+                                        <tr>
+                                            <td>{{ announcement.body|truncatechars:80 }}</td>
+                                            <td class="mono">{{ announcement.start_date|date:"d M Y" }}</td>
+                                            <td class="row-actions-inline">
+                                                <button type="button" class="btn btn-small" data-modal-open="announcement-edit-{{ announcement.pk }}">Edit</button>
+                                                <form method="post" action="{% url 'announcement_delete' announcement.pk %}" class="inline-form" onsubmit="return confirm('Delete this announcement?');">
+                                                    {% csrf_token %}
+                                                    <button class="btn btn-small btn-danger" type="submit">Delete</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr><td colspan="3" class="empty-state">Nothing scheduled.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h2 class="section-label">Older</h2>
+                        <div class="card table-wrap">
+                            <table class="data-table">
+                                <thead>
+                                    <tr><th>Announcement</th><th>Ran</th></tr>
+                                </thead>
+                                <tbody>
+                                    {% for announcement in older_announcements %}
+                                        <tr>
+                                            <td>{{ announcement.body|truncatechars:80 }}</td>
+                                            <td class="mono">{{ announcement.start_date|date:"d M" }} → {{ announcement.end_date|date:"d M Y" }}</td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr><td colspan="2" class="empty-state">No past announcements.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {# ---------- Create modal ---------- #}
+                        <div class="modal-backdrop" id="announcement-create-modal" hidden>
+                            <div class="modal" role="dialog" aria-modal="true">
+                                <div class="modal-head">
+                                    <h2>New announcement</h2>
+                                    <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+                                </div>
+                                <div class="modal-body">
+                                    <form method="post" action="{% url 'announcement_create' %}">
+                                        {% csrf_token %}
+                                        <div class="form-row">
+                                            <label for="new-ann-body">Announcement</label>
+                                            <textarea name="body" id="new-ann-body" rows="4" required></textarea>
+                                        </div>
+                                        <div class="form-row two-up">
+                                            <div>
+                                                <label for="new-ann-start">Start date</label>
+                                                <input type="date" name="start_date" id="new-ann-start" required>
+                                            </div>
+                                            <div>
+                                                <label for="new-ann-end">End date</label>
+                                                <input type="date" name="end_date" id="new-ann-end" required>
+                                            </div>
+                                        </div>
+                                        <div class="form-row">
+                                            <label for="new-ann-service">Service (optional)</label>
+                                            <select name="service" id="new-ann-service">
+                                                <option value="">— All programmes —</option>
+                                                {% for s in services %}
+                                                    <option value="{{ s.pk }}">{{ s.name }} — {{ s.date|date:"d M Y" }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="form-row">
+                                            <label class="checkbox-line">
+                                                <input type="checkbox" name="show_on_public" checked>
+                                                Show on the public bulletin
+                                            </label>
+                                        </div>
+                                        <div class="form-actions">
+                                            <button type="button" class="btn btn-ghost modal-close">Cancel</button>
+                                            <button type="submit" class="btn btn-primary">Create announcement</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        {# ---------- Edit modals for active announcements ---------- #}
+                        {% for announcement in active_announcements %}
+                            <div class="modal-backdrop" id="announcement-edit-{{ announcement.pk }}" hidden>
+                                <div class="modal" role="dialog" aria-modal="true">
+                                    <div class="modal-head">
+                                        <h2>Edit announcement</h2>
+                                        <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form method="post" action="{% url 'announcement_edit' announcement.pk %}">
+                                            {% csrf_token %}
+                                            <div class="form-row">
+                                                <label for="edit-ann-body-{{ announcement.pk }}">Announcement</label>
+                                                <textarea name="body" id="edit-ann-body-{{ announcement.pk }}" rows="4" required>{{ announcement.body }}</textarea>
+                                            </div>
+                                            <div class="form-row two-up">
+                                                <div>
+                                                    <label for="edit-ann-start-{{ announcement.pk }}">Start date</label>
+                                                    <input type="date" name="start_date" id="edit-ann-start-{{ announcement.pk }}" value="{{ announcement.start_date|date:'Y-m-d' }}" required>
+                                                </div>
+                                                <div>
+                                                    <label for="edit-ann-end-{{ announcement.pk }}">End date</label>
+                                                    <input type="date" name="end_date" id="edit-ann-end-{{ announcement.pk }}" value="{{ announcement.end_date|date:'Y-m-d' }}" required>
+                                                </div>
+                                            </div>
+                                            <div class="form-row">
+                                                <label for="edit-ann-service-{{ announcement.pk }}">Service (optional)</label>
+                                                <select name="service" id="edit-ann-service-{{ announcement.pk }}">
+                                                    <option value="">— All programmes —</option>
+                                                    {% for s in services %}
+                                                        <option value="{{ s.pk }}" {% if announcement.service_id == s.pk %}selected{% endif %}>{{ s.name }} — {{ s.date|date:"d M Y" }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="form-row">
+                                                <label class="checkbox-line">
+                                                    <input type="checkbox" name="show_on_public" {% if announcement.show_on_public %}checked{% endif %}>
+                                                    Show on the public bulletin
+                                                </label>
+                                            </div>
+                                            <div class="form-actions">
+                                                <button type="button" class="btn btn-ghost modal-close">Cancel</button>
+                                                <button type="submit" class="btn btn-primary">Save changes</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+
+                        {# ---------- Edit modals for upcoming announcements ---------- #}
+                        {% for announcement in upcoming_announcements %}
+                            <div class="modal-backdrop" id="announcement-edit-{{ announcement.pk }}" hidden>
+                                <div class="modal" role="dialog" aria-modal="true">
+                                    <div class="modal-head">
+                                        <h2>Edit announcement</h2>
+                                        <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form method="post" action="{% url 'announcement_edit' announcement.pk %}">
+                                            {% csrf_token %}
+                                            <div class="form-row">
+                                                <label for="up-edit-ann-body-{{ announcement.pk }}">Announcement</label>
+                                                <textarea name="body" id="up-edit-ann-body-{{ announcement.pk }}" rows="4" required>{{ announcement.body }}</textarea>
+                                            </div>
+                                            <div class="form-row two-up">
+                                                <div>
+                                                    <label for="up-edit-ann-start-{{ announcement.pk }}">Start date</label>
+                                                    <input type="date" name="start_date" id="up-edit-ann-start-{{ announcement.pk }}" value="{{ announcement.start_date|date:'Y-m-d' }}" required>
+                                                </div>
+                                                <div>
+                                                    <label for="up-edit-ann-end-{{ announcement.pk }}">End date</label>
+                                                    <input type="date" name="end_date" id="up-edit-ann-end-{{ announcement.pk }}" value="{{ announcement.end_date|date:'Y-m-d' }}" required>
+                                                </div>
+                                            </div>
+                                            <div class="form-row">
+                                                <label for="up-edit-ann-service-{{ announcement.pk }}">Service (optional)</label>
+                                                <select name="service" id="up-edit-ann-service-{{ announcement.pk }}">
+                                                    <option value="">— All programmes —</option>
+                                                    {% for s in services %}
+                                                        <option value="{{ s.pk }}" {% if announcement.service_id == s.pk %}selected{% endif %}>{{ s.name }} — {{ s.date|date:"d M Y" }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="form-row">
+                                                <label class="checkbox-line">
+                                                    <input type="checkbox" name="show_on_public" {% if announcement.show_on_public %}checked{% endif %}>
+                                                    Show on the public bulletin
+                                                </label>
+                                            </div>
+                                            <div class="form-actions">
+                                                <button type="button" class="btn btn-ghost modal-close">Cancel</button>
+                                                <button type="submit" class="btn btn-primary">Save changes</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+
+                        <script>
+                            (function () {
+                                document.querySelectorAll("[data-modal-open]").forEach(function (btn) {
+                                    btn.addEventListener("click", function () {
+                                        var el = document.getElementById(btn.getAttribute("data-modal-open"));
+                                        if (el) el.hidden = false;
+                                    });
+                                });
+                                document.querySelectorAll(".modal-backdrop").forEach(function (backdrop) {
+                                    backdrop.addEventListener("click", function (e) {
+                                        if (e.target === backdrop) backdrop.hidden = true;
+                                    });
+                                    backdrop.querySelectorAll(".modal-close").forEach(function (b) {
+                                        b.addEventListener("click", function () { backdrop.hidden = true; });
+                                    });
+                                });
+                                document.addEventListener("keydown", function (e) {
+                                    if (e.key === "Escape") {
+                                        document.querySelectorAll(".modal-backdrop").forEach(function (m) {
+                                            m.hidden = true;
+                                        });
+                                    }
+                                });
+                            })();
+                        </script>
+                        {% endblock %}
