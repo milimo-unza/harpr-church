@@ -88,6 +88,7 @@ def admin_dashboard(request):
             "recent_activity": request.church.logs.select_related(
                 "user", "service", "service_item"
             )[:10],
+            "service_templates": request.church.service_templates.filter(is_active=True),
             "user_role_display": "Programme Coordinator",
         },
     )
@@ -357,6 +358,10 @@ def department_create(request):
         department.save()
         messages.success(request, "Department created.")
         return redirect("department_list")
+    if request.method == "POST":
+        # On error, redirect back to list so the modal can display errors
+        messages.error(request, "Please correct the errors in the form.")
+        return redirect("department_list")
     return render(request, "church/department_form.html", {"form": form, "title": "New department"})
 
 
@@ -368,34 +373,33 @@ def department_edit(request, pk):
         form.save()
         messages.success(request, "Department updated.")
         return redirect("department_list")
+    if request.method == "POST":
+        messages.error(request, "Please correct the errors in the form.")
+        return redirect("department_list")
     return render(request, "church/department_form.html", {"form": form, "department": department, "title": "Edit department"})
 
 
 @admin_required
+@require_POST
+def department_delete(request, pk):
+    department = get_object_or_404(request.church.departments, pk=pk)
+    department.delete()
+    messages.success(request, "Department deleted.")
+    return redirect("department_list")
+
+
+@admin_required
 def member_list(request):
-    from django.db.models import Q
-
-    show_all = request.GET.get("show") == "all"
-    cutoff = timezone.now() - timedelta(days=30)
-
-    base = request.church.memberships.select_related(
-        "user", "department", "invited_by"
+    memberships = (
+        request.church.memberships
+        .select_related("user", "department", "invited_by")
+        .order_by("is_active", "user__username")
     )
-
-    if not show_all:
-        base = base.filter(
-            Q(is_active=True)
-            | Q(deactivated_at__isnull=True)
-            | Q(deactivated_at__gte=cutoff)
-        )
-
-    memberships = base.order_by("is_active", "user__username")
     departments = request.church.departments.all()
 
     return render(request, "church/members.html", {
         "memberships": memberships,
         "departments": departments,
-        "show_all": show_all,
     })
 
 
@@ -537,15 +541,10 @@ def announcement_list(request):
         end_date__lt=today,
     ).order_by("-end_date")
 
-    services = request.church.services.filter(
-        date__gte=today - timedelta(days=30)
-    ).order_by("date")[:60]
-
     return render(request, "church/announcements.html", {
         "active_announcements": active,
         "upcoming_announcements": upcoming,
         "older_announcements": older,
-        "services": services,
     })
 
 

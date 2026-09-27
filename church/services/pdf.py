@@ -66,7 +66,8 @@ def generate_bulletin_pdf(service):
         ),
     ]
     data = [["Time", "Item", "Department", "Assigned To"]]
-    items = service.items.select_related("responsible_department").prefetch_related("assignments").order_by("order")
+    items = service.items.select_related(
+        "responsible_department").prefetch_related("assignments").order_by("order")
     for item in items:
         department = item.responsible_department.name if item.responsible_department else "—"
         assignments = ", ".join(

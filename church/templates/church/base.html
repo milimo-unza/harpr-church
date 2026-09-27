@@ -80,18 +80,7 @@
     </aside>
 
     <main class="main">
-      <header class="topbar">
-        <div class="topbar-spacer"></div>
-        <div class="topbar-actions">
-          <div class="notif-bell" data-notification-root>
-            <button class="icon-btn" type="button" data-notification-toggle aria-label="Notifications" hidden>
-              <span aria-hidden="true">◔</span>
-              <span class="notif-badge" data-notification-badge hidden>0</span>
-            </button>
-            <div class="notif-dropdown" data-notification-dropdown hidden></div>
-          </div>
-        </div>
-      </header>
+      {# topbar removed; notification bell will float near the scripts per R6.1 #}
 
       {% block content %}{% endblock %}
     </main>
@@ -134,6 +123,13 @@
       window.harprToast(n.dataset.toast, n.dataset.toastKind || "success");
     });
   </script>
+  <div class="notif-bell--floating" data-notification-root>
+    <button class="icon-btn" type="button" data-notification-toggle aria-label="Notifications">
+      <span aria-hidden="true">◔</span>
+      <span class="notif-badge" data-notification-badge hidden>0</span>
+    </button>
+    <div class="notif-dropdown" data-notification-dropdown hidden></div>
+  </div>
   <script src="{% static 'js/notifications.js' %}"></script>
   {% block scripts %}{% endblock %}
 </body>

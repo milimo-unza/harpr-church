@@ -1,49 +1,269 @@
 {% extends "church/base.html" %}
+{% block title %}Members · Harpr{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <p class="eyebrow">Access</p>
+        <h1>Members</h1>
+    </div>
+    <button type="button" class="btn btn-primary" data-modal-open="invite-modal">Add member</button>
+</div>
+
+<div class="card table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Department</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in memberships %}
+            <tr>
+                <td>{{ m.user.username }}</td>
+                <td>{{ m.user.email|default:"—" }}</td>
+                <td>{{ m.get_role_display }}</td>
+                <td>{{ m.department.name|default:"—" }}</td>
+                <td>
+                    {% if m.is_active %}
+                    <span class="status-badge">Active</span>
+                    {% else %}
+                    <span class="status-badge status-skipped">Inactive</span>
+                    {% endif %}
+                </td>
+                <td class="row-actions-inline">
+                    <button type="button" class="btn btn-small" data-modal-open="edit-member-{{ m.pk }}">Edit</button>
+                    {% if m.is_active %}
+                    <button type="button" class="btn btn-small btn-danger"
+                        data-modal-open="deactivate-member-{{ m.pk }}">Deactivate</button>
+                    {% else %}
+                    <button type="button" class="btn btn-small"
+                        data-modal-open="reactivate-member-{{ m.pk }}">Reactivate</button>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="empty-state">No members yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{# ---------- Invite modal ---------- #}
+<div class="modal-backdrop" id="invite-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-head">
+            <h2>Invite member</h2>
+            <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body">
+            <p class="muted">Enter the person's email address and choose their role and department. Harpr will email
+                them an invitation link that expires in 7 days and can only be used once.</p>
+            <form method="post" action="{% url 'member_invite' %}">
+                {% csrf_token %}
+                <div class="form-row">
+                    <label for="invite_email">Email</label>
+                    <input type="email" name="email" id="invite_email" required>
+                </div>
+                <div class="form-row">
+                    <label for="invite_role">Role</label>
+                    <select name="role" id="invite_role">
+                        <option value="dept_head">Department Head</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label for="invite_department">Department</label>
+                    <select name="department" id="invite_department">
+                        <option value="">— None —</option>
+                        {% for d in departments %}
+                        <option value="{{ d.pk }}">{{ d.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-ghost modal-close">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Send invitation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{# ---------- Per-member modals ---------- #}
+{% for m in memberships %}
+<div class="modal-backdrop" id="edit-member-{{ m.pk }}" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-head">
+            <h2>Edit {{ m.user.username }}</h2>
+            <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body">
+            <p class="muted">Names and emails are managed by the member themselves. As administrator you can change
+                their role or department, or deactivate their account.</p>
+            <form method="post" action="{% url 'member_edit' m.pk %}">
+                {% csrf_token %}
+                <div class="form-row">
+                    <label for="edit-role-{{ m.pk }}">Role</label>
+                    <select name="role" id="edit-role-{{ m.pk }}">
+                        <option value="dept_head" {% if m.role=='dept_head' %}selected{% endif %}>Department Head
+                        </option>
+                        <option value="admin" {% if m.role=='admin' %}selected{% endif %}>Administrator</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label for="edit-dept-{{ m.pk }}">Department</label>
+                    <select name="department" id="edit-dept-{{ m.pk }}">
+                        <option value="">— None —</option>
+                        {% for d in departments %}
+                        <option value="{{ d.pk }}" {% if m.department_id==d.pk %}selected{% endif %}>{{ d.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-ghost modal-close">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="deactivate-member-{{ m.pk }}" hidden>
+    <div class="modal modal--narrow" role="dialog" aria-modal="true">
+        <div class="modal-head">
+            <h2>Deactivate member?</h2>
+            <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body">
+            <p>Deactivating <strong>{{ m.user.username }}</strong> will prevent them from signing in. They will receive
+                a notification. Their historical entries remain in the system.</p>
+            <form method="post" action="{% url 'member_deactivate' m.pk %}">
+                {% csrf_token %}
+                <div class="form-actions">
+                    <button type="button" class="btn btn-ghost modal-close">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Deactivate</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="reactivate-member-{{ m.pk }}" hidden>
+    <div class="modal modal--narrow" role="dialog" aria-modal="true">
+        <div class="modal-head">
+            <h2>Reactivate member?</h2>
+            <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body">
+            <p>Enter your administrator password to reactivate <strong>{{ m.user.username }}</strong>. They will receive
+                a notification.</p>
+            <form method="post" action="{% url 'member_reactivate' m.pk %}">
+                {% csrf_token %}
+                <div class="form-row">
+                    <label for="admin-pwd-{{ m.pk }}">Your password</label>
+                    <input type="password" name="admin_password" id="admin-pwd-{{ m.pk }}" required
+                        autocomplete="current-password">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-ghost modal-close">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Reactivate</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<script>
+    (function () {
+        document.querySelectorAll("[data-modal-open]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                var el = document.getElementById(btn.getAttribute("data-modal-open"));
+                if (el) el.hidden = false;
+            });
+        });
+        document.querySelectorAll(".modal-backdrop").forEach(function (backdrop) {
+            backdrop.addEventListener("click", function (e) {
+                if (e.target === backdrop) backdrop.hidden = true;
+            });
+            backdrop.querySelectorAll(".modal-close").forEach(function (b) {
+                b.addEventListener("click", function () { backdrop.hidden = true; });
+            });
+        });
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") {
+                document.querySelectorAll(".modal-backdrop").forEach(function (m) {
+                    m.hidden = true;
+                });
+            }
+        });
+    })();
+</script>
+{% endblock %}
+{% extends "church/base.html" %}
 {% block title %}Members · Harpr Church{% endblock %}
 {% block content %}
 <div class="page-head">
-	<div>
-		<p class="eyebrow">Access</p>
-		<h1>Members</h1>
-		{% if show_all %}
-			<p class="muted">Showing all members, including those deactivated more than 30 days ago.</p>
-		{% endif %}
-	</div>
-	<div class="button-row">
-		{% if show_all %}
-			<a class="btn btn-ghost" href="{% url 'member_list' %}">Hide long-inactive</a>
-		{% else %}
-			<a class="btn btn-ghost" href="{% url 'member_list' %}?show=all">Show all members</a>
-		{% endif %}
-		<button type="button" class="btn btn-primary" data-modal-open="invite-modal">Add member</button>
-	</div>
+    <div>
+        <p class="eyebrow">Access</p>
+        <h1>Members</h1>
+        {% if show_all %}
+        <p class="muted">Showing all members, including those deactivated more than 30 days ago.</p>
+        {% endif %}
+    </div>
+    <div class="button-row">
+        {% if show_all %}
+        <a class="btn btn-ghost" href="{% url 'member_list' %}">Hide long-inactive</a>
+        {% else %}
+        <a class="btn btn-ghost" href="{% url 'member_list' %}?show=all">Show all members</a>
+        {% endif %}
+        <button type="button" class="btn btn-primary" data-modal-open="invite-modal">Add member</button>
+    </div>
 </div>
 <div class="card table-wrap">
-	<table class="data-table">
-		<thead>
-			<tr><th>Username</th><th>Email</th><th>Role</th><th>Department</th><th>Active</th><th></th></tr>
-		</thead>
-		<tbody>
-			{% for membership in memberships %}
-				<tr>
-					<td>{{ membership.user.username }}</td>
-					<td>{{ membership.user.email|default:"—" }}</td>
-					<td>{{ membership.get_role_display }}</td>
-					<td>{{ membership.department.name|default:"—" }}</td>
-					<td>{{ membership.is_active|yesno:"Yes,No" }}</td>
-					<td>
-						<a href="{% url 'member_edit' membership.pk %}">Edit</a>
-						{% if membership.is_active %}
-							<form class="inline-form" method="post" action="{% url 'member_deactivate' membership.pk %}">{% csrf_token %}
-								<button class="btn btn-small btn-danger" type="submit">Deactivate</button>
-							</form>
-						{% endif %}
-					</td>
-				</tr>
-			{% empty %}
-				<tr><td colspan="6" class="empty-state">No members.</td></tr>
-			{% endfor %}
-		</tbody>
-	</table>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Department</th>
+                <th>Active</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for membership in memberships %}
+            <tr>
+                <td>{{ membership.user.username }}</td>
+                <td>{{ membership.user.email|default:"—" }}</td>
+                <td>{{ membership.get_role_display }}</td>
+                <td>{{ membership.department.name|default:"—" }}</td>
+                <td>{{ membership.is_active|yesno:"Yes,No" }}</td>
+                <td>
+                    <a href="{% url 'member_edit' membership.pk %}">Edit</a>
+                    {% if membership.is_active %}
+                    <form class="inline-form" method="post" action="{% url 'member_deactivate' membership.pk %}">{%
+                        csrf_token %}
+                        <button class="btn btn-small btn-danger" type="submit">Deactivate</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="empty-state">No members.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 {% endblock %}

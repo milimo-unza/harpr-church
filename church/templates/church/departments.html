@@ -1,3 +1,129 @@
 {% extends "church/base.html" %}
 {% block title %}Departments · Harpr Church{% endblock %}
-{% block content %}<div class="page-head"><div><p class="eyebrow">People and teams</p><h1>Departments</h1></div><a class="btn btn-primary" href="{% url 'department_create' %}">New department</a></div><div class="card table-wrap"><table class="data-table"><thead><tr><th>Name</th><th>Slug</th><th>Members</th><th></th></tr></thead><tbody>{% for department in departments %}<tr><td>{{ department.name }}</td><td class="mono">{{ department.slug }}</td><td>{{ department.membership_set.count }}</td><td><a href="{% url 'department_edit' department.pk %}">Edit</a></td></tr>{% empty %}<tr><td colspan="4" class="empty-state">No departments.</td></tr>{% endfor %}</tbody></table></div>{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <p class="eyebrow">People and teams</p>
+        <h1>Departments</h1>
+    </div>
+    <button type="button" class="btn btn-primary" data-modal-open="department-create-modal">New department</button>
+</div>
+
+<div class="card table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Slug</th>
+                <th>Members</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for department in departments %}
+            <tr>
+                <td>{{ department.name }}</td>
+                <td class="mono">{{ department.slug }}</td>
+                <td>{{ department.membership_set.count }}</td>
+                <td class="row-actions-inline">
+                    <button type="button" class="btn btn-small"
+                        data-modal-open="department-edit-{{ department.pk }}">Edit</button>
+                    <form method="post" action="{% url 'department_delete' department.pk %}" class="inline-form"
+                        onsubmit="return confirm('Delete this department?');">
+                        {% csrf_token %}
+                        <button class="btn btn-small btn-danger" type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="empty-state">No departments.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{# ---------- Create modal ---------- #}
+<div class="modal-backdrop" id="department-create-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-head">
+            <h2>New department</h2>
+            <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body">
+            <form method="post" action="{% url 'department_create' %}">
+                {% csrf_token %}
+                <div class="form-row">
+                    <label for="dept-name">Name</label>
+                    <input name="name" id="dept-name" required>
+                </div>
+                <div class="form-row">
+                    <label for="dept-slug">Slug</label>
+                    <input name="slug" id="dept-slug">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-ghost modal-close">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create department</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{# ---------- Per-department edit modal ---------- #}
+{% for department in departments %}
+<div class="modal-backdrop" id="department-edit-{{ department.pk }}" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-head">
+            <h2>Edit {{ department.name }}</h2>
+            <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body">
+            <form method="post" action="{% url 'department_edit' department.pk %}">
+                {% csrf_token %}
+                <div class="form-row">
+                    <label for="dept-name-{{ department.pk }}">Name</label>
+                    <input name="name" id="dept-name-{{ department.pk }}" value="{{ department.name }}" required>
+                </div>
+                <div class="form-row">
+                    <label for="dept-slug-{{ department.pk }}">Slug</label>
+                    <input name="slug" id="dept-slug-{{ department.pk }}" value="{{ department.slug }}">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-ghost modal-close">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<script>
+    (function () {
+        document.querySelectorAll("[data-modal-open]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                var el = document.getElementById(btn.getAttribute("data-modal-open"));
+                if (el) el.hidden = false;
+            });
+        });
+        document.querySelectorAll(".modal-backdrop").forEach(function (backdrop) {
+            backdrop.addEventListener("click", function (e) {
+                if (e.target === backdrop) backdrop.hidden = true;
+            });
+            backdrop.querySelectorAll(".modal-close").forEach(function (b) {
+                b.addEventListener("click", function () { backdrop.hidden = true; });
+            });
+        });
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") {
+                document.querySelectorAll(".modal-backdrop").forEach(function (m) {
+                    m.hidden = true;
+                });
+            }
+        });
+    })();
+</script>
+
+{% endblock %}

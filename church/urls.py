@@ -62,6 +62,11 @@ urlpatterns = [
         admin_views.department_edit,
         name="department_edit",
     ),
+    path(
+        "departments/<int:pk>/delete/",
+        admin_views.department_delete,
+        name="department_delete",
+    ),
     path("members/", admin_views.member_list, name="member_list"),
     path("members/invite/", admin_views.member_invite, name="member_invite"),
     path("members/<int:pk>/edit/", admin_views.member_edit, name="member_edit"),
