@@ -1,0 +1,35 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Terms &amp; Conditions · Harpr</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/harpr.css' %}">
+</head>
+
+<body class="public-body">
+    <main class="public-shell">
+        <header class="public-head">
+            <div>
+                <p class="eyebrow">Legal</p>
+                <h1>Terms &amp; Conditions</h1>
+            </div>
+            <a class="btn btn-ghost" href="{% url 'home' %}">← Back to home</a>
+        </header>
+        <section class="public-card">
+            <p><strong>Status: In development.</strong></p>
+            <p>This page is a placeholder. The full terms and conditions will be published before Harpr is released for
+                general use.</p>
+            <p>Harpr is currently a final-year academic project. It is provided as-is for evaluation and demonstration
+                purposes.</p>
+        </section>
+    </main>
+</body>
+
+</html>

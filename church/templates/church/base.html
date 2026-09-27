@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,7 +9,9 @@
   <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/harpr.css' %}">
   <script>
     (function () {
@@ -19,6 +22,7 @@
   </script>
   {% block head_extra %}{% endblock %}
 </head>
+
 <body>
   <div class="layout">
     <aside class="sidebar">
@@ -32,18 +36,27 @@
 
       <nav class="sidenav" aria-label="Primary">
         {% if is_coordinator %}
-          <a class="navlink {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}" href="{% url 'admin_dashboard' %}">Dashboard</a>
-          <a class="navlink {% if request.resolver_match.url_name == 'service_list' or request.resolver_match.url_name == 'service_detail' %}active{% endif %}" href="{% url 'service_list' %}">Services</a>
-          <a class="navlink {% if request.resolver_match.url_name == 'event_create' or request.resolver_match.url_name == 'event_edit' %}active{% endif %}" href="{% url 'event_create' %}">New event</a>
-          <a class="navlink {% if request.resolver_match.url_name == 'request_list' or request.resolver_match.url_name == 'request_respond' %}active{% endif %}" href="{% url 'request_list' %}">Requests</a>
-          <a class="navlink {% if request.resolver_match.url_name == 'department_list' or request.resolver_match.url_name == 'department_create' or request.resolver_match.url_name == 'department_edit' %}active{% endif %}" href="{% url 'department_list' %}">Departments</a>
-          <a class="navlink {% if request.resolver_match.url_name == 'member_list' or request.resolver_match.url_name == 'member_invite' or request.resolver_match.url_name == 'member_edit' %}active{% endif %}" href="{% url 'member_list' %}">Members</a>
-          <a class="navlink {% if request.resolver_match.url_name == 'announcement_list' or request.resolver_match.url_name == 'announcement_create' or request.resolver_match.url_name == 'announcement_edit' %}active{% endif %}" href="{% url 'announcement_list' %}">Announcements</a>
-          <a class="navlink {% if request.resolver_match.url_name == 'ai_insights' %}active{% endif %}" href="{% url 'ai_insights' %}">Insights</a>
-          <a class="navlink {% if request.resolver_match.url_name == 'church_settings' %}active{% endif %}" href="{% url 'church_settings' %}">Settings</a>
+        <a class="navlink {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}"
+          href="{% url 'admin_dashboard' %}">Dashboard</a>
+        <a class="navlink {% if request.resolver_match.url_name == 'service_list' or request.resolver_match.url_name == 'service_detail' %}active{% endif %}"
+          href="{% url 'service_list' %}">Services</a>
+        <a class="navlink {% if request.resolver_match.url_name == 'request_list' or request.resolver_match.url_name == 'request_respond' %}active{% endif %}"
+          href="{% url 'request_list' %}">Requests</a>
+        <a class="navlink {% if request.resolver_match.url_name == 'department_list' or request.resolver_match.url_name == 'department_create' or request.resolver_match.url_name == 'department_edit' %}active{% endif %}"
+          href="{% url 'department_list' %}">Departments</a>
+        <a class="navlink {% if request.resolver_match.url_name == 'member_list' or request.resolver_match.url_name == 'member_invite' or request.resolver_match.url_name == 'member_edit' %}active{% endif %}"
+          href="{% url 'member_list' %}">Members</a>
+        <a class="navlink {% if request.resolver_match.url_name == 'announcement_list' or request.resolver_match.url_name == 'announcement_create' or request.resolver_match.url_name == 'announcement_edit' %}active{% endif %}"
+          href="{% url 'announcement_list' %}">Announcements</a>
+        <a class="navlink {% if request.resolver_match.url_name == 'ai_insights' %}active{% endif %}"
+          href="{% url 'ai_insights' %}">Insights</a>
+        <a class="navlink {% if request.resolver_match.url_name == 'church_settings' %}active{% endif %}"
+          href="{% url 'church_settings' %}">Settings</a>
         {% elif is_dept_head %}
-          <a class="navlink {% if request.resolver_match.url_name == 'dept_dashboard' %}active{% endif %}" href="{% url 'dept_dashboard' %}">My department</a>
-          <a class="navlink {% if request.resolver_match.url_name == 'dept_request_list' or request.resolver_match.url_name == 'dept_request_create' %}active{% endif %}" href="{% url 'dept_request_list' %}">My requests</a>
+        <a class="navlink {% if request.resolver_match.url_name == 'dept_dashboard' %}active{% endif %}"
+          href="{% url 'dept_dashboard' %}">My department</a>
+        <a class="navlink {% if request.resolver_match.url_name == 'dept_request_list' or request.resolver_match.url_name == 'dept_request_create' %}active{% endif %}"
+          href="{% url 'dept_request_list' %}">My requests</a>
         {% endif %}
       </nav>
 
@@ -71,7 +84,7 @@
         <div class="topbar-spacer"></div>
         <div class="topbar-actions">
           <div class="notif-bell" data-notification-root>
-            <button class="icon-btn" type="button" data-notification-toggle aria-label="Notifications">
+            <button class="icon-btn" type="button" data-notification-toggle aria-label="Notifications" hidden>
               <span aria-hidden="true">◔</span>
               <span class="notif-badge" data-notification-badge hidden>0</span>
             </button>
@@ -86,9 +99,9 @@
 
   <div id="toast-stack" class="toast-stack" aria-live="polite" aria-atomic="true"></div>
   {% if messages %}
-    {% for message in messages %}
-      <span data-toast="{{ message }}" data-toast-kind="{{ message.tags }}" hidden></span>
-    {% endfor %}
+  {% for message in messages %}
+  <span data-toast="{{ message }}" data-toast-kind="{{ message.tags }}" hidden></span>
+  {% endfor %}
   {% endif %}
 
   <script>
@@ -124,4 +137,5 @@
   <script src="{% static 'js/notifications.js' %}"></script>
   {% block scripts %}{% endblock %}
 </body>
+
 </html>

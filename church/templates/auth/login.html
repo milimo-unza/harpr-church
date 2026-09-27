@@ -10,39 +10,103 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/harpr.css' %}">
+  <script>
+    (function () {
+      var theme = localStorage.getItem("harpr-theme") ||
+        (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
 </head>
 
-<body>
-  <main class="auth-page">
-    <div class="auth-card">
-      <div class="brand-mark" aria-hidden="true">H</div>
-      <p class="eyebrow">Harpr</p>
-      <h1>Sign in</h1>
-      {% if form.errors %}
-      <p class="form-error" role="alert">Please check your username and password.</p>
+<body class="auth-page">
+
+  <header class="auth-topbar">
+    <div class="auth-topbar-left">
+      <div class="auth-topbar-mark" aria-hidden="true">H</div>
+      <div class="auth-topbar-brand">
+        <strong>Harpr</strong>
+        <small>Church programmes</small>
+      </div>
+    </div>
+    <div class="auth-topbar-actions">
+      <button type="button" class="icon-btn" id="theme-toggle" aria-label="Toggle theme">◐</button>
+      <a href="{% url 'home' %}">← Back to home</a>
+    </div>
+  </header>
+
+  <main class="auth-center">
+    <div class="auth-form-card">
+      <div class="auth-form-header">
+        <h1>Welcome back!</h1>
+        <p class="subtitle">Log in to your Harpr account</p>
+      </div>
+
+      {% if form.non_field_errors %}
+      <div class="auth-error-banner" role="alert">
+        {{ form.non_field_errors.0 }}
+      </div>
+      {% elif form.errors %}
+      <div class="auth-error-banner" role="alert">
+        Incorrect username or password. Please check and try again.
+      </div>
       {% endif %}
+
       <form method="post">
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ next }}">
-        <p>
+
+        <div class="auth-field">
           <label for="{{ form.username.id_for_label }}">Username</label>
           {{ form.username }}
-        </p>
-        <p>
+        </div>
+
+        <div class="auth-field auth-field--password">
           <label for="{{ form.password.id_for_label }}">Password</label>
           {{ form.password }}
-        </p>
-        <button class="btn btn-primary btn-block" type="submit">Sign in</button>
+          <button type="button" class="pwd-toggle" data-pwd-toggle aria-label="Show password">👁</button>
+        </div>
+
+        <div class="auth-forgot">
+          <a href="{% url 'password_reset' %}">Forgot your password?</a>
+        </div>
+
+        <button type="submit" class="auth-btn-primary">Log in</button>
       </form>
-    </div>
-    <div class="auth-foot">
-      <a href="{% url 'password_reset' %}">Forgot password?</a> ·
-      New church? <a href="{% url 'church_signup' %}">Create an account</a>
+
+      <div class="auth-divider">New to Harpr?</div>
+      <a href="{% url 'church_signup' %}" class="auth-btn-outline">Create a church account</a>
+
+      <p class="auth-legal">
+        By continuing, you acknowledge that you understand and agree to the
+        <a href="{% url 'terms' %}">Terms &amp; Conditions</a> and
+        <a href="{% url 'privacy' %}">Privacy Policy</a>.
+      </p>
     </div>
   </main>
+
+  <script>
+    (function () {
+      var toggle = document.getElementById("theme-toggle");
+      if (toggle) toggle.addEventListener("click", function () {
+        var next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        localStorage.setItem("harpr-theme", next);
+      });
+      document.querySelectorAll("[data-pwd-toggle]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var input = btn.parentNode.querySelector("input");
+          if (!input) return;
+          var isPwd = input.type === "password";
+          input.type = isPwd ? "text" : "password";
+          btn.textContent = isPwd ? "🙈" : "👁";
+        });
+      });
+    })();
+  </script>
 </body>
 
 </html>

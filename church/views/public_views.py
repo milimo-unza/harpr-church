@@ -24,18 +24,18 @@ def _public_service_context(church, target_date):
             .order_by("date")
             .first()
         )
+    today = timezone.localdate()
     announcements = church.announcements.filter(
-        is_active=True, show_on_public=True
-    ).filter(expires_at__isnull=True) | church.announcements.filter(
-        is_active=True,
+        is_paused=False,
         show_on_public=True,
-        expires_at__gt=timezone.now(),
-    )
+        start_date__lte=today,
+        end_date__gte=today,
+    ).order_by("start_date")
     return {
         "church": church,
         "service": service,
         "next_service": next_service,
-        "announcements": announcements.distinct(),
+        "announcements": announcements,
         "target_date": target_date,
     }
 
@@ -74,8 +74,10 @@ def public_request(request, slug):
     if request.method == "POST" and form.is_valid():
         church_request = form.save(commit=False)
         church_request.church = church
-        church_request.submitter_name = request.POST.get("submitter_name", "").strip()
-        church_request.submitter_contact = request.POST.get("submitter_contact", "").strip()
+        church_request.submitter_name = request.POST.get(
+            "submitter_name", "").strip()
+        church_request.submitter_contact = request.POST.get(
+            "submitter_contact", "").strip()
         church_request.submitted_by = None
         church_request.save()
         return redirect("public_schedule", slug=church.slug)
@@ -104,3 +106,11 @@ def church_qr(request, slug):
         reverse("public_schedule", kwargs={"slug": church.slug})
     )
     return HttpResponse(generate_qr_png(url).getvalue(), content_type="image/png")
+
+
+def terms(request):
+    return render(request, "public/terms.html")
+
+
+def privacy(request):
+    return render(request, "public/privacy.html")

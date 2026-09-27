@@ -1,25 +1,139 @@
 {% extends "church/base.html" %}
-{% block title %}Weekly programme · Harpr Church{% endblock %}
+{% block title %}Weekly programme · Harpr{% endblock %}
 {% block content %}
 <div class="page-head">
-  <div><p class="eyebrow">{{ church.name }} · Programme Coordinator</p><h1>Weekly programme</h1><p class="muted">{{ week_start|date:"d M" }} — {{ week_end|date:"d M Y" }}</p></div>
-  <div class="button-row"><a class="btn btn-primary" href="{% url 'service_create' %}">New service</a><a class="btn btn-ghost" href="{% url 'event_create' %}">New event</a></div>
+  <div>
+    <p class="eyebrow">{{ church.name }} · Programme Coordinator</p>
+    <h1>Weekly programme</h1>
+    <p class="muted">{{ week_start|date:"d M" }} — {{ week_end|date:"d M Y" }}</p>
+  </div>
+  <div class="button-row">
+    <button type="button" class="btn btn-primary" data-modal-open="event-create-modal">New event</button>
+    <a class="btn btn-ghost" href="{% url 'service_create' %}">New service</a>
+  </div>
 </div>
+
 <section class="stat-grid">
   <div class="stat-card"><strong>{{ service_count }}</strong><span>Services this month</span></div>
   <div class="stat-card"><strong>{{ pending_request_count }}</strong><span>Pending requests</span></div>
   <div class="stat-card"><strong>{{ recent_activity|length }}</strong><span>Recent actions</span></div>
 </section>
+
 <section class="week-grid" aria-label="Weekly calendar">
   {% for day in days %}
-    <article class="week-col {% if day.date == today %}today{% endif %}">
-      <header class="week-col-head"><strong>{{ day.date|date:"D" }}</strong><small>{{ day.date|date:"d M" }}</small></header>
-      <div class="week-col-body">
-        {% for service in day.services %}<a class="event-chip service-chip" href="{% url 'service_detail' service.pk %}"><strong>{{ service.name }}</strong><small>Service · {{ service.get_status_display }}</small></a>{% endfor %}
-        {% for event in day.events %}<a class="event-chip" href="{% url 'event_edit' event.pk %}"><strong>{{ event.title }}</strong><small>{{ event.get_event_type_display }} · {{ event.start_time|time:"H:i" }}</small></a>{% endfor %}
-        {% if not day.services and not day.events %}<span class="empty-day">Nothing scheduled</span>{% endif %}
-      </div>
-    </article>
+  <article class="week-col {% if day.date == today %}today{% endif %}">
+    <header class="week-col-head">
+      <strong>{{ day.date|date:"D" }}</strong>
+      <small>{{ day.date|date:"d M" }}</small>
+    </header>
+    <div class="week-col-body">
+      {% for service in day.services %}
+      <a class="event-chip service-chip" href="{% url 'service_detail' service.pk %}">
+        <strong>{{ service.name }}</strong>
+        <small>Service · {{ service.get_status_display }}</small>
+      </a>
+      {% endfor %}
+      {% for event in day.events %}
+      <a class="event-chip" href="{% url 'event_edit' event.pk %}">
+        <strong>{{ event.title }}</strong>
+        <small>{{ event.get_event_type_display }} · {{ event.start_time|time:"H:i" }}</small>
+      </a>
+      {% endfor %}
+      {% if not day.services and not day.events %}
+      <span class="empty-day">Nothing scheduled</span>
+      {% endif %}
+    </div>
+  </article>
   {% endfor %}
 </section>
+
+<div class="modal-backdrop" id="event-create-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <h2>New event</h2>
+      <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <form method="post" action="{% url 'event_create' %}">
+        {% csrf_token %}
+        <div class="form-row">
+          <label for="event-title">Title</label>
+          <input name="title" id="event-title" required>
+        </div>
+        <div class="form-row">
+          <label for="event-type">Type</label>
+          <select name="event_type" id="event-type">
+            <option value="rehearsal">Rehearsal / Practice</option>
+            <option value="study">Bible Study</option>
+            <option value="meeting">Meeting</option>
+            <option value="outreach">Outreach</option>
+            <option value="fellowship">Fellowship</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="event-date">Date</label>
+          <input type="date" name="date" id="event-date" required>
+        </div>
+        <div class="form-row two-up">
+          <div>
+            <label for="event-start">Start time</label>
+            <input type="time" name="start_time" id="event-start" required>
+          </div>
+          <div>
+            <label for="event-end">End time</label>
+            <input type="time" name="end_time" id="event-end" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <label for="event-location">Location</label>
+          <input name="location" id="event-location">
+        </div>
+        <div class="form-row">
+          <label for="event-dept">Responsible department</label>
+          <select name="responsible_department" id="event-dept">
+            <option value="">— None —</option>
+            {% for d in departments %}
+            <option value="{{ d.pk }}">{{ d.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="event-notes">Notes</label>
+          <textarea name="notes" id="event-notes" rows="3"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost modal-close">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    document.querySelectorAll("[data-modal-open]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var el = document.getElementById(btn.getAttribute("data-modal-open"));
+        if (el) el.hidden = false;
+      });
+    });
+    document.querySelectorAll(".modal-backdrop").forEach(function (backdrop) {
+      backdrop.addEventListener("click", function (e) {
+        if (e.target === backdrop) backdrop.hidden = true;
+      });
+      backdrop.querySelectorAll(".modal-close").forEach(function (b) {
+        b.addEventListener("click", function () { backdrop.hidden = true; });
+      });
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") {
+        document.querySelectorAll(".modal-backdrop").forEach(function (m) {
+          m.hidden = true;
+        });
+      }
+    });
+  })();
+</script>
 {% endblock %}

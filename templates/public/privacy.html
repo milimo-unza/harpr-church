@@ -1,0 +1,35 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Privacy Policy · Harpr</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/harpr.css' %}">
+</head>
+
+<body class="public-body">
+    <main class="public-shell">
+        <header class="public-head">
+            <div>
+                <p class="eyebrow">Legal</p>
+                <h1>Privacy Policy</h1>
+            </div>
+            <a class="btn btn-ghost" href="{% url 'home' %}">← Back to home</a>
+        </header>
+        <section class="public-card">
+            <p><strong>Status: In development.</strong></p>
+            <p>Harpr stores only the information needed to plan church programmes: names, email addresses, phone
+                numbers, roles, and schedules. No data is sold or shared with third parties.</p>
+            <p>A complete privacy policy, aligned with Zambia's Data Protection Act 2021, will be published before Harpr
+                is released.</p>
+        </section>
+    </main>
+</body>
+
+</html>

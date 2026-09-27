@@ -12,84 +12,145 @@
         href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/harpr.css' %}">
+    <script>
+        (function () {
+            var theme = localStorage.getItem("harpr-theme") ||
+                (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+            document.documentElement.setAttribute("data-theme", theme);
+        })();
+    </script>
 </head>
 
-<body class="auth-body">
-    <main class="auth-card auth-card--wide">
-        <div class="auth-brand">
-            <span class="brand-mark" aria-hidden="true">H</span>
-            <span class="brand-text">
-                <span class="brand-name">Harpr</span>
-                <span class="brand-tagline">Create a church account</span>
-            </span>
+<body class="auth-page">
+    <header class="auth-topbar">
+        <div class="auth-topbar-left">
+            <div class="auth-topbar-mark" aria-hidden="true">H</div>
+            <div class="auth-topbar-brand"><strong>Harpr</strong><small>Church programmes</small></div>
         </div>
+        <div class="auth-topbar-actions">
+            <button type="button" class="icon-btn" id="theme-toggle" aria-label="Toggle theme">◐</button>
+            <a href="{% url 'home' %}">← Back to home</a>
+        </div>
+    </header>
 
-        <h1>Set up your church</h1>
-        <p class="muted">Any church can create a Harpr account. You'll be the
-            Programme Coordinator and can invite department heads afterwards.</p>
+    <main class="auth-center">
+        <div class="auth-form-card auth-form-card--wide">
+            <div class="auth-form-header">
+                <h1>Set up your church</h1>
+                <p class="subtitle">You'll be the administrator and can invite department heads afterwards.</p>
+            </div>
 
-        <form method="post">
-            {% csrf_token %}
-            {{ form.non_field_errors }}
+            {% if form.non_field_errors %}
+            <div class="auth-error-banner" role="alert">{{ form.non_field_errors.0 }}</div>
+            {% endif %}
 
-            <fieldset class="form-section">
-                <legend>Your church</legend>
-                <div class="form-row">
-                    <label for="{{ form.church_name.id_for_label }}">Church name</label>
-                    {{ form.church_name }} {{ form.church_name.errors }}
-                </div>
-                <div class="form-row">
-                    <label for="{{ form.church_slug.id_for_label }}">Church URL</label>
-                    {{ form.church_slug }} {{ form.church_slug.errors }}
-                    <small class="muted">Becomes /c/<em>your-slug</em>/ — lowercase letters and hyphens.</small>
-                </div>
-                <div class="form-row">
-                    <label for="{{ form.worship_day.id_for_label }}">Main worship day</label>
-                    {{ form.worship_day }} {{ form.worship_day.errors }}
-                </div>
-                <div class="form-row">
-                    <label for="{{ form.church_address.id_for_label }}">Address (optional)</label>
-                    {{ form.church_address }}
-                </div>
-            </fieldset>
+            <form method="post">
+                {% csrf_token %}
 
-            <fieldset class="form-section">
-                <legend>Your coordinator account</legend>
-                <div class="form-row">
-                    <label for="{{ form.coordinator_username.id_for_label }}">Username</label>
-                    {{ form.coordinator_username }} {{ form.coordinator_username.errors }}
-                </div>
-                <div class="form-row">
-                    <label for="{{ form.coordinator_email.id_for_label }}">Email</label>
-                    {{ form.coordinator_email }} {{ form.coordinator_email.errors }}
-                </div>
-                <div class="form-row two-up">
-                    <div>
+                <fieldset class="form-section">
+                    <legend>Your church</legend>
+
+                    <div class="auth-field">
+                        <label for="{{ form.church_name.id_for_label }}">Church name</label>
+                        {{ form.church_name }}
+                        {% if form.church_name.errors %}<div class="auth-field-error">{{ form.church_name.errors.0 }}
+                        </div>{% endif %}
+                    </div>
+
+                    <div class="auth-field">
+                        <label for="{{ form.church_slug.id_for_label }}">Church URL</label>
+                        {{ form.church_slug }}
+                        <small class="muted">Becomes /c/<em>your-slug</em>/ — lowercase letters and hyphens.</small>
+                        {% if form.church_slug.errors %}<div class="auth-field-error">{{ form.church_slug.errors.0 }}
+                        </div>{% endif %}
+                    </div>
+
+                    <div class="auth-field">
+                        <label for="{{ form.worship_day.id_for_label }}">Main worship day</label>
+                        {{ form.worship_day }}
+                    </div>
+
+                    <div class="auth-field">
+                        <label for="{{ form.church_address.id_for_label }}">Address (optional)</label>
+                        {{ form.church_address }}
+                    </div>
+                </fieldset>
+
+                <fieldset class="form-section">
+                    <legend>Your administrator account</legend>
+
+                    <div class="auth-field">
+                        <label for="{{ form.coordinator_username.id_for_label }}">Username</label>
+                        {{ form.coordinator_username }}
+                        {% if form.coordinator_username.errors %}<div class="auth-field-error">{{
+                            form.coordinator_username.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="auth-field">
+                        <label for="{{ form.coordinator_email.id_for_label }}">Email</label>
+                        {{ form.coordinator_email }}
+                        {% if form.coordinator_email.errors %}<div class="auth-field-error">{{
+                            form.coordinator_email.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="auth-field">
                         <label for="{{ form.coordinator_first_name.id_for_label }}">First name</label>
                         {{ form.coordinator_first_name }}
                     </div>
-                    <div>
+
+                    <div class="auth-field">
                         <label for="{{ form.coordinator_last_name.id_for_label }}">Last name</label>
                         {{ form.coordinator_last_name }}
                     </div>
-                </div>
-                <div class="form-row">
-                    <label for="{{ form.password1.id_for_label }}">Password</label>
-                    {{ form.password1 }} {{ form.password1.errors }}
-                </div>
-                <div class="form-row">
-                    <label for="{{ form.password2.id_for_label }}">Confirm password</label>
-                    {{ form.password2 }} {{ form.password2.errors }}
-                </div>
-            </fieldset>
 
-            <button class="btn btn-primary btn-block" type="submit">Create church account</button>
-        </form>
+                    <div class="auth-field auth-field--password">
+                        <label for="{{ form.password1.id_for_label }}">Password</label>
+                        {{ form.password1 }}
+                        <button type="button" class="pwd-toggle" data-pwd-toggle aria-label="Show password">👁</button>
+                        {% if form.password1.errors %}<div class="auth-field-error">{{ form.password1.errors.0 }}</div>
+                        {% endif %}
+                    </div>
 
-        <div class="auth-foot">
-            Already have an account? <a href="{% url 'login' %}">Sign in</a>
+                    <div class="auth-field auth-field--password">
+                        <label for="{{ form.password2.id_for_label }}">Confirm password</label>
+                        {{ form.password2 }}
+                        <button type="button" class="pwd-toggle" data-pwd-toggle aria-label="Show password">👁</button>
+                        {% if form.password2.errors %}<div class="auth-field-error">{{ form.password2.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </fieldset>
+
+                <button type="submit" class="auth-btn-primary">Create church account</button>
+            </form>
+
+            <p class="auth-legal">
+                Already have an account? <a href="{% url 'login' %}">Sign in</a>.<br>
+                By continuing, you acknowledge that you understand and agree to the
+                <a href="{% url 'terms' %}">Terms &amp; Conditions</a> and
+                <a href="{% url 'privacy' %}">Privacy Policy</a>.
+            </p>
         </div>
     </main>
+
+    <script>
+        (function () {
+            var toggle = document.getElementById("theme-toggle");
+            if (toggle) toggle.addEventListener("click", function () {
+                var next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+                document.documentElement.setAttribute("data-theme", next);
+                localStorage.setItem("harpr-theme", next);
+            });
+            document.querySelectorAll("[data-pwd-toggle]").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                    var input = btn.parentNode.querySelector("input");
+                    if (!input) return;
+                    var isPwd = input.type === "password";
+                    input.type = isPwd ? "text" : "password";
+                    btn.textContent = isPwd ? "🙈" : "👁";
+                });
+            });
+        })();
+    </script>
 </body>
 
 </html>

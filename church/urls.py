@@ -12,6 +12,8 @@ from church.views import (
 
 urlpatterns = [
     path("", home_views.home, name="home"),
+    path("terms/", public_views.terms, name="terms"),
+    path("privacy/", public_views.privacy, name="privacy"),
     path("dashboard/", admin_views.admin_dashboard, name="admin_dashboard"),
     path("services/", admin_views.service_list, name="service_list"),
     path("services/new/", admin_views.service_create, name="service_create"),
@@ -68,6 +70,11 @@ urlpatterns = [
         admin_views.member_deactivate,
         name="member_deactivate",
     ),
+    path(
+        "members/<int:pk>/reactivate/",
+        admin_views.member_reactivate,
+        name="member_reactivate",
+    ),
     path("announcements/", admin_views.announcement_list, name="announcement_list"),
     path(
         "announcements/new/",
@@ -78,6 +85,16 @@ urlpatterns = [
         "announcements/<int:pk>/edit/",
         admin_views.announcement_edit,
         name="announcement_edit",
+    ),
+    path(
+        "announcements/<int:pk>/pause/",
+        admin_views.announcement_pause,
+        name="announcement_pause",
+    ),
+    path(
+        "announcements/<int:pk>/delete/",
+        admin_views.announcement_delete,
+        name="announcement_delete",
     ),
     path("ai-insights/", admin_views.ai_insights, name="ai_insights"),
     path("settings/", admin_views.church_settings, name="church_settings"),

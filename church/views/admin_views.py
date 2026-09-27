@@ -50,7 +50,9 @@ User = get_user_model()
 def admin_dashboard(request):
     """Show the signed-in coordinator a Monday-to-Sunday church calendar."""
     today = timezone.localdate()
-    week_start = today - timedelta(days=today.weekday())
+    # Sunday-first week: Sunday.weekday() == 6, so shift forward by 1
+    days_since_sunday = (today.weekday() + 1) % 7
+    week_start = today - timedelta(days=days_since_sunday)
     week_end = week_start + timedelta(days=6)
     services = request.church.services.filter(
         date__range=(week_start, week_end)
@@ -371,9 +373,16 @@ def department_edit(request, pk):
 
 @admin_required
 def member_list(request):
-    memberships = request.church.memberships.select_related(
-        "user", "department", "invited_by")
-    return render(request, "church/members.html", {"memberships": memberships})
+    memberships = (
+        request.church.memberships
+        .select_related("user", "department", "invited_by")
+        .order_by("is_active", "user__username")
+    )
+    departments = request.church.departments.all()
+    return render(request, "church/members.html", {
+        "memberships": memberships,
+        "departments": departments,
+    })
 
 
 @admin_required
@@ -402,8 +411,9 @@ def member_invite(request):
             message=(
                 f"{request.user.get_full_name() or request.user.username} "
                 f"has invited you to join {request.church.name} on Harpr.\n\n"
-                f"Click this link to set your password and accept:\n{accept_url}\n\n"
-                f"This link expires in 7 days."
+                f"Click this link to set your password and accept:\n"
+                f"{accept_url}\n\n"
+                f"This link expires in 7 days and can only be used once."
             ),
             from_email="harpr@localhost",
             recipient_list=[data["email"]],
@@ -411,34 +421,38 @@ def member_invite(request):
         )
         messages.success(request, f"Invitation sent to {data['email']}.")
         return redirect("member_list")
-    return render(request, "church/member_form.html", {"form": form, "title": "Invite member"})
+    return render(
+        request,
+        "church/member_form.html",
+        {"form": form, "title": "Invite member"},
+    )
 
 
 @admin_required
 def member_edit(request, pk):
     membership = get_object_or_404(
-        request.church.memberships.select_related("user"), pk=pk)
+        request.church.memberships.select_related("user"), pk=pk
+    )
     form = MemberEditForm(
         request.POST or None,
         church=request.church,
         initial={
-            "email": membership.user.email,
-            "first_name": membership.user.first_name,
-            "last_name": membership.user.last_name,
             "role": membership.role,
             "department": membership.department_id,
         },
     )
     if request.method == "POST" and form.is_valid():
         data = form.cleaned_data
-        membership.user.email = data["email"]
-        membership.user.first_name = data["first_name"]
-        membership.user.last_name = data["last_name"]
-        membership.user.save(
-            update_fields=["email", "first_name", "last_name"])
         membership.role = data["role"]
         membership.department = data["department"]
         membership.save(update_fields=["role", "department"])
+
+        notify_user(
+            membership.user,
+            "Your role has been updated",
+            f"Your role in {request.church.name} is now {membership.get_role_display()}.",
+            church=request.church,
+        )
         messages.success(request, "Member updated.")
         return redirect("member_list")
     return render(request, "church/member_form.html", {"form": form, "membership": membership, "title": "Edit member"})
@@ -450,14 +464,70 @@ def member_deactivate(request, pk):
     membership = get_object_or_404(request.church.memberships, pk=pk)
     membership.is_active = False
     membership.save(update_fields=["is_active"])
-    messages.success(request, "Member deactivated.")
+
+    notify_user(
+        membership.user,
+        "Your account has been deactivated",
+        f"Your access to {request.church.name} has been suspended by an administrator.",
+        church=request.church,
+    )
+    messages.success(request, f"{membership.user.username} deactivated.")
+    return redirect("member_list")
+
+
+@admin_required
+@require_POST
+def member_reactivate(request, pk):
+    from django.contrib.auth import authenticate
+
+    membership = get_object_or_404(request.church.memberships, pk=pk)
+    password = request.POST.get("admin_password", "")
+
+    if not authenticate(
+        request, username=request.user.username, password=password
+    ):
+        messages.error(
+            request,
+            "Incorrect password. Reactivation cancelled.",
+        )
+        return redirect("member_list")
+
+    membership.is_active = True
+    membership.save(update_fields=["is_active"])
+
+    notify_user(
+        membership.user,
+        "Your account has been reactivated",
+        f"Your access to {request.church.name} has been restored.",
+        church=request.church,
+    )
+    messages.success(request, f"{membership.user.username} reactivated.")
     return redirect("member_list")
 
 
 @admin_required
 def announcement_list(request):
-    announcements = request.church.announcements.select_related("service")
-    return render(request, "church/announcements.html", {"announcements": announcements})
+    today = timezone.localdate()
+    all_announcements = request.church.announcements.all()
+
+    active = all_announcements.filter(
+        start_date__lte=today,
+        end_date__gte=today,
+    ).order_by("start_date")
+
+    upcoming = all_announcements.filter(
+        start_date__gt=today,
+    ).order_by("start_date")
+
+    older = all_announcements.filter(
+        end_date__lt=today,
+    ).order_by("-end_date")
+
+    return render(request, "church/announcements.html", {
+        "active_announcements": active,
+        "upcoming_announcements": upcoming,
+        "older_announcements": older,
+    })
 
 
 @admin_required
@@ -482,6 +552,26 @@ def announcement_edit(request, pk):
         messages.success(request, "Announcement updated.")
         return redirect("announcement_list")
     return render(request, "church/announcement_form.html", {"form": form, "announcement": announcement, "title": "Edit announcement"})
+
+
+@admin_required
+@require_POST
+def announcement_pause(request, pk):
+    announcement = get_object_or_404(request.church.announcements, pk=pk)
+    announcement.is_paused = not announcement.is_paused
+    announcement.save(update_fields=["is_paused"])
+    state = "paused" if announcement.is_paused else "resumed"
+    messages.success(request, f"Announcement {state}.")
+    return redirect("announcement_list")
+
+
+@admin_required
+@require_POST
+def announcement_delete(request, pk):
+    announcement = get_object_or_404(request.church.announcements, pk=pk)
+    announcement.delete()
+    messages.success(request, "Announcement deleted.")
+    return redirect("announcement_list")
 
 
 def gather_church_stats(church):

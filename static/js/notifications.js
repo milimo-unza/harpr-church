@@ -5,25 +5,57 @@
   var dropdown = root.querySelector("[data-notification-dropdown]");
   var toggle = root.querySelector("[data-notification-toggle]");
 
+  function hideBell() {
+    if (toggle) toggle.hidden = true;
+  }
+
+  function showBell() {
+    if (toggle) toggle.hidden = false;
+  }
+
   function loadNotifications() {
-    fetch("/api/notifications/", { headers: { "X-Requested-With": "XMLHttpRequest" } })
-      .then(function (response) { return response.ok ? response.json() : null; })
+    fetch("/api/notifications/", {
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+    })
+      .then(function (response) {
+        return response.ok ? response.json() : null;
+      })
       .then(function (data) {
         if (!data) return;
+
+        if (data.unread_count === 0) {
+          hideBell();
+          badge.hidden = true;
+          return;
+        }
+
+        showBell();
         badge.textContent = data.unread_count;
-        badge.hidden = data.unread_count === 0;
+        badge.hidden = false;
         dropdown.innerHTML = data.notifications.length
-          ? data.notifications.map(function (item) {
-              return '<a class="notif-item" href="' + item.url + '"><strong>' + item.title + '</strong><br><small>' + item.body + '</small></a>';
-            }).join("")
+          ? data.notifications
+            .map(function (item) {
+              return (
+                '<a class="notif-item" href="' + item.url + '">' +
+                "<strong>" + item.title + "</strong>" +
+                "<small>" + item.body + "</small>" +
+                "</a>"
+              );
+            })
+            .join("")
           : '<div class="notif-item">No new notifications.</div>';
       })
-      .catch(function () {});
+      .catch(function () { });
   }
-  toggle.addEventListener("click", function () {
-    dropdown.hidden = !dropdown.hidden;
-    if (!dropdown.hidden) loadNotifications();
-  });
+
+  if (toggle) {
+    toggle.addEventListener("click", function () {
+      dropdown.hidden = !dropdown.hidden;
+      if (!dropdown.hidden) loadNotifications();
+    });
+  }
+
+  hideBell();
   loadNotifications();
   window.setInterval(loadNotifications, 60000);
 })();

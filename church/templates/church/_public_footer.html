@@ -1,0 +1,21 @@
+{% if church.contact_phone or church.contact_email or church.contact_whatsapp or church.footer_verse %}
+<section class="public-card public-footer">
+    {% if church.footer_verse %}
+    <p class="footer-verse"><em>{{ church.footer_verse }}</em></p>
+    {% endif %}
+    <div class="footer-contacts">
+        {% if church.contact_phone %}
+        <span><strong>Phone:</strong> {{ church.contact_phone }}</span>
+        {% endif %}
+        {% if church.contact_email %}
+        <span><strong>Email:</strong> <a href="mailto:{{ church.contact_email }}">{{ church.contact_email }}</a></span>
+        {% endif %}
+        {% if church.contact_whatsapp %}
+        <span>
+            <strong>WhatsApp:</strong>
+            <a href="https://wa.me/{{ church.contact_whatsapp }}" target="_blank" rel="noopener">Chat with us</a>
+        </span>
+        {% endif %}
+    </div>
+</section>
+{% endif %}

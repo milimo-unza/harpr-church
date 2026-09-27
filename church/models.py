@@ -18,6 +18,10 @@ class Church(models.Model):
         help_text="The church's main day of worship.",
     )
     logo = models.ImageField(upload_to="church_logos/", blank=True, null=True)
+    contact_phone = models.CharField(max_length=30, blank=True)
+    contact_email = models.EmailField(blank=True)
+    contact_whatsapp = models.CharField(max_length=30, blank=True)
+    footer_verse = models.CharField(max_length=300, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 
@@ -380,7 +384,10 @@ class Announcement(models.Model):
     title = models.CharField(max_length=200)
     body = models.TextField()
     is_active = models.BooleanField(default=True)
+    is_paused = models.BooleanField(default=False)
     show_on_public = models.BooleanField(default=True)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(null=True, blank=True)
 

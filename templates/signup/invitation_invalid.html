@@ -1,18 +1,53 @@
 {% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="en" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
-    <title>Invitation expired · Harpr</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Invitation unavailable · Harpr</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/harpr.css' %}">
 </head>
 
-<body class="auth-body">
-    <main class="auth-card">
-        <h1>This invitation has expired</h1>
-        <p>The link is either too old or has already been used. Ask the church's coordinator to send a new one.</p>
-        <p><a class="btn btn-primary btn-block" href="{% url 'login' %}">Back to sign in</a></p>
+<body class="auth-page">
+    <header class="auth-topbar">
+        <div class="auth-topbar-left">
+            <div class="auth-topbar-mark" aria-hidden="true">H</div>
+            <div class="auth-topbar-brand"><strong>Harpr</strong><small>Church programmes</small></div>
+        </div>
+        <div class="auth-topbar-actions">
+            <a href="{% url 'home' %}">← Back to home</a>
+        </div>
+    </header>
+    <main class="auth-center">
+        <div class="auth-form-card">
+            {% if already_accepted %}
+            <div class="auth-form-header">
+                <h1>You already accepted this</h1>
+                <p class="subtitle">This invitation has already been used to create an account.</p>
+            </div>
+            <p class="muted" style="text-align:center;">
+                If you're having trouble signing in, use the password reset link below, or contact your church
+                administrator.
+            </p>
+            <a href="{% url 'password_reset' %}" class="auth-btn-primary">Reset your password</a>
+            <div class="auth-divider">or</div>
+            <a href="{% url 'login' %}" class="auth-btn-outline">Back to sign in</a>
+            {% else %}
+            <div class="auth-form-header">
+                <h1>This invitation has expired</h1>
+                <p class="subtitle">The link is either too old or has already been used.</p>
+            </div>
+            <p class="muted" style="text-align:center;">
+                Ask your church administrator to send you a new invitation.
+            </p>
+            <a href="{% url 'login' %}" class="auth-btn-primary">Back to sign in</a>
+            {% endif %}
+        </div>
     </main>
 </body>
 

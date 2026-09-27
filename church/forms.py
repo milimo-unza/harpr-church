@@ -123,13 +123,11 @@ class DepartmentForm(forms.ModelForm):
 
 
 class MemberInviteForm(forms.Form):
-    username = forms.CharField(max_length=150)
-    email = forms.EmailField(required=False)
-    first_name = forms.CharField(max_length=150, required=False)
-    last_name = forms.CharField(max_length=150, required=False)
+    email = forms.EmailField()
     role = forms.ChoiceField(choices=Membership.ROLE_CHOICES)
     department = forms.ModelChoiceField(
-        queryset=Department.objects.none(), required=False)
+        queryset=Department.objects.none(), required=False
+    )
 
     def __init__(self, *args, church=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -138,20 +136,12 @@ class MemberInviteForm(forms.Form):
         )
         _style_fields(self)
 
-    def clean_username(self):
-        username = self.cleaned_data["username"]
-        if User.objects.filter(username=username).exists():
-            raise forms.ValidationError("That username is already in use.")
-        return username
-
 
 class MemberEditForm(forms.Form):
-    email = forms.EmailField(required=False)
-    first_name = forms.CharField(max_length=150, required=False)
-    last_name = forms.CharField(max_length=150, required=False)
     role = forms.ChoiceField(choices=Membership.ROLE_CHOICES)
     department = forms.ModelChoiceField(
-        queryset=Department.objects.none(), required=False)
+        queryset=Department.objects.none(), required=False
+    )
 
     def __init__(self, *args, church=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -238,12 +228,17 @@ class ChurchSettingsForm(forms.ModelForm):
         ("Africa/Lagos", "Africa/Lagos"),
     ]
     timezone = forms.ChoiceField(
-        choices=AFRICAN_TIMEZONES, initial="Africa/Lusaka")
+        choices=AFRICAN_TIMEZONES, initial="Africa/Lusaka"
+    )
 
     class Meta:
         model = Church
-        fields = ["name", "slug", "worship_day",
-                  "timezone", "address", "phone", "email", "logo"]
+        fields = [
+            "name", "slug", "worship_day", "timezone", "address",
+            "phone", "email", "logo",
+            "contact_phone", "contact_email", "contact_whatsapp",
+            "footer_verse",
+        ]
         widgets = {"address": forms.Textarea(attrs={"rows": 3})}
 
     def __init__(self, *args, **kwargs):

@@ -73,3 +73,6 @@ tasks/
 timeplanner/
 attached_assets/
 .agents/
+
+# Windows download metadata
+*:Zone.Identifier
