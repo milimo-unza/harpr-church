@@ -1,4 +1,42 @@
-from reportlab.lib import colors
+# Harpr — Round 3 tail: Bulletin PDF and settings
+
+**This is the continuation of `HARPR_fix_round3.md`.** Sections S1
+through S4 in that file are already applied. This file covers S5
+(the bulletin PDF rewrite and settings grouping) and S6 (commit and
+push).
+
+Do not re-apply S1 through S4.
+
+---
+
+## Before you start
+
+**Environment:**
+
+```
+cd /root/harpr && . .venv/bin/activate
+```
+
+**Verification after each section:**
+
+```
+python manage.py check
+python manage.py test church
+```
+
+---
+
+## Section S5 — Upgrade the bulletin PDF
+
+The current PDF is a plain table. This replaces it with a proper church
+bulletin layout: header with church name, programme, announcements on
+page 2, and a footer with contact details and the verse.
+
+### S5.1 Replace `church/services/pdf.py`
+
+Overwrite the file completely:
+
+```
 import io
 from xml.sax.saxutils import escape
 
@@ -22,7 +60,6 @@ DARK = HexColor("#2b2823")
 MUTED = HexColor("#6f6a60")
 HAIRLINE = HexColor("#d9d4c6")
 CREAM = HexColor("#f7f3ea")
-
 
 def generate_bulletin_pdf(service):
     buffer = io.BytesIO()
@@ -135,8 +172,7 @@ def generate_bulletin_pdf(service):
         ]))
         elements.append(table)
     else:
-        elements.append(
-            Paragraph("No items scheduled for this service.", item_meta))
+        elements.append(Paragraph("No items scheduled for this service.", item_meta))
 
     from django.utils import timezone
     today = timezone.localdate()
@@ -150,20 +186,17 @@ def generate_bulletin_pdf(service):
         elements.append(PageBreak())
         elements.append(Paragraph(escape(service.church.name), church_name))
         elements.append(Paragraph("Announcements", bulletin_sub))
-        elements.append(HRFlowable(width="100%", thickness=0.5,
-                        color=HAIRLINE, spaceAfter=10))
+        elements.append(HRFlowable(width="100%", thickness=0.5, color=HAIRLINE, spaceAfter=10))
         for announcement in announcements:
             elements.append(
-                Paragraph(
-                    f"&bull; {escape(announcement.body)}", announcement_style)
+                Paragraph(f"&bull; {escape(announcement.body)}", announcement_style)
             )
 
     elements.append(Spacer(1, 12 * mm))
     elements.append(HRFlowable(width="100%", thickness=0.5, color=HAIRLINE))
 
     if service.church.footer_verse:
-        elements.append(
-            Paragraph(escape(service.church.footer_verse), verse_style))
+        elements.append(Paragraph(escape(service.church.footer_verse), verse_style))
 
     contacts = []
     if service.church.contact_phone:
@@ -184,115 +217,122 @@ def generate_bulletin_pdf(service):
     document.build(elements)
     buffer.seek(0)
     return buffer
+```
 
+### S5.2 Verify
 
-def generate_bulletin_pdf(service):
-    buffer = io.BytesIO()
-    document = SimpleDocTemplate(
-        buffer,
-        pagesize=A4,
-        topMargin=20 * mm,
-        bottomMargin=20 * mm,
-        leftMargin=15 * mm,
-        rightMargin=15 * mm,
-    )
-    styles = getSampleStyleSheet()
-    title = ParagraphStyle(
-        "ChurchTitle",
-        parent=styles["Heading1"],
-        fontName="Helvetica-Bold",
-        fontSize=18,
-        textColor=HexColor("#2b2823"),
-        spaceAfter=4,
-    )
-    subtitle = ParagraphStyle(
-        "ChurchSubtitle",
-        parent=styles["Normal"],
-        fontName="Helvetica",
-        fontSize=11,
-        textColor=HexColor("#6f6a60"),
-        spaceAfter=16,
-    )
-    item_title = ParagraphStyle(
-        "ItemTitle",
-        parent=styles["Normal"],
-        fontName="Helvetica-Bold",
-        fontSize=10,
-        textColor=HexColor("#2b2823"),
-    )
-    item_meta = ParagraphStyle(
-        "ItemMeta",
-        parent=styles["Normal"],
-        fontName="Helvetica",
-        fontSize=9,
-        textColor=HexColor("#6f6a60"),
-    )
+```
+python manage.py check
+python manage.py test church
+```
 
-    elements = [
-        Paragraph(escape(service.church.name), title),
-        Paragraph(
-            f"{escape(service.name)} — {service.date.strftime('%A, %d %B %Y')}",
-            subtitle,
-        ),
-    ]
-    data = [["Time", "Item", "Department", "Assigned To"]]
-    items = service.items.select_related(
-        "responsible_department").prefetch_related("assignments").order_by("order")
-    for item in items:
-        department = item.responsible_department.name if item.responsible_department else "—"
-        assignments = ", ".join(
-            f"{assignment.person_name} ({assignment.role})"
-            for assignment in item.assignments.all()
-        ) or "—"
-        data.append(
-            [
-                Paragraph(item.planned_start.strftime("%H:%M"), item_title),
-                Paragraph(escape(item.title), item_title),
-                Paragraph(escape(department), item_meta),
-                Paragraph(escape(assignments), item_meta),
-            ]
-        )
+Visit `/c/grace-covenant/` and click "Download PDF". The PDF should now
+have: church name at the top, "Sunday Worship Bulletin" subtitle, the
+service name and date, an Order of Service table, announcements on
+page 2, and a footer with contacts and verse.
 
-    table = Table(data, colWidths=[20 * mm, 60 * mm, 40 * mm, 50 * mm])
-    table.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), HexColor("#eceae3")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), HexColor("#2b2823")),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, 0), 9),
-                ("GRID", (0, 0), (-1, -1), 0.5, HexColor("#d9d4c6")),
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("TOPPADDING", (0, 0), (-1, -1), 6),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-                ("LEFTPADDING", (0, 0), (-1, -1), 6),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 6),
-            ]
-        )
-    )
-    elements.append(table)
-    from django.utils import timezone
-    today = timezone.localdate()
+### S5.3 Group the settings form
 
-    announcements = service.church.announcements.filter(
-        is_paused=False,
-        show_on_public=True,
-        start_date__lte=today,
-        end_date__gte=today,
-    ).order_by("start_date")
+The contact and verse fields currently render flat on `/settings/`.
+Group them into two visible sections.
 
-    if announcements.exists():
-        elements.append(PageBreak())
-        elements.append(Paragraph("Announcements", title))
-        for announcement in announcements:
-            elements.append(
-                Paragraph(
-                    f"• {escape(announcement.body)}",
-                    item_meta,
-                )
-            )
-    elements.append(Spacer(1, 16 * mm))
-    elements.append(Paragraph("Generated by Harpr Church", item_meta))
-    document.build(elements)
-    buffer.seek(0)
-    return buffer
+In `church/templates/church/settings.html`, find this line:
+
+```
+      {{ form.as_p }}
+```
+
+Replace it with:
+
+```
+      <fieldset class="form-section">
+        <legend>Church identity</legend>
+        <div class="form-row"><label for="{{ form.name.id_for_label }}">Name</label>{{ form.name }}</div>
+        <div class="form-row"><label for="{{ form.slug.id_for_label }}">URL slug</label>{{ form.slug }}</div>
+        <div class="form-row"><label for="{{ form.worship_day.id_for_label }}">Worship day</label>{{ form.worship_day }}</div>
+        <div class="form-row"><label for="{{ form.timezone.id_for_label }}">Timezone</label>{{ form.timezone }}</div>
+        <div class="form-row"><label for="{{ form.address.id_for_label }}">Address</label>{{ form.address }}</div>
+        <div class="form-row"><label for="{{ form.logo.id_for_label }}">Logo</label>{{ form.logo }}</div>
+      </fieldset>
+
+      <fieldset class="form-section">
+        <legend>Bulletin footer</legend>
+        <p class="muted">These appear at the bottom of every bulletin PDF and on the public schedule page.</p>
+        <div class="form-row"><label for="{{ form.footer_verse.id_for_label }}">Verse or message</label>{{ form.footer_verse }}</div>
+        <div class="form-row"><label for="{{ form.contact_phone.id_for_label }}">Contact phone</label>{{ form.contact_phone }}</div>
+        <div class="form-row"><label for="{{ form.contact_email.id_for_label }}">Contact email</label>{{ form.contact_email }}</div>
+        <div class="form-row"><label for="{{ form.contact_whatsapp.id_for_label }}">Contact WhatsApp</label>{{ form.contact_whatsapp }}<small class="muted">Digits only, including country code. e.g. 260971234567</small></div>
+      </fieldset>
+```
+
+### S5.4 Verify
+
+Reload `/settings/`. The form should show two grouped sections. Fill in
+the footer fields, save, then download a bulletin PDF and confirm the
+new footer appears.
+
+---
+
+## Section S6 — Commit and push
+
+```
+cd /root/harpr
+python manage.py check
+python manage.py test church
+python manage.py makemigrations --check --dry-run
+```
+
+The third command must print "No changes detected."
+
+```
+git add -A
+git status --short
+```
+
+Review the list. It should include:
+
+- `church/templates/church/members.html`
+- `church/templates/church/announcements.html`
+- `church/templates/church/dashboard.html`
+- `church/templates/church/settings.html`
+- `church/views/admin_views.py`
+- `church/management/commands/seed_demo.py`
+- `church/services/pdf.py`
+
+If anything looks wrong, stop and report the full `git status --short`
+output before committing.
+
+Otherwise:
+
+```
+git commit -m "Fix member and announcement templates, add week navigation, rebuild seed data, upgrade bulletin PDF, group settings form"
+git push origin main
+```
+
+Report the full output of `git push origin main`.
+
+Then remove the spec files:
+
+```
+git rm HARPR_fix_round3.md HARPR_round3_tail.md 2>/dev/null || rm -f HARPR_fix_round3.md HARPR_round3_tail.md
+git commit -m "Remove applied round 3 spec"
+git push origin main
+```
+
+Report the output of the second push.
+
+---
+
+## End of round 3
+
+Report in one message:
+
+- Output of `python manage.py check`
+- Output of `python manage.py test church`
+- Confirmation that `/members/` loads without errors
+- Confirmation that `/announcements/` loads without errors
+- Confirmation that Previous / Today / Next work on `/dashboard/`
+- Confirmation that the dashboard shows services from July through November
+- Confirmation that the AI insights page shows insights
+- Confirmation that the bulletin PDF has announcements on page 2 and a footer
+- Both push outputs

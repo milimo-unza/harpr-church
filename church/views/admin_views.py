@@ -48,18 +48,33 @@ User = get_user_model()
 
 @admin_required
 def admin_dashboard(request):
-    """Show the signed-in coordinator a Monday-to-Sunday church calendar."""
-    today = timezone.localdate()
-    # Sunday-first week: Sunday.weekday() == 6, so shift forward by 1
-    days_since_sunday = (today.weekday() + 1) % 7
-    week_start = today - timedelta(days=days_since_sunday)
+    """Show the signed-in coordinator a Monday-to-Sunday church calendar.
+
+    Supports an optional ?week=YYYY-Www ISO week query parameter to view a specific
+    week. Provides `prev_week` and `next_week` context values as ISO-week strings
+    suitable for building navigation links.
+    """
+    week_param = request.GET.get("week")
+    if week_param:
+        try:
+            year_str, w_str = week_param.split("-W")
+            year = int(year_str)
+            w = int(w_str)
+            week_start = datetime.date.fromisocalendar(year, w, 1)
+        except Exception:
+            week_start = timezone.localdate() - timedelta(days=timezone.localdate().weekday())
+    else:
+        week_start = timezone.localdate() - timedelta(days=timezone.localdate().weekday())
+
     week_end = week_start + timedelta(days=6)
+
     services = request.church.services.filter(
         date__range=(week_start, week_end)
     ).prefetch_related("items")
     events = request.church.events.filter(
         date__range=(week_start, week_end)
     ).select_related("responsible_department")
+
     days = []
     for day_offset in range(7):
         day = week_start + timedelta(days=day_offset)
@@ -70,17 +85,23 @@ def admin_dashboard(request):
                 "events": [event for event in events if event.date == day],
             }
         )
+
+    prev_start = week_start - timedelta(days=7)
+    next_start = week_start + timedelta(days=7)
+    prev_week = f"{prev_start.isocalendar()[0]}-W{prev_start.isocalendar()[1]:02d}"
+    next_week = f"{next_start.isocalendar()[0]}-W{next_start.isocalendar()[1]:02d}"
+
     return render(
         request,
         "church/dashboard.html",
         {
             "church": request.church,
-            "today": today,
+            "today": timezone.localdate(),
             "week_start": week_start,
             "week_end": week_end,
             "days": days,
             "service_count": request.church.services.filter(
-                date__year=today.year, date__month=today.month
+                date__year=timezone.localdate().year, date__month=timezone.localdate().month
             ).count(),
             "pending_request_count": request.church.requests.filter(
                 status="pending"
@@ -90,6 +111,8 @@ def admin_dashboard(request):
             )[:10],
             "service_templates": request.church.service_templates.filter(is_active=True),
             "user_role_display": "Programme Coordinator",
+            "prev_week": prev_week,
+            "next_week": next_week,
         },
     )
 

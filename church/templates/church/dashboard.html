@@ -5,7 +5,12 @@
   <div>
     <p class="eyebrow">{{ church.name }} · Programme Coordinator</p>
     <h1>Weekly programme</h1>
-    <p class="muted">{{ week_start|date:"d M" }} — {{ week_end|date:"d M Y" }}</p>
+    <div class="week-nav">
+      <a class="btn btn-small" href="?week={{ prev_week|date:'Y-m-d' }}">← Previous</a>
+      <a class="btn btn-small" href="{% url 'admin_dashboard' %}">Today</a>
+      <a class="btn btn-small" href="?week={{ next_week|date:'Y-m-d' }}">Next →</a>
+      <span class="muted" style="margin-left:8px;">{{ week_start|date:"d M" }} — {{ week_end|date:"d M Y" }}</span>
+    </div>
   </div>
   <div class="button-row">
     <button type="button" class="btn btn-primary" data-modal-open="event-create-modal">New event</button>

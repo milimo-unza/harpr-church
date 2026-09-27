@@ -20,9 +20,10 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = "Create or update the Harpr Church demonstration data."
+    help = "Create or update the Harpr Church demonstration data (Round 3 seeder)."
 
     def handle(self, *args, **options):
+        # Use fixed dates for July → November 2026 per Round 3 specification
         church, _ = Church.objects.update_or_create(
             slug="grace-covenant",
             defaults={
@@ -32,19 +33,20 @@ class Command(BaseCommand):
                 "is_active": True,
             },
         )
+
         departments = {}
-        for slug, name in [
-            ("pastors", "Pastors"),
-            ("music", "Music"),
-            ("ushering", "Ushering"),
-            ("media", "Media"),
-            ("children", "Children"),
-            ("prayer", "Prayer"),
+        for slug, name, color in [
+            ("pastors", "Pastors", "#7a9c59"),
+            ("music", "Music", "#b5623e"),
+            ("ushering", "Ushering", "#4a90e2"),
+            ("media", "Media", "#9b59b6"),
+            ("children", "Children", "#f1c40f"),
+            ("prayer", "Prayer", "#e67e22"),
         ]:
             departments[slug], _ = Department.objects.update_or_create(
                 church=church,
                 slug=slug,
-                defaults={"name": name, "color": "#b5623e"},
+                defaults={"name": name, "color": color},
             )
 
         coordinator = self._user(
@@ -55,6 +57,7 @@ class Command(BaseCommand):
             church=church,
             defaults={"role": "admin", "department": None, "is_active": True},
         )
+
         heads = {
             "music_head": "music",
             "pastors_head": "pastors",
@@ -62,7 +65,8 @@ class Command(BaseCommand):
             "media_head": "media",
         }
         for username, department_slug in heads.items():
-            user = self._user(username, f"{username}@example.com", username.title(), "Head")
+            user = self._user(
+                username, f"{username}@example.com", username.replace("_", " ").title(), "Head")
             Membership.objects.update_or_create(
                 user=user,
                 church=church,
@@ -83,6 +87,7 @@ class Command(BaseCommand):
                 "is_active": True,
             },
         )
+
         item_specs = [
             ("Pre-Service Music", 10, "music"),
             ("Call to Worship", 5, "pastors"),
@@ -107,38 +112,40 @@ class Command(BaseCommand):
                 },
             )
 
-        sunday = timezone.localdate() - timedelta(days=(timezone.localdate().weekday() + 1) % 7)
+        # Create weekly services from July through November 2026 on Sundays
+        start_date = date(2026, 7, 5)  # first Sunday in July 2026
+        end_date = date(2026, 11, 29)  # last Sunday in November 2026
+        current = start_date
+        Service.objects.filter(church=church, name="Sunday Worship Service").exclude(
+            date__range=(start_date, end_date)).delete()
         names = {
-            "Sermon": ["Pastor Phiri", "Pastor Banda", "Pastor Mulenga"],
+            "Sermon": ["Pastor Phiri", "Pastor Banda", "Pastor Mulenga", "Pastor Chanda"],
             "Worship Songs": ["Ruth Mwansa", "Mwaka Zulu", "Chanda Tembo"],
             "Offering": ["Moses Lungu", "Esther Chileshe", "Andrew Sakala"],
             "Scripture Reading": ["Grace Mumba", "Brian Kunda", "Naomi Sampa"],
         }
-        valid_service_dates = [
-            sunday + timedelta(days=week * 7) for week in range(-3, 5)
-        ]
-        Service.objects.filter(
-            church=church,
-            name="Sunday Worship Service",
-        ).exclude(date__in=valid_service_dates).delete()
-        for service_index, service_date in enumerate(valid_service_dates):
+        idx = 0
+        while current <= end_date:
             service, _ = Service.objects.update_or_create(
                 church=church,
-                date=service_date,
+                date=current,
                 name="Sunday Worship Service",
-                defaults={"template": template, "status": "draft"},
+                defaults={"template": template, "status": "completed" if current <
+                          timezone.localdate() else "draft"},
             )
-            start = timezone.make_aware(datetime.combine(service_date, time(8, 0)))
+            start_dt = timezone.make_aware(
+                datetime.combine(current, time(8, 0)))
             for order, (title, duration, department_slug) in enumerate(item_specs):
+                planned = start_dt
                 item, _ = ServiceItem.objects.update_or_create(
                     service=service,
                     order=order,
                     defaults={
                         "title": title,
-                        "planned_start": start,
+                        "planned_start": planned,
                         "planned_duration_minutes": duration,
                         "responsible_department": departments[department_slug],
-                        "status": "planned",
+                        "status": "completed" if service.status == "completed" else "planned",
                     },
                 )
                 if title in names:
@@ -146,25 +153,31 @@ class Command(BaseCommand):
 
                     Assignment.objects.update_or_create(
                         service_item=item,
-                        person_name=names[title][service_index % len(names[title])],
+                        person_name=names[title][idx % len(names[title])],
                         role=title,
                         defaults={"church": church},
                     )
-                start += timedelta(minutes=duration)
+                start_dt += timedelta(minutes=duration)
+            idx += 1
+            current += timedelta(days=7)
 
+        # Some weekly events across the same period
         event_specs = [
             ("Choir Practice", "rehearsal", 2, time(18, 0), time(19, 30), "music"),
             ("Bible Study", "study", 4, time(18, 30), time(20, 0), "pastors"),
             ("Youth Meeting", "meeting", 5, time(14, 0), time(16, 0), "children"),
             ("Prayer Meeting", "meeting", 5, time(9, 0), time(11, 0), "prayer"),
-            ("Media Team Rehearsal", "rehearsal", 1, time(17, 0), time(18, 0), "media"),
+            ("Media Team Rehearsal", "rehearsal",
+             1, time(17, 0), time(18, 0), "media"),
         ]
-        monday = timezone.localdate() - timedelta(days=timezone.localdate().weekday())
+        # place these in the first full week of July 2026 and let them repeat weekly
+        first_monday = start_date - timedelta(days=start_date.weekday())
         for title, event_type, day_offset, start_time, end_time, department_slug in event_specs:
+            d = first_monday + timedelta(days=day_offset)
             ChurchEvent.objects.update_or_create(
                 church=church,
                 title=title,
-                date=monday + timedelta(days=day_offset),
+                date=d,
                 defaults={
                     "event_type": event_type,
                     "start_time": start_time,
@@ -176,26 +189,28 @@ class Command(BaseCommand):
 
         Announcement.objects.update_or_create(
             church=church,
-            title="Welcome to Sunday worship",
+            body="Please arrive ten minutes early for worship.",
             defaults={
-                "body": "Please arrive ten minutes early for worship.",
                 "show_on_public": True,
                 "is_active": True,
+                "start_date": timezone.localdate(),
+                "end_date": timezone.localdate() + timedelta(days=7),
             },
         )
         Announcement.objects.update_or_create(
             church=church,
-            title="Community outreach",
+            body="The church family meets after service for the monthly outreach briefing.",
             defaults={
-                "body": "The church family meets after service for the monthly outreach briefing.",
                 "show_on_public": True,
                 "is_active": True,
+                "start_date": timezone.localdate(),
+                "end_date": timezone.localdate() + timedelta(days=14),
             },
         )
-        self.stdout.write(self.style.SUCCESS("Harpr Church demo data is ready."))
+        self.stdout.write(self.style.SUCCESS("Harpr demo data rebuilt."))
         self.stdout.write("Coordinator: coordinator / harpr2026")
-        self.stdout.write("Department heads: music_head, pastors_head, ushering_head, media_head / harpr2026")
-        self.stdout.write("Public URL: /c/grace-covenant/")
+        self.stdout.write(
+            "Run: python manage.py seed_demo to refresh this data.")
 
     @staticmethod
     def _user(username, email, first_name, last_name):
