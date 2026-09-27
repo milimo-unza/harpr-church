@@ -154,12 +154,18 @@ class MemberEditForm(forms.Form):
 class AnnouncementForm(forms.ModelForm):
     class Meta:
         model = Announcement
-        fields = ["title", "body", "service", "show_on_public", "expires_at"]
+        fields = [
+            "body",
+            "service",
+            "show_on_public",
+            "start_date",
+            "end_date",
+            "is_paused",
+        ]
         widgets = {
             "body": forms.Textarea(attrs={"rows": 4}),
-            "expires_at": forms.DateTimeInput(
-                format="%Y-%m-%dT%H:%M", attrs={"type": "datetime-local"}
-            ),
+            "start_date": forms.DateInput(attrs={"type": "date"}),
+            "end_date": forms.DateInput(attrs={"type": "date"}),
         }
 
     def __init__(self, *args, church=None, **kwargs):

@@ -6,7 +6,14 @@ from reportlab.lib.colors import HexColor
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.platypus import (
+    PageBreak,
+    Paragraph,
+    SimpleDocTemplate,
+    Spacer,
+    Table,
+    TableStyle,
+)
 
 
 def generate_bulletin_pdf(service):
@@ -93,14 +100,23 @@ def generate_bulletin_pdf(service):
         )
     )
     elements.append(table)
-    announcements = service.announcements.filter(is_active=True, show_on_public=True)
-    if announcements:
-        elements.append(Spacer(1, 12 * mm))
+    from django.utils import timezone
+    today = timezone.localdate()
+
+    announcements = service.church.announcements.filter(
+        is_paused=False,
+        show_on_public=True,
+        start_date__lte=today,
+        end_date__gte=today,
+    ).order_by("start_date")
+
+    if announcements.exists():
+        elements.append(PageBreak())
         elements.append(Paragraph("Announcements", title))
         for announcement in announcements:
             elements.append(
                 Paragraph(
-                    f"• {escape(announcement.title)}: {escape(announcement.body)}",
+                    f"• {escape(announcement.body)}",
                     item_meta,
                 )
             )

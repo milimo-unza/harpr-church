@@ -1,3 +1,49 @@
 {% extends "church/base.html" %}
 {% block title %}Members · Harpr Church{% endblock %}
-{% block content %}<div class="page-head"><div><p class="eyebrow">Access</p><h1>Members</h1></div><a class="btn btn-primary" href="{% url 'member_invite' %}">Add member</a></div><div class="card table-wrap"><table class="data-table"><thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Department</th><th>Active</th><th></th></tr></thead><tbody>{% for membership in memberships %}<tr><td>{{ membership.user.username }}</td><td>{{ membership.user.email|default:"—" }}</td><td>{{ membership.get_role_display }}</td><td>{{ membership.department.name|default:"—" }}</td><td>{{ membership.is_active|yesno:"Yes,No" }}</td><td><a href="{% url 'member_edit' membership.pk %}">Edit</a>{% if membership.is_active %}<form class="inline-form" method="post" action="{% url 'member_deactivate' membership.pk %}">{% csrf_token %}<button class="btn btn-small btn-danger" type="submit">Deactivate</button></form>{% endif %}</td></tr>{% empty %}<tr><td colspan="6" class="empty-state">No members.</td></tr>{% endfor %}</tbody></table></div>{% endblock %}
+{% block content %}
+<div class="page-head">
+	<div>
+		<p class="eyebrow">Access</p>
+		<h1>Members</h1>
+		{% if show_all %}
+			<p class="muted">Showing all members, including those deactivated more than 30 days ago.</p>
+		{% endif %}
+	</div>
+	<div class="button-row">
+		{% if show_all %}
+			<a class="btn btn-ghost" href="{% url 'member_list' %}">Hide long-inactive</a>
+		{% else %}
+			<a class="btn btn-ghost" href="{% url 'member_list' %}?show=all">Show all members</a>
+		{% endif %}
+		<button type="button" class="btn btn-primary" data-modal-open="invite-modal">Add member</button>
+	</div>
+</div>
+<div class="card table-wrap">
+	<table class="data-table">
+		<thead>
+			<tr><th>Username</th><th>Email</th><th>Role</th><th>Department</th><th>Active</th><th></th></tr>
+		</thead>
+		<tbody>
+			{% for membership in memberships %}
+				<tr>
+					<td>{{ membership.user.username }}</td>
+					<td>{{ membership.user.email|default:"—" }}</td>
+					<td>{{ membership.get_role_display }}</td>
+					<td>{{ membership.department.name|default:"—" }}</td>
+					<td>{{ membership.is_active|yesno:"Yes,No" }}</td>
+					<td>
+						<a href="{% url 'member_edit' membership.pk %}">Edit</a>
+						{% if membership.is_active %}
+							<form class="inline-form" method="post" action="{% url 'member_deactivate' membership.pk %}">{% csrf_token %}
+								<button class="btn btn-small btn-danger" type="submit">Deactivate</button>
+							</form>
+						{% endif %}
+					</td>
+				</tr>
+			{% empty %}
+				<tr><td colspan="6" class="empty-state">No members.</td></tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</div>
+{% endblock %}

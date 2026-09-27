@@ -57,6 +57,7 @@ class Membership(models.Model):
     )
     joined_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+    deactivated_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         unique_together = [("user", "church")]
@@ -381,21 +382,31 @@ class Announcement(models.Model):
     service = models.ForeignKey(
         Service, on_delete=models.CASCADE, null=True, blank=True, related_name="announcements"
     )
-    title = models.CharField(max_length=200)
     body = models.TextField()
-    is_active = models.BooleanField(default=True)
     is_paused = models.BooleanField(default=False)
     show_on_public = models.BooleanField(default=True)
-    start_date = models.DateField(null=True, blank=True)
-    end_date = models.DateField(null=True, blank=True)
+    start_date = models.DateField()
+    end_date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        ordering = ["-created_at"]
+        ordering = ["-start_date", "-created_at"]
 
     def __str__(self):
-        return self.title
+        return self.body[:60]
+
+    def is_active_now(self):
+        from django.utils import timezone
+        today = timezone.localdate()
+        return not self.is_paused and self.start_date <= today <= self.end_date
+
+    def is_upcoming(self):
+        from django.utils import timezone
+        return self.start_date > timezone.localdate()
+
+    def is_older(self):
+        from django.utils import timezone
+        return self.end_date < timezone.localdate()
 
 
 class Notification(models.Model):

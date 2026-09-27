@@ -373,15 +373,29 @@ def department_edit(request, pk):
 
 @admin_required
 def member_list(request):
-    memberships = (
-        request.church.memberships
-        .select_related("user", "department", "invited_by")
-        .order_by("is_active", "user__username")
+    from django.db.models import Q
+
+    show_all = request.GET.get("show") == "all"
+    cutoff = timezone.now() - timedelta(days=30)
+
+    base = request.church.memberships.select_related(
+        "user", "department", "invited_by"
     )
+
+    if not show_all:
+        base = base.filter(
+            Q(is_active=True)
+            | Q(deactivated_at__isnull=True)
+            | Q(deactivated_at__gte=cutoff)
+        )
+
+    memberships = base.order_by("is_active", "user__username")
     departments = request.church.departments.all()
+
     return render(request, "church/members.html", {
         "memberships": memberships,
         "departments": departments,
+        "show_all": show_all,
     })
 
 
@@ -523,10 +537,15 @@ def announcement_list(request):
         end_date__lt=today,
     ).order_by("-end_date")
 
+    services = request.church.services.filter(
+        date__gte=today - timedelta(days=30)
+    ).order_by("date")[:60]
+
     return render(request, "church/announcements.html", {
         "active_announcements": active,
         "upcoming_announcements": upcoming,
         "older_announcements": older,
+        "services": services,
     })
 
 
