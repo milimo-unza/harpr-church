@@ -654,14 +654,17 @@ fieldset.form-section {
 .status-cancelled {
     background: rgba(158, 58, 46, 0.12);
     color: var(--danger);
+
     .sidenav {
         overflow: visible;
         flex-direction: row;
         flex-wrap: wrap;
     }
+
     .sidebar-footer {
         margin-top: var(--space-4);
     }
+
     .main {
         padding: var(--space-4);
     }
