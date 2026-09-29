@@ -48,25 +48,26 @@ User = get_user_model()
 
 @admin_required
 def admin_dashboard(request):
-    """Show the signed-in coordinator a Monday-to-Sunday church calendar.
+    from datetime import date, timedelta
 
-    Supports an optional ?week=YYYY-Www ISO week query parameter to view a specific
-    week. Provides `prev_week` and `next_week` context values as ISO-week strings
-    suitable for building navigation links.
-    """
+    today = timezone.localdate()
     week_param = request.GET.get("week")
+
     if week_param:
         try:
-            year_str, w_str = week_param.split("-W")
-            year = int(year_str)
-            w = int(w_str)
-            week_start = datetime.date.fromisocalendar(year, w, 1)
-        except Exception:
-            week_start = timezone.localdate() - timedelta(days=timezone.localdate().weekday())
+            ref = date.fromisoformat(week_param)
+        except (ValueError, TypeError):
+            ref = today
     else:
-        week_start = timezone.localdate() - timedelta(days=timezone.localdate().weekday())
+        ref = today
 
+    # Sunday-first week: Sunday.weekday() == 6, so shift forward by 1
+    days_since_sunday = (ref.weekday() + 1) % 7
+    week_start = ref - timedelta(days=days_since_sunday)
     week_end = week_start + timedelta(days=6)
+
+    prev_week = week_start - timedelta(days=7)
+    next_week = week_start + timedelta(days=7)
 
     services = request.church.services.filter(
         date__range=(week_start, week_end)
@@ -78,44 +79,32 @@ def admin_dashboard(request):
     days = []
     for day_offset in range(7):
         day = week_start + timedelta(days=day_offset)
-        days.append(
-            {
-                "date": day,
-                "services": [service for service in services if service.date == day],
-                "events": [event for event in events if event.date == day],
-            }
-        )
+        days.append({
+            "date": day,
+            "services": [s for s in services if s.date == day],
+            "events": [e for e in events if e.date == day],
+        })
 
-    prev_start = week_start - timedelta(days=7)
-    next_start = week_start + timedelta(days=7)
-    prev_week = f"{prev_start.isocalendar()[0]}-W{prev_start.isocalendar()[1]:02d}"
-    next_week = f"{next_start.isocalendar()[0]}-W{next_start.isocalendar()[1]:02d}"
-
-    return render(
-        request,
-        "church/dashboard.html",
-        {
-            "church": request.church,
-            "today": timezone.localdate(),
-            "week_start": week_start,
-            "week_end": week_end,
-            "days": days,
-            "service_count": request.church.services.filter(
-                date__year=timezone.localdate().year, date__month=timezone.localdate().month
-            ).count(),
-            "pending_request_count": request.church.requests.filter(
-                status="pending"
-            ).count(),
-            "recent_activity": request.church.logs.select_related(
-                "user", "service", "service_item"
-            )[:10],
-            "service_templates": request.church.service_templates.filter(is_active=True),
-            "user_role_display": "Programme Coordinator",
-            "prev_week": prev_week,
-            "next_week": next_week,
-        },
-    )
-
+    return render(request, "church/dashboard.html", {
+        "church": request.church,
+        "today": today,
+        "week_start": week_start,
+        "week_end": week_end,
+        "prev_week": prev_week,
+        "next_week": next_week,
+        "days": days,
+        "service_count": request.church.services.filter(
+            date__year=today.year, date__month=today.month
+        ).count(),
+        "pending_request_count": request.church.requests.filter(
+            status="pending"
+        ).count(),
+        "recent_activity": request.church.logs.select_related(
+            "user", "service", "service_item"
+        )[:10],
+        "service_templates": request.church.service_templates.filter(is_active=True),
+        "departments": request.church.departments.all(),
+    })
 
 @admin_required
 def service_list(request):
@@ -484,6 +473,9 @@ def member_edit(request, pk):
     )
     if request.method == "POST" and form.is_valid():
         data = form.cleaned_data
+        if membership.user == request.user and data["role"] != "admin":
+            messages.error(request, "You cannot change your own role from Administrator.")
+            return redirect("member_list")
         membership.role = data["role"]
         membership.department = data["department"]
         membership.save(update_fields=["role", "department"])
@@ -503,6 +495,9 @@ def member_edit(request, pk):
 @require_POST
 def member_deactivate(request, pk):
     membership = get_object_or_404(request.church.memberships, pk=pk)
+    if membership.user == request.user:
+        messages.error(request, "You cannot deactivate your own account.")
+        return redirect("member_list")
     membership.is_active = False
     membership.save(update_fields=["is_active"])
 
