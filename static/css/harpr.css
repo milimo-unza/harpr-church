@@ -1696,3 +1696,115 @@ margin-top: var(--space-4);
 width: auto;
 min-width: 220px;
 }
+
+/* Public topbar */
+.public-topbar {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: var(--space-4);
+padding: var(--space-3) var(--space-6);
+border-bottom: 1px solid var(--border);
+background: var(--surface);
+margin-bottom: var(--space-4);
+}
+
+.public-topbar-brand {
+display: flex;
+align-items: center;
+gap: var(--space-3);
+text-decoration: none;
+color: var(--fg);
+font-family: var(--font-serif);
+font-size: 1.1rem;
+font-weight: 600;
+}
+
+.public-topbar-brand .brand-mark {
+width: 30px;
+height: 30px;
+border-radius: 8px;
+font-size: 1.05rem;
+}
+
+.public-topbar-actions {
+display: flex;
+align-items: center;
+gap: var(--space-3);
+}
+.public-topbar-actions a {
+font-size: 0.86rem;
+color: var(--muted-fg);
+padding: 6px 10px;
+border-radius: var(--radius-sm);
+}
+.public-topbar-actions a:hover {
+color: var(--fg);
+background: var(--surface-2);
+}
+
+@media (max-width: 640px) {
+.public-topbar {
+padding: var(--space-3) var(--space-4);
+flex-wrap: wrap;
+}
+.public-topbar-actions {
+width: 100%;
+justify-content: flex-start;
+}
+}
+
+/* Clickable table rows (dept dashboard) */
+.clickable-row {
+cursor: pointer;
+transition: background .1s;
+}
+.clickable-row:hover {
+background: var(--surface-2);
+}
+
+/* Roster chips (saved team names) */
+.roster-chips {
+display: flex;
+flex-wrap: wrap;
+gap: var(--space-2);
+}
+.roster-chip {
+display: inline-flex;
+align-items: center;
+gap: 6px;
+padding: 4px 10px;
+border-radius: var(--radius-pill);
+border: 1px solid var(--border);
+background: var(--surface);
+color: var(--fg);
+font-size: 0.82rem;
+font-family: var(--font-sans);
+cursor: pointer;
+transition: background .1s, border-color .1s;
+}
+.roster-chip:hover {
+background: var(--surface-2);
+border-color: var(--accent);
+}
+.roster-chip--add {
+color: var(--accent);
+border-color: var(--accent);
+background: var(--accent-soft);
+}
+.roster-chip--add:hover {
+background: var(--accent);
+color: var(--accent-fg);
+}
+.roster-chip button {
+background: transparent;
+border: none;
+color: var(--muted-fg);
+cursor: pointer;
+font-size: 1rem;
+padding: 0 0 0 4px;
+line-height: 1;
+}
+.roster-chip button:hover {
+color: var(--danger);
+}

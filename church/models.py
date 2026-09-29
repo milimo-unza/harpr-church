@@ -95,6 +95,31 @@ class Department(models.Model):
         return f"{self.church.name} — {self.name}"
 
 
+class DepartmentMember(models.Model):
+    """A saved person in a department's roster.
+
+    Purely a convenience feature: department heads click a saved name to
+    pre-fill an assignment instead of retyping it. Assignments themselves
+    stay free-text so this model has no impact on existing data."""
+
+    church = models.ForeignKey(
+        Church, on_delete=models.CASCADE, related_name="department_members"
+    )
+    department = models.ForeignKey(
+        Department, on_delete=models.CASCADE, related_name="roster"
+    )
+    name = models.CharField(max_length=200)
+    phone = models.CharField(max_length=30, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [("department", "name")]
+        ordering = ["name"]
+
+    def __str__(self):
+        return f"{self.name} ({self.department.name})"
+
+
 class ServiceTemplate(models.Model):
     DAY_CHOICES = [
         (0, "Monday"),
@@ -305,6 +330,8 @@ class Request(models.Model):
         related_name="responded_requests",
     )
     responded_at = models.DateTimeField(null=True, blank=True)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

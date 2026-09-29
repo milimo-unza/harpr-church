@@ -1,3 +1,248 @@
 {% extends "church/base.html" %}
 {% block title %}My department · Harpr Church{% endblock %}
-{% block content %}<div class="page-head"><div><p class="eyebrow">Department head</p><h1>My department</h1></div><a class="btn btn-primary" href="{% url 'dept_request_create' %}">Submit request</a></div><h2>Pending assignments</h2><div class="card table-wrap"><table class="data-table"><thead><tr><th>Time</th><th>Service</th><th>Item</th><th></th></tr></thead><tbody>{% for item in pending_items %}<tr><td>{{ item.planned_start|date:"d M H:i" }}</td><td>{{ item.service.name }}</td><td>{{ item.title }}</td><td><a href="{% url 'dept_item_detail' item.pk %}">Fill assignment</a></td></tr>{% empty %}<tr><td colspan="4" class="empty-state">No pending assignments.</td></tr>{% endfor %}</tbody></table></div><h2>Upcoming items</h2><div class="card table-wrap"><table class="data-table"><tbody>{% for item in items %}<tr><td>{{ item.planned_start|date:"d M H:i" }}</td><td>{{ item.service.name }}</td><td><a href="{% url 'dept_item_detail' item.pk %}">{{ item.title }}</a></td></tr>{% empty %}<tr><td class="empty-state">No upcoming items.</td></tr>{% endfor %}</tbody></table></div>{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">{{ department.name }} · Department head</p>
+    <h1>My department</h1>
+    <div class="week-nav">
+      <a class="btn btn-small" href="?week={{ prev_week|date:'Y-m-d' }}">← Previous</a>
+      <a class="btn btn-small" href="{% url 'dept_dashboard' %}">Today</a>
+      <a class="btn btn-small" href="?week={{ next_week|date:'Y-m-d' }}">Next →</a>
+      <span class="muted" style="margin-left:8px;">{{ week_start|date:"d M" }} — {{ week_end|date:"d M Y" }}</span>
+    </div>
+  </div>
+  <div class="button-row">
+    <a class="btn btn-ghost" href="{% url 'dept_roster' %}">My team</a>
+    <a class="btn btn-primary" href="{% url 'dept_request_create' %}">Submit request</a>
+  </div>
+</div>
+
+<section class="week-grid" aria-label="Church week">
+  {% for day in days %}
+  <article class="week-col {% if day.date == today %}today{% endif %}">
+    <header class="week-col-head">
+      <strong>{{ day.date|date:"D" }}</strong>
+      <small>{{ day.date|date:"d M" }}</small>
+    </header>
+    <div class="week-col-body">
+      {% for service in day.services %}
+      <div class="event-chip service-chip">
+        <strong>{{ service.name }}</strong>
+        <small>Service · {{ service.get_status_display }}</small>
+      </div>
+      {% endfor %}
+      {% for event in day.events %}
+      <div class="event-chip">
+        <strong>{{ event.title }}</strong>
+        <small>{{ event.get_event_type_display }} · {{ event.start_time|time:"H:i" }}</small>
+      </div>
+      {% endfor %}
+      {% if not day.services and not day.events %}
+      <span class="empty-day">Nothing scheduled</span>
+      {% endif %}
+    </div>
+  </article>
+  {% endfor %}
+</section>
+
+<section style="margin-top: var(--space-6);">
+  <h2 class="section-label">Pending assignments</h2>
+  {% if pending_items %}
+  <div class="card table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Service</th>
+          <th>Item</th>
+          <th>Time</th>
+          <th>Assigned</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in pending_items %}
+        <tr class="clickable-row" data-modal-open="assign-modal-{{ item.pk }}">
+          <td class="mono">{{ item.planned_start|date:"d M Y" }}</td>
+          <td>{{ item.service.name }}</td>
+          <td><strong>{{ item.title }}</strong></td>
+          <td class="mono">{{ item.planned_start|date:"H:i" }}</td>
+          <td><span class="muted">Unassigned</span></td>
+          <td><button type="button" class="btn btn-small">Assign</button></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="muted">No pending assignments. Everything is covered.</p>
+  {% endif %}
+</section>
+
+<section style="margin-top: var(--space-6);">
+  <h2 class="section-label">Upcoming items</h2>
+  {% if items %}
+  <div class="card table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Service</th>
+          <th>Item</th>
+          <th>Time</th>
+          <th>Assigned</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        <tr class="clickable-row" data-modal-open="assign-modal-{{ item.pk }}">
+          <td class="mono">{{ item.planned_start|date:"d M Y" }}</td>
+          <td>{{ item.service.name }}</td>
+          <td><strong>{{ item.title }}</strong></td>
+          <td class="mono">{{ item.planned_start|date:"H:i" }}</td>
+          <td>
+            {% for a in item.assignments.all %}
+              {{ a.person_name }}{% if not forloop.last %}, {% endif %}
+            {% empty %}<span class="muted">Unassigned</span>{% endfor %}
+          </td>
+          <td><button type="button" class="btn btn-small">Edit</button></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="muted">No upcoming items for your department yet.</p>
+  {% endif %}
+</section>
+
+{% for item in items %}
+<div class="modal-backdrop" id="assign-modal-{{ item.pk }}" hidden>
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <h2>Assign — {{ item.title }}</h2>
+      <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="muted" style="margin-top:0;">
+        {{ item.service.name }} · {{ item.planned_start|date:"l, d F Y H:i" }}
+      </p>
+
+      {% if item.assignments.exists %}
+      <div class="form-row">
+        <label>Currently assigned</label>
+        <div class="roster-chips">
+          {% for a in item.assignments.all %}
+          <form method="post" action="{% url 'dept_assignment_delete' a.pk %}" class="roster-chip" data-ajax-form>
+            {% csrf_token %}
+            <span>{{ a.person_name }}</span>
+            <button type="submit" aria-label="Remove {{ a.person_name }}" title="Remove">×</button>
+          </form>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if roster %}
+      <div class="form-row">
+        <label>Saved team</label>
+        <div class="roster-chips" data-roster>
+          {% for member in roster %}
+          <button type="button" class="roster-chip roster-chip--add" data-name="{{ member.name }}">
+            + {{ member.name }}
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <form method="post" action="{% url 'dept_assignment_create' item.pk %}" data-ajax-form data-assign-form>
+        {% csrf_token %}
+        <div class="form-row">
+          <label for="person-{{ item.pk }}">Person</label>
+          <input name="person_name" id="person-{{ item.pk }}" required autocomplete="off">
+        </div>
+        <div class="form-row">
+          <label class="checkbox-line">
+            <input type="checkbox" name="save_to_roster" checked>
+            Save this name to my team
+          </label>
+        </div>
+        <div class="form-errors" data-form-errors hidden></div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost modal-close">Cancel</button>
+          <button type="submit" class="btn btn-primary">Assign</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+<script>
+  (function () {
+    document.querySelectorAll("[data-modal-open]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var el = document.getElementById(btn.getAttribute("data-modal-open"));
+        if (el) el.hidden = false;
+      });
+    });
+    document.querySelectorAll(".modal-backdrop").forEach(function (backdrop) {
+      backdrop.addEventListener("click", function (e) {
+        if (e.target === backdrop) backdrop.hidden = true;
+      });
+      backdrop.querySelectorAll(".modal-close").forEach(function (b) {
+        b.addEventListener("click", function () { backdrop.hidden = true; });
+      });
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") {
+        document.querySelectorAll(".modal-backdrop").forEach(function (m) { m.hidden = true; });
+      }
+    });
+
+    // Clicking a saved name fills the person field.
+    document.querySelectorAll(".modal").forEach(function (modal) {
+      var form = modal.querySelector("[data-assign-form]");
+      if (!form) return;
+      var input = form.querySelector("input[name='person_name']");
+      modal.querySelectorAll(".roster-chip--add").forEach(function (chip) {
+        chip.addEventListener("click", function () {
+          if (input) { input.value = chip.dataset.name; input.focus(); }
+        });
+      });
+    });
+
+    // AJAX submit for assign + remove forms.
+    document.querySelectorAll("form[data-ajax-form]").forEach(function (form) {
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var errBox = form.querySelector("[data-form-errors]");
+        fetch(form.action, {
+          method: "POST",
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "Accept": "application/json",
+          },
+          body: new FormData(form),
+        })
+          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+          .then(function (res) {
+            if (res.ok && res.d.ok) {
+              if (res.d.message && window.harprToast) window.harprToast(res.d.message);
+              window.location.reload();
+            } else if (errBox) {
+              errBox.hidden = false;
+              errBox.textContent = "Please enter a name.";
+            }
+          })
+          .catch(function () {
+            if (errBox) { errBox.hidden = false; errBox.textContent = "Network error."; }
+          });
+      });
+    });
+  })();
+</script>
+{% endblock %}

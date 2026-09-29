@@ -47,14 +47,20 @@ def api_notifications_mark_all_read(request):
 
 @login_required
 def api_activity(request):
-    """Return the most recent ServiceLog entries for the user's active church."""
+    """Return recent ServiceLog entries visible to this user.
+
+    Coordinators see the full church log. Department heads see nothing here
+    (their activity feed lives in the notification bell)."""
     membership = (
         request.user.church_memberships.filter(is_active=True)
         .select_related("church")
         .first()
     )
     if not membership:
-        return JsonResponse({"entries": []})
+        return JsonResponse({"entries": [], "scope": "none"})
+
+    if membership.role != "admin":
+        return JsonResponse({"entries": [], "scope": "dept_head"})
 
     logs = (
         membership.church.logs

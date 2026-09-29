@@ -23,17 +23,22 @@
       .then(function (data) {
         if (!data) return;
 
+        showBell();
+
         if (data.unread_count === 0) {
-          hideBell();
           badge.hidden = true;
+          dropdown.innerHTML =
+            '<div class="footer-dropdown-head">Notifications</div>' +
+            '<div class="footer-dropdown-empty">No new notifications. ' +
+            'Check back in a while.</div>';
           return;
         }
 
-        showBell();
         badge.textContent = data.unread_count;
         badge.hidden = false;
-        dropdown.innerHTML = data.notifications.length
-          ? data.notifications
+        dropdown.innerHTML =
+          '<div class="footer-dropdown-head">Notifications</div>' +
+          data.notifications
             .map(function (item) {
               return (
                 '<a class="notif-item" href="' + item.url + '">' +
@@ -42,8 +47,7 @@
                 "</a>"
               );
             })
-            .join("")
-          : '<div class="notif-item">No new notifications.</div>';
+            .join("");
       })
       .catch(function () { });
   }

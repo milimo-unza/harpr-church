@@ -1,3 +1,20 @@
 {% extends "church/public_base.html" %}
 {% block title %}Request · {{ church.name }}{% endblock %}
-{% block content %}<div class="public-card narrow-page"><h2>Request an addition</h2><form method="post">{% csrf_token %}<p><label for="submitter_name">Your name</label><input class="form-input" name="submitter_name" id="submitter_name" required></p><p><label for="submitter_contact">Contact</label><input class="form-input" name="submitter_contact" id="submitter_contact"></p>{{ form.as_p }}<button class="btn btn-primary" type="submit">Submit request</button></form></div>{% endblock %}
+{% block content %}
+<div class="public-card narrow-page">
+    <h2>Request an addition</h2>
+    <form method="post">
+        {% csrf_token %}
+        <p>
+            <label for="submitter_name">Your name</label>
+            <input class="form-input" name="submitter_name" id="submitter_name" required>
+        </p>
+        <p>
+            <label for="submitter_contact">Contact</label>
+            <input class="form-input" name="submitter_contact" id="submitter_contact">
+        </p>
+        {{ form.as_p }}
+        <button class="btn btn-primary" type="submit">Submit request</button>
+    </form>
+</div>
+{% endblock %}

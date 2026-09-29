@@ -57,6 +57,8 @@
           href="{% url 'dept_dashboard' %}">My department</a>
         <a class="navlink {% if request.resolver_match.url_name == 'dept_request_list' or request.resolver_match.url_name == 'dept_request_create' %}active{% endif %}"
           href="{% url 'dept_request_list' %}">My requests</a>
+        <a class="navlink {% if request.resolver_match.url_name == 'dept_roster' %}active{% endif %}"
+          href="{% url 'dept_roster' %}">My team</a>
         {% endif %}
       </nav>
 
@@ -167,6 +169,10 @@
           .then(function (r) { return r.ok ? r.json() : null; })
           .then(function (data) {
             if (!data) { list.innerHTML = '<div class="footer-dropdown-empty">Could not load.</div>'; return; }
+            if (data.scope === 'dept_head') {
+              list.innerHTML = '<div class="footer-dropdown-empty">Recent actions are only visible to programme coordinators. Use the notification bell for updates on your department.</div>';
+              return;
+            }
             if (!data.entries.length) {
               list.innerHTML = '<div class="footer-dropdown-empty">No activity yet.</div>';
               return;

@@ -1,3 +1,60 @@
 {% extends "church/base.html" %}
-{% block title %}New request · Harpr Church{% endblock %}
-{% block content %}<div class="narrow-page"><p class="eyebrow">Department head</p><h1>Submit request</h1><div class="card form-card"><form method="post">{% csrf_token %}{{ form.as_p }}<button class="btn btn-primary" type="submit">Submit</button></form></div></div>{% endblock %}
+{% block title %}Submit request · Harpr Church{% endblock %}
+{% block content %}
+<div class="narrow-page">
+  <p class="eyebrow">Department head</p>
+  <h1>Submit request</h1>
+  <p class="muted" style="margin-bottom: var(--space-4);">
+    Use this to ask the Programme Coordinator for a change to the programme.
+    If your request is date-based, add a start and end date below.
+  </p>
+
+  <div class="card form-card">
+    <form method="post">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+      <div class="form-errors">
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="form-row">
+        <label for="{{ form.type.id_for_label }}">Type</label>
+        {{ form.type }}
+      </div>
+
+      <div class="form-row">
+        <label for="{{ form.title.id_for_label }}">Title</label>
+        {{ form.title }}
+      </div>
+
+      <div class="form-row">
+        <label for="{{ form.body.id_for_label }}">Details</label>
+        {{ form.body }}
+      </div>
+
+      <div class="form-row two-up">
+        <div>
+          <label for="start-date">Start date (optional)</label>
+          <input type="date" name="start_date" id="start-date">
+        </div>
+        <div>
+          <label for="end-date">End date (optional)</label>
+          <input type="date" name="end_date" id="end-date">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label for="{{ form.target_service.id_for_label }}">Target service (optional)</label>
+        {{ form.target_service }}
+      </div>
+
+      <div class="form-actions">
+        <a class="btn btn-ghost" href="{% url 'dept_request_list' %}">Cancel</a>
+        <button class="btn btn-primary" type="submit">Submit request</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

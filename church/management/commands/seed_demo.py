@@ -98,11 +98,13 @@ class Command(BaseCommand):
             },
         )
         item_specs = [
+            ("Sound Check", 10, "media"),
             ("Pre-Service Music", 10, "music"),
             ("Call to Worship", 5, "pastors"),
             ("Opening Prayer", 10, "prayer"),
             ("Worship Songs", 25, "music"),
             ("Scripture Reading", 5, "pastors"),
+            ("Livestream Setup", 5, "media"),
             ("Sermon", 45, "pastors"),
             ("Response Song", 10, "music"),
             ("Announcements", 10, "pastors"),

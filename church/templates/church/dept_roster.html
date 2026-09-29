@@ -1,0 +1,67 @@
+{% extends "church/base.html" %}
+{% block title %}My team · Harpr Church{% endblock %}
+{% block content %}
+<div class="narrow-page">
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">{{ department.name }} · Department head</p>
+      <h1>My team</h1>
+      <p class="muted" style="margin-top:6px;">
+        Saved names appear as quick-pick chips when you assign someone to a service item.
+      </p>
+    </div>
+    <a class="btn btn-ghost" href="{% url 'dept_dashboard' %}">Back to dashboard</a>
+  </div>
+
+  <div class="card">
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add">
+      <div class="form-row two-up">
+        <div>
+          <label for="member-name">Name</label>
+          <input name="name" id="member-name" required>
+        </div>
+        <div>
+          <label for="member-phone">Phone (optional)</label>
+          <input name="phone" id="member-phone">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Add to team</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Phone</th>
+          <th style="width:100px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for member in roster %}
+        <tr>
+          <td>{{ member.name }}</td>
+          <td class="mono">{{ member.phone|default:"—" }}</td>
+          <td>
+            <form method="post" style="display:inline;">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="remove">
+              <input type="hidden" name="member_id" value="{{ member.pk }}">
+              <button type="submit" class="btn btn-small btn-danger"
+                onclick="return confirm('Remove {{ member.name }} from your team?')">Remove</button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="empty-state">No saved team members yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,69 +1,233 @@
+from datetime import date, timedelta
+
 from django.contrib import messages
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from church.forms import AssignmentForm, RequestForm
-from church.models import ServiceItem
+from church.models import (
+    Assignment,
+    DepartmentMember,
+    Service,
+    ServiceItem,
+)
 from church.views.decorators import dept_head_required
+
+
+def _is_ajax(request):
+    return (
+        request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        or request.headers.get("Accept", "").startswith("application/json")
+    )
+
+
+def _week_bounds(ref=None):
+    """Sunday-first week containing `ref` (defaults to today)."""
+    today = timezone.localdate()
+    ref = ref or today
+    days_since_sunday = (ref.weekday() + 1) % 7
+    week_start = ref - timedelta(days=days_since_sunday)
+    week_end = week_start + timedelta(days=6)
+    return today, week_start, week_end
 
 
 @dept_head_required
 def dept_dashboard(request):
+    """Week grid + department's own upcoming items, all in one page."""
     if not request.department:
-        items = ServiceItem.objects.none()
-    else:
-        items = (
-            ServiceItem.objects.filter(
-                church=request.church,
-                responsible_department=request.department,
-                planned_start__gte=timezone.now(),
-            )
-            .select_related("service")
-            .prefetch_related("assignments")
-            .order_by("planned_start")
+        return render(request, "church/dept_dashboard.html", {
+            "items": [],
+            "pending_items": [],
+            "roster": [],
+            "days": [],
+            "week_start": timezone.localdate(),
+            "week_end": timezone.localdate(),
+            "prev_week": timezone.localdate(),
+            "next_week": timezone.localdate(),
+            "today": timezone.localdate(),
+            "department": None,
+        })
+
+    today, week_start, week_end = _week_bounds()
+
+    # Allow ?week=YYYY-MM-DD navigation, matching the coordinator dashboard.
+    week_param = request.GET.get("week")
+    if week_param:
+        try:
+            ref = date.fromisoformat(week_param)
+            today, week_start, week_end = _week_bounds(ref)
+        except (ValueError, TypeError):
+            pass
+
+    prev_week = week_start - timedelta(days=7)
+    next_week = week_start + timedelta(days=7)
+
+    # All church services + events this week (read-only for dept heads).
+    services = request.church.services.filter(
+        date__range=(week_start, week_end)
+    ).prefetch_related("items__assignments")
+    events = request.church.events.filter(
+        date__range=(week_start, week_end)
+    ).select_related("responsible_department")
+
+    days = []
+    for day_offset in range(7):
+        day = week_start + timedelta(days=day_offset)
+        days.append({
+            "date": day,
+            "services": [s for s in services if s.date == day],
+            "events": [e for e in events if e.date == day],
+        })
+
+    # The department's own items — future and today, ordered by time.
+    dept_items = (
+        ServiceItem.objects.filter(
+            church=request.church,
+            responsible_department=request.department,
+            planned_start__gte=timezone.now(),
         )
-    pending_items = [item for item in items if not item.assignments.exists()]
-    return render(
-        request,
-        "church/dept_dashboard.html",
-        {"items": items, "pending_items": pending_items},
+        .select_related("service")
+        .prefetch_related("assignments")
+        .order_by("planned_start")
     )
+
+    pending_items = [item for item in dept_items if not item.assignments.exists()]
+    roster = DepartmentMember.objects.filter(
+        department=request.department
+    ).order_by("name")
+
+    return render(request, "church/dept_dashboard.html", {
+        "items": dept_items,
+        "pending_items": pending_items,
+        "roster": roster,
+        "days": days,
+        "week_start": week_start,
+        "week_end": week_end,
+        "prev_week": prev_week,
+        "next_week": next_week,
+        "today": today,
+        "department": request.department,
+    })
 
 
 @dept_head_required
 def dept_item_detail(request, pk):
-    item = get_object_or_404(
-        ServiceItem.objects.select_related("service", "responsible_department"),
-        pk=pk,
-        church=request.church,
-        responsible_department=request.department,
-    )
-    return render(
-        request,
-        "church/dept_item_detail.html",
-        {"item": item, "form": AssignmentForm()},
-    )
-
-
-@dept_head_required
-@require_POST
-def dept_assignment_create(request, pk):
+    """Kept for direct URLs — now redirects to the dashboard."""
     item = get_object_or_404(
         ServiceItem,
         pk=pk,
         church=request.church,
         responsible_department=request.department,
     )
-    form = AssignmentForm(request.POST)
-    if form.is_valid():
-        assignment = form.save(commit=False)
-        assignment.service_item = item
-        assignment.save()
-        messages.success(request, "Assignment added.")
-    else:
-        messages.error(request, "Enter a name and role.")
-    return redirect("dept_item_detail", pk=item.pk)
+    return redirect(f"{request.path.rsplit('/', 2)[0]}/?focus={item.pk}")
+
+
+@dept_head_required
+@require_POST
+def dept_assignment_create(request, pk):
+    """Add an assignment from the modal. Also saves the name to the roster."""
+    item = get_object_or_404(
+        ServiceItem,
+        pk=pk,
+        church=request.church,
+        responsible_department=request.department,
+    )
+
+    person_name = request.POST.get("person_name", "").strip()
+    role = request.POST.get("role", "").strip() or item.title
+    save_to_roster = request.POST.get("save_to_roster") == "on"
+
+    if not person_name:
+        if _is_ajax(request):
+            return JsonResponse(
+                {"ok": False, "errors": {"person_name": ["A name is required."]}},
+                status=400,
+            )
+        messages.error(request, "Enter a name.")
+        return redirect("dept_dashboard")
+
+    Assignment.objects.create(
+        service_item=item,
+        person_name=person_name,
+        role=role,
+    )
+
+    if save_to_roster:
+        DepartmentMember.objects.get_or_create(
+            church=request.church,
+            department=request.department,
+            name=person_name,
+        )
+
+    if _is_ajax(request):
+        return JsonResponse({
+            "ok": True,
+            "redirect": "/dept/",
+            "message": f"{person_name} assigned to {item.title}.",
+        })
+
+    messages.success(request, f"{person_name} assigned to {item.title}.")
+    return redirect("dept_dashboard")
+
+
+@dept_head_required
+@require_POST
+def dept_assignment_delete(request, pk):
+    """Remove an assignment from an item (does not touch the roster)."""
+    assignment = get_object_or_404(
+        Assignment,
+        pk=pk,
+        service_item__church=request.church,
+        service_item__responsible_department=request.department,
+    )
+    assignment.delete()
+
+    if _is_ajax(request):
+        return JsonResponse({"ok": True, "message": "Assignment removed."})
+
+    messages.success(request, "Assignment removed.")
+    return redirect("dept_dashboard")
+
+
+@dept_head_required
+def dept_roster(request):
+    """List + add + remove saved department members."""
+    if not request.department:
+        return redirect("dept_dashboard")
+
+    if request.method == "POST":
+        action = request.POST.get("action", "add")
+        if action == "add":
+            name = request.POST.get("name", "").strip()
+            phone = request.POST.get("phone", "").strip()
+            if name:
+                DepartmentMember.objects.get_or_create(
+                    church=request.church,
+                    department=request.department,
+                    name=name,
+                    defaults={"phone": phone},
+                )
+                messages.success(request, f"{name} added to your team.")
+            else:
+                messages.error(request, "Enter a name.")
+        elif action == "remove":
+            member_id = request.POST.get("member_id")
+            DepartmentMember.objects.filter(
+                pk=member_id,
+                department=request.department,
+            ).delete()
+            messages.success(request, "Team member removed.")
+        return redirect("dept_roster")
+
+    roster = DepartmentMember.objects.filter(
+        department=request.department
+    ).order_by("name")
+    return render(request, "church/dept_roster.html", {
+        "roster": roster,
+        "department": request.department,
+    })
 
 
 @dept_head_required
@@ -73,6 +237,19 @@ def dept_request_create(request):
         church_request = form.save(commit=False)
         church_request.church = request.church
         church_request.submitted_by = request.user
+        # Optional date window.
+        start_raw = request.POST.get("start_date", "").strip()
+        end_raw = request.POST.get("end_date", "").strip()
+        if start_raw:
+            try:
+                church_request.start_date = date.fromisoformat(start_raw)
+            except ValueError:
+                pass
+        if end_raw:
+            try:
+                church_request.end_date = date.fromisoformat(end_raw)
+            except ValueError:
+                pass
         church_request.save()
         messages.success(request, "Request submitted.")
         return redirect("dept_request_list")

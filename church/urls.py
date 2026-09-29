@@ -146,4 +146,10 @@ urlpatterns = [
     path("signup/", signup_views.church_signup, name="church_signup"),
     path("invite/<str:token>/", invitation_views.accept_invitation,
          name="accept_invitation"),
+    path(
+        "dept/assignments/<int:pk>/delete/",
+        dept_views.dept_assignment_delete,
+        name="dept_assignment_delete",
+    ),
+    path("dept/roster/", dept_views.dept_roster, name="dept_roster"),
 ]

@@ -40,9 +40,11 @@
 <div class="public-card">
     <h2>No service scheduled today</h2>
     {% if next_service %}
-    <p>Next programme: <a
-            href="{% url 'public_schedule_date' church.slug next_service.date.year next_service.date.month next_service.date.day %}">{{
-            next_service.name }} on {{ next_service.date|date:"l, d F" }}</a></p>
+    <p>Next programme:
+        <a href="{% url 'public_schedule_date' church.slug next_service.date.year next_service.date.month next_service.date.day %}">
+            {{ next_service.name }} on {{ next_service.date|date:"l, d F" }}
+        </a>
+    </p>
     {% else %}
     <p>There is no upcoming programme yet.</p>
     {% endif %}
@@ -65,7 +67,4 @@
 </p>
 
 {% include "church/_public_footer.html" %}
-{% endblock %}
-{% block scripts %}
-<script>document.querySelector("[data-save-church]").addEventListener("click", function () { var key = "harpr-saved-churches"; var saved = JSON.parse(localStorage.getItem(key) || "[]"); if (!saved.includes(this.dataset.slug)) saved.push(this.dataset.slug); localStorage.setItem(key, JSON.stringify(saved)); this.textContent = "Saved"; });</script>
 {% endblock %}
