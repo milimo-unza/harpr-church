@@ -78,3 +78,10 @@ attached_assets/
 *:Zone.Identifier
 
 static/css/harpr.css.broken-backup
+
+# One-shot patch/apply scripts (run-once tooling, not source)
+patch_*.py
+r4b_*.sh
+write_*.sh
+fix_*_and_*.sh
+.r4b_backup/
