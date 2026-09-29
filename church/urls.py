@@ -117,6 +117,7 @@ urlpatterns = [
         name="dept_request_create",
     ),
     path("dept/requests/", dept_views.dept_request_list, name="dept_request_list"),
+    path("api/activity/", api_views.api_activity, name="api_activity"),
     path("api/notifications/", api_views.api_notifications,
          name="api_notifications"),
     path(

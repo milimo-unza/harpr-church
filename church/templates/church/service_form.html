@@ -1,3 +1,44 @@
 {% extends "church/base.html" %}
 {% block title %}{{ title }} · Harpr Church{% endblock %}
-{% block content %}<div class="narrow-page"><p class="eyebrow">Programme planning</p><h1>{{ title }}</h1><div class="card form-card"><form method="post">{% csrf_token %}{{ form.as_p }}<div class="form-actions"><a class="btn btn-ghost" href="{% url 'service_list' %}">Cancel</a><button class="btn btn-primary" type="submit">Save service</button></div></form></div></div>{% endblock %}
+{% block content %}
+<div class="narrow-page">
+  <p class="eyebrow">Programme planning</p>
+  <h1>{{ title }}</h1>
+
+  <div class="card form-card">
+    <form method="post">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+      <div class="form-errors">
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="form-row">
+        <label for="{{ form.name.id_for_label }}">Name</label>
+        {{ form.name }}
+        {% if form.name.errors %}<div class="form-error">{{ form.name.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="form-row">
+        <label for="{{ form.date.id_for_label }}">Date</label>
+        {{ form.date }}
+        {% if form.date.errors %}<div class="form-error">{{ form.date.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="form-row">
+        <label for="{{ form.template.id_for_label }}">Template (optional)</label>
+        {{ form.template }}
+        <small class="muted">Selecting a template auto-creates its items for this service.</small>
+        {% if form.template.errors %}<div class="form-error">{{ form.template.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="form-actions">
+        <a class="btn btn-ghost" href="{% url 'service_list' %}">Cancel</a>
+        <button class="btn btn-primary" type="submit">Save service</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

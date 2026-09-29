@@ -19,9 +19,22 @@
 </div>
 
 <section class="stat-grid">
-  <div class="stat-card"><strong>{{ service_count }}</strong><span>Services this month</span></div>
-  <div class="stat-card"><strong>{{ pending_request_count }}</strong><span>Pending requests</span></div>
-  <div class="stat-card"><strong>{{ recent_activity|length }}</strong><span>Recent actions</span></div>
+  <div class="stat-card">
+    <strong>{{ service_count }}</strong>
+    <span>Services in {{ month_label }}</span>
+  </div>
+  <div class="stat-card">
+    <strong>{{ completed_count }}</strong>
+    <span>Completed (all time)</span>
+  </div>
+  <div class="stat-card">
+    <strong>{{ pending_request_count }}</strong>
+    <span>Pending requests</span>
+  </div>
+  <div class="stat-card">
+    <strong>{{ recent_activity|length }}</strong>
+    <span>Recent actions</span>
+  </div>
 </section>
 
 <section class="week-grid" aria-label="Weekly calendar">
@@ -110,6 +123,41 @@
         <div class="form-actions">
           <button type="button" class="btn btn-ghost modal-close">Cancel</button>
           <button type="submit" class="btn btn-primary">Create event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="service-create-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <h2>New service</h2>
+      <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <form method="post" action="{% url 'service_create' %}">
+        {% csrf_token %}
+        <div class="form-row">
+          <label for="service-name">Name</label>
+          <input name="name" id="service-name" required>
+        </div>
+        <div class="form-row">
+          <label for="service-date">Date</label>
+          <input type="date" name="date" id="service-date" required>
+        </div>
+        <div class="form-row">
+          <label for="service-template">Template (optional)</label>
+          <select name="template" id="service-template">
+            <option value="">— None —</option>
+            {% for t in service_templates %}
+            <option value="{{ t.pk }}">{{ t.name }} ({{ t.get_day_of_week_display }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost modal-close">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create service</button>
         </div>
       </form>
     </div>

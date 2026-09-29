@@ -7,6 +7,14 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load a local .env if python-dotenv is installed. Silently skip otherwise.
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(BASE_DIR / ".env")
+except ImportError:
+    pass
+
 SECRET_KEY = (
     os.environ.get("SECRET_KEY")
     or os.environ.get("SESSION_SECRET")

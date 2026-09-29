@@ -49,9 +49,12 @@
   }
 
   if (toggle) {
-    toggle.addEventListener("click", function () {
-      dropdown.hidden = !dropdown.hidden;
-      if (!dropdown.hidden) loadNotifications();
+    toggle.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var willOpen = dropdown.hidden;
+      document.querySelectorAll(".footer-dropdown").forEach(function (d) { d.hidden = true; });
+      dropdown.hidden = !willOpen;
+      if (willOpen) loadNotifications();
     });
   }
 

@@ -166,6 +166,9 @@ transition: background .1s, color .1s, border-color .1s;
 .main {
 padding: var(--space-6) var(--space-7);
 max-width: none;
+display: flex;
+flex-direction: column;
+min-height: 100vh;
 }
 
 .topbar {
@@ -333,6 +336,18 @@ padding: 0;
 margin: var(--space-1) 0 0;
 }
 
+.form-errors {
+padding: 10px 14px;
+margin-bottom: var(--space-4);
+border-left: 2px solid var(--danger);
+background: rgba(158, 58, 46, 0.06);
+color: var(--danger);
+font-size: 0.82rem;
+}
+.form-errors[hidden] { display: none !important; }
+.form-errors ul { margin: var(--space-2) 0 0; padding-left: 18px; }
+.form-errors li { margin-bottom: 3px; }
+
 .form-actions {
 display: flex;
 gap: var(--space-2);
@@ -431,6 +446,8 @@ border: 1px solid var(--border);
 border-radius: var(--radius);
 background: var(--surface);
 overflow: hidden;
+flex: 1 1 auto;
+min-height: 380px;
 }
 
 .week-col {
@@ -465,6 +482,7 @@ margin-top: 1px;
 }
 
 .week-col-body {
+flex: 1 1 auto;
 min-height: 130px;
 padding: var(--space-2);
 display: flex;
@@ -499,6 +517,47 @@ font-size: 0.76rem;
 padding: var(--space-2);
 text-align: center;
 font-style: italic;
+}
+
+.activity-section {
+margin-top: var(--space-6);
+padding-top: var(--space-5);
+border-top: 1px solid var(--hairline);
+}
+.activity-list {
+list-style: none;
+padding: 0;
+margin: 0;
+border: 1px solid var(--border);
+border-radius: var(--radius);
+background: var(--surface);
+overflow: hidden;
+}
+.activity-item {
+display: grid;
+grid-template-columns: 140px 1fr auto;
+gap: var(--space-3);
+padding: 10px var(--space-4);
+border-bottom: 1px solid var(--hairline);
+font-size: 0.84rem;
+align-items: baseline;
+}
+.activity-item:last-child { border-bottom: none; }
+.activity-action {
+font-family: var(--font-mono);
+font-size: 0.72rem;
+font-weight: 500;
+letter-spacing: 0.06em;
+text-transform: uppercase;
+color: var(--accent);
+}
+.activity-detail {
+color: var(--fg);
+}
+.activity-meta {
+color: var(--muted-fg);
+font-size: 0.76rem;
+white-space: nowrap;
 }
 
 .status-badge {
@@ -1168,11 +1227,13 @@ overflow-x: auto;
 scroll-snap-type: x mandatory;
 -webkit-overflow-scrolling: touch;
 border-radius: var(--radius);
+min-height: 260px;
 }
 .week-col { flex: 0 0 200px; scroll-snap-align: start; }
 .stat-grid { grid-template-columns: 1fr 1fr; }
 .stat-card { padding: var(--space-3); }
 .stat-value { font-size: 1.4rem; }
+.activity-item { grid-template-columns: 1fr; gap: 4px; }
 }
 
 @media (max-width: 640px) {
@@ -1258,7 +1319,7 @@ max-width: none;
 }
 
 /* ============================================================
-Sidebar brand — the missing rules
+Sidebar brand
 ============================================================ */
 
 .sidebar-brand {
@@ -1315,7 +1376,6 @@ white-space: nowrap;
 max-width: 150px;
 }
 
-/* Sidebar user chip */
 .user-avatar {
 width: 34px;
 height: 34px;
@@ -1363,7 +1423,6 @@ line-height: 1.2;
 Notion-style typography — no monospace in the UI
 ============================================================ */
 
-/* Eyebrows: small sans-serif, letter-spaced, muted */
 .eyebrow,
 .card-head h2,
 .section-label {
@@ -1377,7 +1436,6 @@ color: var(--muted-fg);
 
 .card-head h2 { font-size: 0.78rem; }
 
-/* Form labels: sans-serif, sentence-case-ish, medium weight */
 .form-row label,
 .auth-field label {
 font-family: var(--font-sans);
@@ -1388,7 +1446,6 @@ text-transform: none;
 color: var(--fg);
 }
 
-/* Stat labels */
 .stat-label {
 font-family: var(--font-sans);
 font-size: 0.76rem;
@@ -1398,7 +1455,6 @@ text-transform: none;
 color: var(--muted-fg);
 }
 
-/* Status badges: soft sans, not mono */
 .status-badge {
 font-family: var(--font-sans);
 font-size: 0.72rem;
@@ -1406,13 +1462,11 @@ font-weight: 550;
 letter-spacing: 0.01em;
 }
 
-/* Notification items */
 .notif-item strong {
 font-family: var(--font-sans);
 font-weight: 600;
 }
 
-/* Table cells that were styled mono */
 .mono,
 td.mono,
 .data-table td.mono,
@@ -1422,18 +1476,15 @@ font-variant-numeric: tabular-nums;
 letter-spacing: 0;
 }
 
-/* Tabular numbers still respect alignment */
 .nowrap {
 font-family: var(--font-sans);
 font-variant-numeric: tabular-nums;
 }
 
-/* Stat values: keep serif, they look right */
 .stat-value {
 font-family: var(--font-serif);
 }
 
-/* Form-section legends */
 .form-section legend {
 font-family: var(--font-sans);
 font-size: 0.74rem;
@@ -1443,7 +1494,6 @@ text-transform: uppercase;
 color: var(--muted-fg);
 }
 
-/* Week column heads */
 .week-col-head strong {
 font-family: var(--font-sans);
 font-size: 0.72rem;
@@ -1453,7 +1503,6 @@ text-transform: uppercase;
 color: var(--muted-fg);
 }
 
-/* Filter tabs */
 .filter-tabs a {
 font-family: var(--font-sans);
 font-weight: 550;
@@ -1545,4 +1594,105 @@ margin-bottom: var(--space-2);
 padding: 8px 12px;
 font-size: 0.8rem;
 margin-bottom: var(--space-3);
+}
+
+/* ============================================================
+Sidebar footer popovers (activity + notifications)
+============================================================ */
+
+.footer-actions {
+display: flex;
+align-items: center;
+gap: var(--space-2);
+padding: 0 var(--space-2);
+margin: 0 calc(var(--space-2) * -1);
+}
+
+.footer-popover {
+position: relative;
+display: inline-flex;
+}
+
+.footer-dropdown {
+position: absolute;
+left: 0;
+bottom: calc(100% + 8px);
+z-index: 30;
+width: 320px;
+max-height: 420px;
+overflow-y: auto;
+padding: var(--space-2);
+border: 1px solid var(--border);
+border-radius: var(--radius);
+background: var(--surface);
+box-shadow: var(--shadow-lg);
+}
+.footer-dropdown[hidden] { display: none !important; }
+
+.footer-dropdown-head {
+font-family: var(--font-mono);
+font-size: 0.68rem;
+font-weight: 600;
+letter-spacing: 0.12em;
+text-transform: uppercase;
+color: var(--muted-fg);
+padding: var(--space-2) var(--space-3);
+border-bottom: 1px solid var(--hairline);
+margin-bottom: var(--space-1);
+}
+
+.footer-dropdown-empty {
+padding: var(--space-4);
+color: var(--muted-fg);
+font-size: 0.82rem;
+text-align: center;
+font-style: italic;
+}
+
+@media (max-width: 768px) {
+.footer-dropdown {
+position: fixed;
+left: var(--space-3);
+right: var(--space-3);
+bottom: 80px;
+width: auto;
+max-width: none;
+}
+}
+
+.notif-item--static {
+cursor: default;
+}
+.notif-item--static:hover {
+background: transparent;
+}
+
+/* Service detail — compact table */
+.item-table td,
+.item-table th {
+padding: 6px 10px;
+font-size: 0.84rem;
+vertical-align: middle;
+}
+.item-table tr td {
+border-bottom: 1px solid var(--hairline);
+}
+.item-table strong {
+font-weight: 500;
+}
+.item-table small.muted {
+display: block;
+margin-top: 2px;
+font-size: 0.72rem;
+}
+.page-actions {
+display: flex;
+gap: var(--space-2);
+align-items: center;
+flex-wrap: wrap;
+margin-top: var(--space-4);
+}
+.page-actions .form-input {
+width: auto;
+min-width: 220px;
 }

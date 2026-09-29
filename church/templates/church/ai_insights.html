@@ -1,3 +1,63 @@
 {% extends "church/base.html" %}
-{% block title %}AI insights · Harpr Church{% endblock %}
-{% block content %}<div class="page-head"><div><p class="eyebrow">Operations analysis</p><h1>AI insights</h1></div></div><div class="card insight-card"><p>{{ insight }}</p>{% if cached %}<small class="muted">Cached for the last 24 hours.</small>{% endif %}</div>{% if stats %}<div class="stat-grid"><div class="stat-card"><strong>{{ stats.service_count }}</strong><span>Completed services</span></div><div class="stat-card"><strong>{{ stats.avg_delay_minutes }}</strong><span>Average delay (minutes)</span></div><div class="stat-card"><strong>{{ stats.avg_overrun_minutes }}</strong><span>Average overrun</span></div><div class="stat-card"><strong>{{ stats.overrun_count }}</strong><span>Services overrun</span></div></div>{% endif %}{% endblock %}
+{% block title %}Operations report · Harpr Church{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Operations report</p>
+    <h1>Programme summary</h1>
+    <p class="muted" style="margin-top:6px;">
+      Aggregated from the last {{ stats.service_count }} completed services.
+      Individual member names and personal data are not used.
+    </p>
+  </div>
+</div>
+
+{% if stats %}
+<div class="stat-grid">
+  <div class="stat-card">
+    <strong>{{ stats.service_count }}</strong>
+    <span>Completed services</span>
+  </div>
+  <div class="stat-card">
+    <strong>{{ stats.avg_delay_minutes }}</strong>
+    <span>Avg start delay (min)</span>
+  </div>
+  <div class="stat-card">
+    <strong>{{ stats.avg_overrun_minutes }}</strong>
+    <span>Avg duration overrun (min)</span>
+  </div>
+  <div class="stat-card">
+    <strong>{{ stats.most_delayed_item }}</strong>
+    <span>Most delayed item</span>
+  </div>
+</div>
+{% endif %}
+
+<div class="card insight-card">
+  <div class="card-head">
+    <h2>Commentary</h2>
+    {% if cached %}<small class="muted">Cached for 24 hours.</small>{% endif %}
+  </div>
+
+  {% if no_key %}
+  <p>
+    No AI commentary is available because no Groq API key is configured.
+    To enable it, set <code>GROQ_API_KEY</code> in your <code>.env</code>
+    file and reload this page. The summary numbers above do not depend on
+    the AI and are always accurate.
+  </p>
+  {% elif error_detail %}
+  <p>{{ insight }}</p>
+  <p class="muted" style="font-size:0.78rem; margin-top:8px;">
+    The AI service returned an error. The summary numbers above are
+    unaffected.
+  </p>
+  {% else %}
+  <p>{{ insight }}</p>
+  <p class="muted" style="font-size:0.78rem; margin-top:12px;">
+    Generated from aggregated summary numbers only. No member names or
+    individual records are sent.
+  </p>
+  {% endif %}
+</div>
+{% endblock %}

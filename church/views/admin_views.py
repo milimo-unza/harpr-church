@@ -1,3 +1,4 @@
+import json
 import os
 from datetime import datetime, timedelta
 
@@ -6,11 +7,13 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Count
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.core.management import call_command
+
+from django.conf import settings
 
 from church.forms import (
     AnnouncementForm,
@@ -44,6 +47,19 @@ from church.services.recalculation import (
 from church.views.decorators import admin_required
 
 User = get_user_model()
+
+
+def _is_ajax(request):
+    """True if the request came from our modal JS (fetch + X-Requested-With)."""
+    return (
+        request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        or request.headers.get("Accept", "").startswith("application/json")
+    )
+
+
+def _form_errors_json(form):
+    """Flatten Django form errors into {field: [messages]}."""
+    return {field: [str(e) for e in errs] for field, errs in form.errors.items()}
 
 
 @admin_required
@@ -85,6 +101,14 @@ def admin_dashboard(request):
             "events": [e for e in events if e.date == day],
         })
 
+    month_start = today.replace(day=1)
+    # Last day of month: first day of next month minus one day
+    if today.month == 12:
+        next_month = today.replace(year=today.year + 1, month=1, day=1)
+    else:
+        next_month = today.replace(month=today.month + 1, day=1)
+    month_end = next_month - timedelta(days=1)
+
     return render(request, "church/dashboard.html", {
         "church": request.church,
         "today": today,
@@ -94,17 +118,22 @@ def admin_dashboard(request):
         "next_week": next_week,
         "days": days,
         "service_count": request.church.services.filter(
-            date__year=today.year, date__month=today.month
+            date__gte=month_start, date__lte=month_end
+        ).count(),
+        "month_label": today.strftime("%b %Y"),
+        "completed_count": request.church.services.filter(
+            status="completed"
         ).count(),
         "pending_request_count": request.church.requests.filter(
             status="pending"
         ).count(),
         "recent_activity": request.church.logs.select_related(
             "user", "service", "service_item"
-        )[:10],
+        )[:20],
         "service_templates": request.church.service_templates.filter(is_active=True),
         "departments": request.church.departments.all(),
     })
+
 
 @admin_required
 def service_list(request):
@@ -121,8 +150,13 @@ def service_list(request):
     return render(
         request,
         "church/service_list.html",
-        {"services": services, "active_filter": filter_name,
-            "current_year": timezone.localdate().year},
+        {
+            "services": services,
+            "active_filter": filter_name,
+            "current_year": timezone.localdate().year,
+            "service_form": ServiceForm(church=request.church),
+            "service_templates": request.church.service_templates.filter(is_active=True),
+        },
     )
 
 
@@ -161,8 +195,18 @@ def service_create(request):
                     notes=template_item.notes,
                 )
                 start += timedelta(minutes=template_item.default_duration_minutes)
+        if _is_ajax(request):
+            return JsonResponse({
+                "ok": True,
+                "redirect": "/services/",
+                "message": "Service created.",
+            })
         messages.success(request, "Service created.")
         return redirect("service_list")
+
+    if request.method == "POST" and _is_ajax(request):
+        return JsonResponse({"ok": False, "errors": _form_errors_json(form)}, status=400)
+
     return render(request, "church/service_form.html", {"form": form, "title": "New service"})
 
 
@@ -177,7 +221,12 @@ def service_detail(request, pk):
     return render(
         request,
         "church/service_detail.html",
-        {"service": service, "assignment_form": AssignmentForm()},
+        {
+            "service": service,
+            "assignment_form": AssignmentForm(),
+            "item_form": ServiceItemForm(church=request.church),
+            "departments": request.church.departments.all(),
+        },
     )
 
 
@@ -197,8 +246,18 @@ def service_item_create(request, pk):
             "New service item",
             f"{item.title} was added to {service.name}.",
         )
+        if _is_ajax(request):
+            return JsonResponse({
+                "ok": True,
+                "redirect": f"/services/{service.pk}/",
+                "message": "Service item added.",
+            })
         messages.success(request, "Service item added.")
         return redirect("service_detail", pk=service.pk)
+
+    if request.method == "POST" and _is_ajax(request):
+        return JsonResponse({"ok": False, "errors": _form_errors_json(form)}, status=400)
+
     return render(request, "church/service_item_form.html", {"form": form, "service": service, "title": "Add item"})
 
 
@@ -216,8 +275,18 @@ def service_item_edit(request, pk, item_pk):
             "Service item updated",
             f"{item.title} in {service.name} was updated.",
         )
+        if _is_ajax(request):
+            return JsonResponse({
+                "ok": True,
+                "redirect": f"/services/{service.pk}/",
+                "message": "Service item updated.",
+            })
         messages.success(request, "Service item updated.")
         return redirect("service_detail", pk=service.pk)
+
+    if request.method == "POST" and _is_ajax(request):
+        return JsonResponse({"ok": False, "errors": _form_errors_json(form)}, status=400)
+
     return render(request, "church/service_item_form.html", {"form": form, "service": service, "item": item, "title": "Edit item"})
 
 
@@ -300,8 +369,18 @@ def event_create(request):
             "New church event",
             f"{event.title} is scheduled for {event.date}.",
         )
+        if _is_ajax(request):
+            return JsonResponse({
+                "ok": True,
+                "redirect": "/dashboard/",
+                "message": "Event created.",
+            })
         messages.success(request, "Event created.")
         return redirect("admin_dashboard")
+
+    if request.method == "POST" and _is_ajax(request):
+        return JsonResponse({"ok": False, "errors": _form_errors_json(form)}, status=400)
+
     return render(request, "church/event_form.html", {"form": form, "title": "New event"})
 
 
@@ -312,8 +391,18 @@ def event_edit(request, pk):
                            instance=event, church=request.church)
     if request.method == "POST" and form.is_valid():
         form.save()
+        if _is_ajax(request):
+            return JsonResponse({
+                "ok": True,
+                "redirect": "/dashboard/",
+                "message": "Event updated.",
+            })
         messages.success(request, "Event updated.")
         return redirect("admin_dashboard")
+
+    if request.method == "POST" and _is_ajax(request):
+        return JsonResponse({"ok": False, "errors": _form_errors_json(form)}, status=400)
+
     return render(request, "church/event_form.html", {"form": form, "event": event, "title": "Edit event"})
 
 
@@ -371,7 +460,6 @@ def department_create(request):
         messages.success(request, "Department created.")
         return redirect("department_list")
     if request.method == "POST":
-        # On error, redirect back to list so the modal can display errors
         messages.error(request, "Please correct the errors in the form.")
         return redirect("department_list")
     return render(request, "church/department_form.html", {"form": form, "title": "New department"})
@@ -655,7 +743,7 @@ def ai_insights(request):
     cutoff = timezone.now() - timedelta(hours=24)
     cached = request.church.ai_insights.filter(
         generated_at__gte=cutoff).first()
-    if cached:
+    if cached and "temporarily unavailable" not in cached.content:
         return render(
             request,
             "church/ai_insights.html",
@@ -672,42 +760,78 @@ def ai_insights(request):
                 "cached": False,
             },
         )
+
+    api_key = settings.GROQ_API_KEY or os.environ.get("GROQ_API_KEY", "")
+    if not api_key:
+        return render(
+            request,
+            "church/ai_insights.html",
+            {
+                "insight": (
+                    "AI insights are disabled because no Groq API key is configured. "
+                    "Set the GROQ_API_KEY environment variable (or add it to your .env file) "
+                    "and reload this page. Everything else in Harpr works without it."
+                ),
+                "stats": stats,
+                "cached": False,
+                "no_key": True,
+            },
+        )
+
     insight_text = ""
+    error_detail = ""
     try:
         from openai import OpenAI
 
         client = OpenAI(
             base_url="https://api.groq.com/openai/v1",
-            api_key=os.environ.get("GROQ_API_KEY") or None,
+            api_key=api_key,
         )
         prompt = (
-            "Analyse these aggregated church operations numbers and give three "
-            "specific recommendations under 150 words. "
-            f"Data: {stats}"
+            "You are writing a short plain-prose paragraph for a church "
+            "programme coordinator. Do not use markdown, bullet points, "
+            "headings, or asterisks — just flowing sentences. Write 3 to 5 "
+            "sentences. First summarise what the numbers show, then name the "
+            "single item with the largest average delay, then suggest one "
+            "concrete thing the coordinator could adjust. If a number is zero "
+            "or unavailable, do not invent a finding about it. "
+            f"Aggregated summary numbers: {stats}"
         )
         response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="openai/gpt-oss-120b",
             messages=[
                 {"role": "system", "content": "You are a church operations analyst."},
                 {"role": "user", "content": prompt},
             ],
             temperature=0.7,
-            max_tokens=300,
+            max_tokens=400,
         )
         insight_text = response.choices[0].message.content
-    except Exception:
-        insight_text = "AI analysis temporarily unavailable."
-    AIInsight.objects.create(
-        church=request.church,
-        period_start=timezone.localdate() - timedelta(days=30),
-        period_end=timezone.localdate(),
-        content=insight_text,
-        raw_stats=stats,
-    )
+    except Exception as exc:
+        error_detail = f"{type(exc).__name__}: {exc}"
+        insight_text = (
+            "AI analysis is temporarily unavailable. "
+            f"({error_detail})"
+        )
+
+    if not error_detail:
+        AIInsight.objects.create(
+            church=request.church,
+            period_start=timezone.localdate() - timedelta(days=30),
+            period_end=timezone.localdate(),
+            content=insight_text,
+            raw_stats=stats,
+        )
+
     return render(
         request,
         "church/ai_insights.html",
-        {"insight": insight_text, "stats": stats, "cached": False},
+        {
+            "insight": insight_text,
+            "stats": stats,
+            "cached": False,
+            "error_detail": error_detail,
+        },
     )
 
 

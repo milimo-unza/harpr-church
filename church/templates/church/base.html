@@ -49,7 +49,7 @@
         <a class="navlink {% if request.resolver_match.url_name == 'announcement_list' or request.resolver_match.url_name == 'announcement_create' or request.resolver_match.url_name == 'announcement_edit' %}active{% endif %}"
           href="{% url 'announcement_list' %}">Announcements</a>
         <a class="navlink {% if request.resolver_match.url_name == 'ai_insights' %}active{% endif %}"
-          href="{% url 'ai_insights' %}">Insights</a>
+          href="{% url 'ai_insights' %}">Report</a>
         <a class="navlink {% if request.resolver_match.url_name == 'church_settings' %}active{% endif %}"
           href="{% url 'church_settings' %}">Settings</a>
         {% elif is_dept_head %}
@@ -70,18 +70,39 @@
             </span>
           </span>
         </div>
-        <div class="footer-actions">
-          <button class="icon-btn" id="theme-toggle" type="button" aria-label="Toggle theme">◐</button>
-          <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+
+        <div class="footer-actions" role="toolbar" aria-label="Account and activity">
+          <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
             <button class="icon-btn" type="submit" aria-label="Sign out" title="Sign out">⏻</button>
           </form>
+
+          <button class="icon-btn" id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle theme">◐</button>
+
+          <div class="footer-popover" data-activity-root>
+            <button class="icon-btn" type="button" data-activity-toggle aria-label="Recent actions" title="Recent actions">
+              <span aria-hidden="true">≡</span>
+            </button>
+            <div class="footer-dropdown" data-activity-dropdown hidden>
+              <div class="footer-dropdown-head">Recent actions</div>
+              <div class="footer-dropdown-body" data-activity-list>
+                <div class="footer-dropdown-empty">Loading…</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="footer-popover" data-notification-root>
+            <button class="icon-btn" type="button" data-notification-toggle aria-label="Notifications" title="Notifications">
+              <span aria-hidden="true">◔</span>
+              <span class="notif-badge" data-notification-badge hidden>0</span>
+            </button>
+            <div class="footer-dropdown" data-notification-dropdown hidden></div>
+          </div>
         </div>
       </div>
     </aside>
 
     <main class="main">
-      {# topbar removed; notification bell will float near the scripts per R6.1 #}
-
       {% block content %}{% endblock %}
     </main>
   </div>
@@ -123,15 +144,61 @@
       window.harprToast(n.dataset.toast, n.dataset.toastKind || "success");
     });
   </script>
-  <div class="notif-bell--floating" data-notification-root>
-    <button class="icon-btn" type="button" data-notification-toggle aria-label="Notifications">
-      <span aria-hidden="true">◔</span>
-      <span class="notif-badge" data-notification-badge hidden>0</span>
-    </button>
-    <div class="notif-dropdown" data-notification-dropdown hidden></div>
-  </div>
+
   <script src="{% static 'js/notifications.js' %}"></script>
-  {% block scripts %}{% endblock %}
+
+  <script>
+    (function () {
+      var root = document.querySelector("[data-activity-root]");
+      if (!root) return;
+      var toggle = root.querySelector("[data-activity-toggle]");
+      var dropdown = root.querySelector("[data-activity-dropdown]");
+      var list = root.querySelector("[data-activity-list]");
+      var loaded = false;
+
+      function escapeHtml(s) {
+        return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+        });
+      }
+
+      function load() {
+        fetch("/api/activity/", { headers: { "X-Requested-With": "XMLHttpRequest" } })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (data) {
+            if (!data) { list.innerHTML = '<div class="footer-dropdown-empty">Could not load.</div>'; return; }
+            if (!data.entries.length) {
+              list.innerHTML = '<div class="footer-dropdown-empty">No activity yet.</div>';
+              return;
+            }
+            list.innerHTML = data.entries.map(function (e) {
+              return '<div class="notif-item notif-item--static">' +
+                '<strong>' + escapeHtml(e.action) + '</strong>' +
+                '<small>' + escapeHtml(e.detail) + '</small>' +
+                '<small class="muted">' + escapeHtml(e.meta) + '</small>' +
+                '</div>';
+            }).join("");
+          })
+          .catch(function () { list.innerHTML = '<div class="footer-dropdown-empty">Could not load.</div>'; });
+      }
+
+      if (toggle) {
+        toggle.addEventListener("click", function (e) {
+          e.stopPropagation();
+          var willOpen = dropdown.hidden;
+          document.querySelectorAll(".footer-dropdown").forEach(function (d) { d.hidden = true; });
+          dropdown.hidden = !willOpen;
+          if (willOpen) { load(); }
+        });
+      }
+    })();
+
+    // Close any open footer dropdown when clicking outside it.
+    document.addEventListener("click", function (e) {
+      if (e.target.closest(".footer-popover")) return;
+      document.querySelectorAll(".footer-dropdown").forEach(function (d) { d.hidden = true; });
+    });
+  </script>
 </body>
 
 </html>

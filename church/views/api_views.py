@@ -44,3 +44,35 @@ def api_notification_read(request, pk):
 def api_notifications_mark_all_read(request):
     updated = _user_notifications(request.user).filter(is_read=False).update(is_read=True)
     return JsonResponse({"ok": True, "updated": updated})
+
+@login_required
+def api_activity(request):
+    """Return the most recent ServiceLog entries for the user's active church."""
+    membership = (
+        request.user.church_memberships.filter(is_active=True)
+        .select_related("church")
+        .first()
+    )
+    if not membership:
+        return JsonResponse({"entries": []})
+
+    logs = (
+        membership.church.logs
+        .select_related("user", "service")
+        .order_by("-created_at")[:10]
+    )
+    entries = []
+    for entry in logs:
+        meta_bits = [entry.created_at.strftime("%d %b %H:%M")]
+        if entry.user:
+            meta_bits.append(entry.user.username)
+        if entry.service:
+            meta_bits.append(entry.service.name)
+        detail = entry.details or entry.reason or "—"
+        entries.append({
+            "action": entry.get_action_display(),
+            "detail": detail,
+            "meta": " · ".join(meta_bits),
+            "url": "/dashboard/",
+        })
+    return JsonResponse({"entries": entries})

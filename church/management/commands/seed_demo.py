@@ -1,4 +1,5 @@
 from datetime import date, datetime, time, timedelta
+import random
 
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
@@ -25,6 +26,9 @@ class Command(BaseCommand):
     help = "Rebuild the Harpr Church demonstration data."
 
     def handle(self, *args, **options):
+        # Deterministic so repeated runs give the same demo numbers.
+        rng = random.Random(20260705)
+
         today = timezone.localdate()
 
         church, _ = Church.objects.update_or_create(
@@ -133,6 +137,9 @@ class Command(BaseCommand):
             "Scripture Reading": ["Grace Mumba", "Brian Kunda", "Naomi Sampa"],
         }
 
+        # Items that tend to slip. Gives the AI report something to talk about.
+        delay_prone = {"Pre-Service Music": (3, 12), "Worship Songs": (0, 6), "Sermon": (-2, 4)}
+
         for idx, service_date in enumerate(service_dates):
             is_past = service_date < today
             service, _ = Service.objects.update_or_create(
@@ -145,9 +152,19 @@ class Command(BaseCommand):
                 },
             )
             start = timezone.make_aware(datetime.combine(service_date, time(8, 0)))
+            running_actual = start
             for order, (title, duration, dept_slug) in enumerate(item_specs):
-                actual_start = start if is_past else None
-                actual_duration = duration if is_past else None
+                if is_past:
+                    lo, hi = delay_prone.get(title, (0, 4))
+                    delay_min = rng.randint(lo, hi)
+                    duration_jitter = rng.randint(-2, 5)
+                    actual_start = running_actual + timedelta(minutes=delay_min)
+                    actual_duration = max(1, duration + duration_jitter)
+                    running_actual = actual_start + timedelta(minutes=actual_duration)
+                else:
+                    actual_start = None
+                    actual_duration = None
+
                 item, _ = ServiceItem.objects.update_or_create(
                     service=service,
                     order=order,
