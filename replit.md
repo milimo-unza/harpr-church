@@ -2,30 +2,24 @@
 
 ## Run the project
 
-The configured workflow is **Start application**:
+    python manage.py runserver 0.0.0.0:5000
 
-```bash
-python manage.py runserver 0.0.0.0:5000
-```
-
-The app uses Django 6, SQLite, server-rendered templates, and vanilla
-JavaScript. Dependencies are listed in `requirements.txt`.
+Django 6, SQLite, server-rendered templates, vanilla JavaScript.
+Dependencies are in `requirements.txt`.
 
 For a fresh database:
 
-```bash
-python manage.py migrate
-python manage.py seed_demo
-```
+    python manage.py migrate
+    python manage.py seed_demo
 
-Open `/accounts/login/` to sign in. The demo users use the password
-`harpr2026`; the coordinator is `coordinator`, and department-head users
-include `music_head`, `pastors_head`, `ushering_head`, and `media_head`.
+Open `/accounts/login/`. Demo users share the password `harpr2026`.
+Coordinator: `coordinator`. Department heads: `music_head`, `pastors_head`,
+`ushering_head`, `media_head`.
 
 The public demo page is `/c/grace-covenant/`.
 
 ## Optional configuration
 
-Set `GROQ_API_KEY` to enable the optional AI insights page. The rest of the
-application works without it. `SESSION_SECRET` is accepted as the Django
-secret key in Replit environments.
+Set `GROQ_API_KEY` to enable the AI commentary on the Report page. The rest
+of the application works without it. `SESSION_SECRET` is accepted as the
+Django secret key.
