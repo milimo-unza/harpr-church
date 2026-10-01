@@ -81,6 +81,7 @@
 
           <button class="icon-btn" id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle theme">◐</button>
 
+          {% if is_coordinator %}
           <div class="footer-popover" data-activity-root>
             <button class="icon-btn" type="button" data-activity-toggle aria-label="Recent actions" title="Recent actions">
               <span aria-hidden="true">≡</span>
@@ -92,6 +93,7 @@
               </div>
             </div>
           </div>
+          {% endif %}
 
           <div class="footer-popover" data-notification-root>
             <button class="icon-btn" type="button" data-notification-toggle aria-label="Notifications" title="Notifications">

@@ -15,6 +15,7 @@ from church.models import (
     Service,
     ServiceItem,
 )
+from church.services.notifications import log_action
 from church.views.decorators import dept_head_required
 
 
@@ -218,6 +219,14 @@ def dept_assignment_create(request, pk):
             person_name=name,
             role=role,
         )
+        log_action(
+            church=request.church,
+            user=request.user,
+            action="item_edited",
+            details=f"Assigned {name} to {item.title}",
+            service=item.service,
+            service_item=item,
+        )
         created.append(assignment)
         if save_to_roster:
             DepartmentMember.objects.get_or_create(
@@ -248,7 +257,17 @@ def dept_assignment_delete(request, pk):
         service_item__church=request.church,
         service_item__responsible_department=request.department,
     )
+    item = assignment.service_item
+    person = assignment.person_name
     assignment.delete()
+    log_action(
+        church=request.church,
+        user=request.user,
+        action="item_edited",
+        details=f"Removed {person} from {item.title}",
+        service=item.service,
+        service_item=item,
+    )
 
     if _is_ajax(request):
         return JsonResponse({"ok": True, "message": "Assignment removed."})

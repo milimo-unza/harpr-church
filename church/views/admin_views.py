@@ -39,7 +39,7 @@ from church.models import (
     ServiceItem,
     Invitation,
 )
-from church.services.notifications import notify_department, notify_user
+from church.services.notifications import log_action, notify_department, notify_user
 from church.services.recalculation import (
     freeze_service,
     recalculate_times,
@@ -241,6 +241,14 @@ def service_item_create(request, pk):
         item.order = (service.items.order_by(
             "-order").first().order + 1) if service.items.exists() else 0
         item.save()
+        log_action(
+            church=request.church,
+            user=request.user,
+            action="item_added",
+            details=f"{item.title} added to {service.name}",
+            service=service,
+            service_item=item,
+        )
         notify_department(
             request.church,
             item.responsible_department,
@@ -270,6 +278,14 @@ def service_item_edit(request, pk, item_pk):
                            instance=item, church=request.church)
     if request.method == "POST" and form.is_valid():
         item = form.save()
+        log_action(
+            church=request.church,
+            user=request.user,
+            action="item_edited",
+            details=f"{item.title} edited in {service.name}",
+            service=service,
+            service_item=item,
+        )
         notify_department(
             request.church,
             item.responsible_department,
@@ -351,6 +367,14 @@ def assignment_create(request, pk, item_pk):
         assignment = form.save(commit=False)
         assignment.service_item = item
         assignment.save()
+        log_action(
+            church=request.church,
+            user=request.user,
+            action="item_edited",
+            details=f"Assigned {assignment.person_name} to {item.title}",
+            service=service,
+            service_item=item,
+        )
         messages.success(request, "Assignment added.")
     else:
         messages.error(request, "Enter a name and role for the assignment.")
@@ -364,6 +388,12 @@ def event_create(request):
         event = form.save(commit=False)
         event.church = request.church
         event.save()
+        log_action(
+            church=request.church,
+            user=request.user,
+            action="created",
+            details=f"Event created: {event.title} on {event.date}",
+        )
         notify_department(
             request.church,
             event.responsible_department,
@@ -409,6 +439,12 @@ def event_edit(request, pk):
                            instance=event, church=request.church)
     if request.method == "POST" and form.is_valid():
         form.save()
+        log_action(
+            church=request.church,
+            user=request.user,
+            action="created",
+            details=f"Event updated: {event.title}",
+        )
         if _is_ajax(request):
             return JsonResponse({
                 "ok": True,
@@ -428,7 +464,14 @@ def event_edit(request, pk):
 @require_POST
 def event_delete(request, pk):
     event = get_object_or_404(request.church.events, pk=pk)
+    title = event.title
     event.delete()
+    log_action(
+        church=request.church,
+        user=request.user,
+        action="created",
+        details=f"Event deleted: {title}",
+    )
     if _is_ajax(request):
         return JsonResponse({"ok": True, "message": "Event deleted."})
     messages.success(request, "Event deleted.")
@@ -554,6 +597,14 @@ def request_respond(request, pk):
                         notes=church_request.approved_text or church_request.body,
                     )
                     created_kind = "Event added to schedule."
+
+        log_action(
+            church=request.church,
+            user=request.user,
+            action="request_approved" if church_request.status == "approved" else "request_rejected",
+            details=f"{church_request.get_status_display()}: {church_request.title}",
+            reason=church_request.admin_response or "",
+        )
 
         if church_request.submitted_by:
             notify_user(

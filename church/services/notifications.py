@@ -24,3 +24,18 @@ def notify_department(church, department, title, body="", url=""):
         is_active=True,
     ).select_related("user"):
         notify_user(membership.user, title, body, url, church=church)
+
+def log_action(church, user, action, details="", reason="", service=None, service_item=None):
+    """Write a ServiceLog entry. Centralised so every view logs consistently."""
+    from church.models import ServiceLog
+    if church is None:
+        return None
+    return ServiceLog.objects.create(
+        church=church,
+        user=user,
+        action=action,
+        details=details or "",
+        reason=reason or "",
+        service=service,
+        service_item=service_item,
+    )
