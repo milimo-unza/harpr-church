@@ -2063,3 +2063,22 @@ width: 100%;
 flex: 1;
 }
 }
+
+.notif-mark-all {
+display: block;
+width: 100%;
+margin-top: var(--space-2);
+padding: var(--space-2) var(--space-3);
+background: transparent;
+border: 1px solid var(--border);
+border-radius: var(--radius-sm);
+color: var(--muted-fg);
+font-family: var(--font-sans);
+font-size: 0.78rem;
+cursor: pointer;
+text-align: center;
+}
+.notif-mark-all:hover {
+background: var(--surface-2);
+color: var(--fg);
+}

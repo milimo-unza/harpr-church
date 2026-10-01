@@ -5,6 +5,16 @@
   var dropdown = root.querySelector("[data-notification-dropdown]");
   var toggle = root.querySelector("[data-notification-toggle]");
 
+  function getCookie(name) {
+    var v = null;
+    document.cookie.split(";").forEach(function (c) {
+      var parts = c.trim().split("=");
+      if (parts[0] === name) v = decodeURIComponent(parts[1]);
+    });
+    return v;
+  }
+
+
   function hideBell() {
     if (toggle) toggle.hidden = true;
   }
@@ -41,13 +51,37 @@
           data.notifications
             .map(function (item) {
               return (
-                '<a class="notif-item" href="' + item.url + '">' +
+                '<a class="notif-item" href="' + item.url + '" data-notif-id="' + item.id + '">' +
                 "<strong>" + item.title + "</strong>" +
                 "<small>" + item.body + "</small>" +
                 "</a>"
               );
             })
-            .join("");
+            .join("") +
+          '<button type="button" class="notif-mark-all" data-mark-all>Mark all as read</button>';
+
+        var markAll = dropdown.querySelector("[data-mark-all]");
+        if (markAll) {
+          markAll.addEventListener("click", function () {
+            fetch("/api/notifications/mark-all-read/", {
+              method: "POST",
+              headers: { "X-CSRFToken": getCookie("csrftoken") },
+            }).then(function () { loadNotifications(); });
+          });
+        }
+
+        // Mark each clicked notification as read before navigating.
+        dropdown.querySelectorAll("[data-notif-id]").forEach(function (link) {
+          link.addEventListener("click", function () {
+            var id = link.getAttribute("data-notif-id");
+            var csrf = getCookie("csrftoken");
+            fetch("/api/notifications/" + id + "/read/", {
+              method: "POST",
+              headers: { "X-CSRFToken": csrf },
+              keepalive: true,
+            });
+          });
+        });
       })
       .catch(function () { });
   }
