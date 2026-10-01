@@ -18,12 +18,6 @@ from church.models import (
 User = get_user_model()
 
 
-def _style_fields(form):
-    for field in form.fields.values():
-        existing = field.widget.attrs.get("class", "")
-        field.widget.attrs["class"] = f"{existing} form-input".strip()
-
-
 class ServiceForm(forms.ModelForm):
     template = forms.ModelChoiceField(
         queryset=ServiceTemplate.objects.none(), required=False
@@ -40,7 +34,7 @@ class ServiceForm(forms.ModelForm):
             church.service_templates.filter(
                 is_active=True) if church else ServiceTemplate.objects.none()
         )
-        _style_fields(self)
+        add_input_class(self)
 
 
 class ServiceItemForm(forms.ModelForm):
@@ -66,7 +60,7 @@ class ServiceItemForm(forms.ModelForm):
         self.fields["responsible_department"].queryset = (
             church.departments.all() if church else Department.objects.none()
         )
-        _style_fields(self)
+        add_input_class(self)
 
 
 class AssignmentForm(forms.ModelForm):
@@ -77,7 +71,7 @@ class AssignmentForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        _style_fields(self)
+        add_input_class(self)
 
 
 class RequestForm(forms.ModelForm):
@@ -90,7 +84,7 @@ class RequestForm(forms.ModelForm):
 
     def __init__(self, *args, church=None, **kwargs):
         super().__init__(*args, **kwargs)
-        _style_fields(self)
+        add_input_class(self)
 
 
 class RequestResponseForm(forms.ModelForm):
@@ -105,7 +99,7 @@ class RequestResponseForm(forms.ModelForm):
             ("approved", "Approved"),
             ("rejected", "Rejected"),
         ]
-        _style_fields(self)
+        add_input_class(self)
 
 
 class RequestApproveForm(forms.Form):
@@ -144,7 +138,7 @@ class DepartmentForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        _style_fields(self)
+        add_input_class(self)
 
 
 class MemberInviteForm(forms.Form):
@@ -159,7 +153,7 @@ class MemberInviteForm(forms.Form):
         self.fields["department"].queryset = (
             church.departments.all() if church else Department.objects.none()
         )
-        _style_fields(self)
+        add_input_class(self)
 
 
 class MemberEditForm(forms.Form):
@@ -173,7 +167,7 @@ class MemberEditForm(forms.Form):
         self.fields["department"].queryset = (
             church.departments.all() if church else Department.objects.none()
         )
-        _style_fields(self)
+        add_input_class(self)
 
 
 class AnnouncementForm(forms.ModelForm):
@@ -199,7 +193,7 @@ class AnnouncementForm(forms.ModelForm):
         self.fields["service"].queryset = (
             church.services.all() if church else Service.objects.none()
         )
-        _style_fields(self)
+        add_input_class(self)
 
 
 class ChurchEventForm(forms.ModelForm):
@@ -227,7 +221,7 @@ class ChurchEventForm(forms.ModelForm):
         self.fields["responsible_department"].queryset = (
             church.departments.all() if church else Department.objects.none()
         )
-        _style_fields(self)
+        add_input_class(self)
 
     def clean(self):
         cleaned = super().clean()
@@ -246,7 +240,7 @@ class RecalculateForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        _style_fields(self)
+        add_input_class(self)
 
 
 class ChurchSettingsForm(forms.ModelForm):
@@ -274,7 +268,7 @@ class ChurchSettingsForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        _style_fields(self)
+        add_input_class(self)
 
 
 class ChurchSignupForm(forms.Form):
@@ -324,6 +318,7 @@ class ChurchSignupForm(forms.Form):
                 slug=self.cleaned_data["church_slug"],
                 address=self.cleaned_data.get("church_address", ""),
                 worship_day=int(self.cleaned_data["worship_day"]),
+                # hardcoded for Zambia, add a picker later
                 timezone="Africa/Lusaka",
             )
             user = User.objects.create_user(
@@ -411,3 +406,8 @@ class PublicRequestForm(forms.ModelForm):
         if commit:
             obj.save()
         return obj
+
+# Quick way to give every field the same css class without listing them
+def add_input_class(form):
+    for f in form.fields.values():
+        f.widget.attrs["class"] = "form-input"

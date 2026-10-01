@@ -98,5 +98,6 @@
 
   hideBell();
   loadNotifications();
+  // FIXME: polling every minute is wasteful, switch to SSE or long-poll
   window.setInterval(loadNotifications, 60000);
 })();

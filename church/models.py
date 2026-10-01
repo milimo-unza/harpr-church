@@ -149,7 +149,6 @@ class ServiceItemTemplate(models.Model):
     template = models.ForeignKey(
         ServiceTemplate, on_delete=models.CASCADE, related_name="items"
     )
-    # Stored directly as required for church-scoped filtering; derived from template.
     church = models.ForeignKey(
         Church,
         on_delete=models.CASCADE,
@@ -218,7 +217,6 @@ class ServiceItem(models.Model):
 
     service = models.ForeignKey(
         Service, on_delete=models.CASCADE, related_name="items")
-    # Kept as a direct tenant key; save() derives it from the owning service.
     church = models.ForeignKey(
         Church, on_delete=models.CASCADE, related_name="service_items", editable=False
     )
@@ -254,7 +252,6 @@ class Assignment(models.Model):
     service_item = models.ForeignKey(
         ServiceItem, on_delete=models.CASCADE, related_name="assignments"
     )
-    # Kept as a direct tenant key; save() derives it from the owning service item.
     church = models.ForeignKey(
         Church, on_delete=models.CASCADE, related_name="assignments", editable=False
     )
@@ -382,7 +379,6 @@ class ServiceLog(models.Model):
 class Bulletin(models.Model):
     service = models.ForeignKey(
         Service, on_delete=models.CASCADE, related_name="bulletins")
-    # Direct tenant key for church-scoped queries; derived from service.
     church = models.ForeignKey(
         Church, on_delete=models.CASCADE, related_name="bulletins", editable=False
     )

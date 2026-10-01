@@ -31,9 +31,9 @@ never names or individual member data.
 
 ## Sprint 6 — September 1–October 15, 2026
 
-UI polish, department rosters, the requests workflow (announcements vs
-schedule), modal-based interaction throughout, seed data, documentation,
-and route tests for deployment.
+UI cleanup. Added the department rosters and the requests workflow. Moved
+most of the forms into modals. Rewrote the seed data. Wrote the docs you
+are reading.
 
 ## Scope cuts
 
@@ -41,11 +41,12 @@ and route tests for deployment.
 - WeasyPrint, dropped in favour of ReportLab (fewer deployment deps)
 - Browser push notifications — deferred in favour of in-app notifications
 
-## What would be done differently
+## What I would do differently
 
-Define the public and staff URL map earlier and write route-level tests
-before building templates. Use PostgreSQL from the start if multi-church
-concurrent editing were ever intended.
+I would sit down and map out all the URLs first. Halfway through I realised
+the public pages and the staff pages were fighting each other for the same
+route names. I also would write tests earlier. Most of the tests in here
+were written at the end.
 
 ## Future work
 

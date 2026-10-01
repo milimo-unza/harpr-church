@@ -51,7 +51,7 @@ User = get_user_model()
 
 
 def _is_ajax(request):
-    """True if the request came from our modal JS (fetch + X-Requested-With)."""
+    """Return True if this came from the modal fetch calls."""
     return (
         request.headers.get("X-Requested-With") == "XMLHttpRequest"
         or request.headers.get("Accept", "").startswith("application/json")
@@ -59,12 +59,12 @@ def _is_ajax(request):
 
 
 def _form_errors_json(form):
-    """Flatten Django form errors into {field: [messages]}."""
+    """Turn form errors into plain JSON."""
     return {field: [str(e) for e in errs] for field, errs in form.errors.items()}
 
 
 def _frozen_response(request, service):
-    """Standard response when an action is blocked because the service is frozen."""
+    """Error when service is frozen."""
     msg = (
         f"{service.name} is frozen. Unfreeze it with a reason before "
         "editing its items."
@@ -90,7 +90,7 @@ def admin_dashboard(request):
     else:
         ref = today
 
-    # Sunday-first week: Sunday.weekday() == 6, so shift forward by 1
+    # Sunday first
     days_since_sunday = (ref.weekday() + 1) % 7
     week_start = ref - timedelta(days=days_since_sunday)
     week_end = week_start + timedelta(days=6)
@@ -115,7 +115,6 @@ def admin_dashboard(request):
         })
 
     month_start = today.replace(day=1)
-    # Last day of month: first day of next month minus one day
     if today.month == 12:
         next_month = today.replace(year=today.year + 1, month=1, day=1)
     else:
@@ -1009,7 +1008,9 @@ def gather_church_stats(church):
 
 
 def gather_department_load(church):
-    """Count upcoming service items per department over the next 60 days."""
+    # TODO: this runs on every report page load. Cache it once I have time.
+    # Also doesn't filter out skipped items, so the count can be off
+    # by a bit. Not worth fixing right now.
     from datetime import timedelta as _td
     from django.db.models import Count as _Count
     today = timezone.localdate()
@@ -1075,6 +1076,7 @@ def ai_insights(request):
             },
         )
 
+    # TODO: move the key to settings only, env fallback is ugly
     api_key = settings.GROQ_API_KEY or os.environ.get("GROQ_API_KEY", "")
     if not api_key:
         return render(

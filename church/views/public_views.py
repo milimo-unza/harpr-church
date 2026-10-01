@@ -84,6 +84,7 @@ def public_request(request, slug):
             "submitter_contact", "").strip()
         church_request.submitted_by = None
 
+        # TODO: this parsing should be a form, not manual
         start_raw = request.POST.get("start_date", "").strip()
         end_raw = request.POST.get("end_date", "").strip()
         if start_raw:

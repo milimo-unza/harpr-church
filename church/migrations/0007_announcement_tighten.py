@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 def backfill_announcement_dates(apps, schema_editor):
-    """Give any null-dated announcements a reasonable window."""
     Announcement = apps.get_model("church", "Announcement")
     today = timezone.localdate()
     for announcement in Announcement.objects.all():

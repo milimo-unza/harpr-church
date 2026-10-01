@@ -7,7 +7,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load a local .env if python-dotenv is installed. Silently skip otherwise.
+# Load .env if it exists
 try:
     from dotenv import load_dotenv
 
@@ -89,13 +89,11 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# en-gb forces 24-hour time inputs in browsers; en-us would render 12-hour.
 LANGUAGE_CODE = "en-gb"
 TIME_ZONE = "Africa/Lusaka"
 USE_I18N = True
 USE_TZ = True
 
-# Email: SMTP if configured, else console (dev).
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")

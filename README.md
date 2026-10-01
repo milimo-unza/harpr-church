@@ -6,19 +6,19 @@ Kasamba Mukkuli (2021515567) at the University of Zambia under Prof. J. Phiri.
 
 ## What it does
 
-Three roles interact with one church.
+I built this as my final year project. It is a scheduling tool for a church
+that wants its weekly programme online, and wants the staff to be able to
+plan it without a spreadsheet.
 
-**Programme Coordinator** schedules services and church events, manages
-departments and members, reviews requests from department heads and the
-public, publishes bulletins, and reviews an operations report on schedule
-drift.
+Three types of user:
 
-**Department Head** sees the church-wide week at a glance, manages their own
-department's assignments against a saved team roster, and submits requests
-for announcements or for additions to the calendar.
-
-**Public visitors** view the schedule and announcements, download a bulletin
-PDF, and submit announcement requests without an account.
+- **Programme Coordinator** plans services and events, manages departments
+  and members, reviews requests, and publishes bulletins. Can see an
+  operations report on how services actually run compared to plan.
+- **Department Head** sees the week for the whole church, manages the people
+  in their own department, and asks the coordinator for changes.
+- **Public visitors** see the schedule and announcements, download the
+  bulletin PDF, and send in announcements without needing an account.
 
 ## Features
 
@@ -70,9 +70,12 @@ AI commentary on the Report page. Everything else works without it.
     church/templates/   Server-rendered pages
     static/             CSS and notification JS
 
-## Limitations and future work
+## Limitations
 
-SQLite for a student demonstration. No recurring-event rules, no email
-backend (console backend only), no browser push notifications. Future work
-could add PostgreSQL, calendar export, richer analytics, and an actual
-deployment pipeline.
+- SQLite only. Fine for one church, not for many at once.
+- No recurring event rules yet, you have to add each one.
+- Emails print to the console unless you set up SMTP.
+- No browser push, only in-app notifications.
+
+If I had more time I would add event recurrence, proper deployment, and a
+month view on the dashboard.
