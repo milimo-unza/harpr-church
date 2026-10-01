@@ -124,6 +124,29 @@
   {% endif %}
 </section>
 
+<section style="margin-top: var(--space-6);">
+  <h2 class="section-label">Recent changes</h2>
+  {% if recent_changes %}
+  <ul class="activity-list">
+    {% for entry in recent_changes %}
+    <li class="activity-item">
+      <span class="activity-action">{{ entry.get_action_display }}</span>
+      <span class="activity-detail">
+        {{ entry.details|default:entry.reason|default:"—" }}
+        {% if entry.service_item %} · {{ entry.service_item.title }}{% endif %}
+      </span>
+      <span class="activity-meta">
+        {{ entry.created_at|date:"d M H:i" }}
+        {% if entry.user %} · {{ entry.user.username }}{% endif %}
+      </span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">No recent changes touching your department.</p>
+  {% endif %}
+</section>
+
 {% for item in items %}
 <div class="modal-backdrop" id="assign-modal-{{ item.pk }}" hidden>
   <div class="modal" role="dialog" aria-modal="true">

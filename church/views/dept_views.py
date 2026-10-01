@@ -2,6 +2,7 @@ import json
 from datetime import date, timedelta
 
 from django.contrib import messages
+from django.db import models
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -119,6 +120,20 @@ def dept_dashboard(request):
         item.assigned_names = {a.person_name for a in item.assignments.all()}
 
     pending_items = [item for item in dept_items if not item.assignments.exists()]
+
+    # Recent changes involving this department's items, or requests this
+    # dept head has submitted. Shows the last 8 entries.
+    from church.models import ServiceLog
+    item_ids = [it.pk for it in dept_items]
+    recent_changes = list(
+        ServiceLog.objects.filter(
+            church=request.church,
+        ).filter(
+            models.Q(service_item_id__in=item_ids)
+            | models.Q(user=request.user)
+        ).select_related("user", "service", "service_item").order_by("-created_at")[:8]
+    )
+
     roster = DepartmentMember.objects.filter(
         department=request.department
     ).order_by("name")
@@ -131,6 +146,7 @@ def dept_dashboard(request):
     return render(request, "church/dept_dashboard.html", {
         "items": dept_items,
         "pending_items": pending_items,
+        "recent_changes": recent_changes,
         "roster": roster,
         "roster_json": roster_json,
         "days": days,
