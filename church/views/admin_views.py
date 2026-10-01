@@ -388,6 +388,23 @@ def event_create(request):
 @admin_required
 def event_edit(request, pk):
     event = get_object_or_404(request.church.events, pk=pk)
+
+    # GET via AJAX — return the event as JSON for the modal.
+    if request.method == "GET" and _is_ajax(request):
+        return JsonResponse({
+            "event": {
+                "id": event.pk,
+                "title": event.title,
+                "event_type": event.event_type,
+                "date": event.date.isoformat(),
+                "start_time": event.start_time.strftime("%H:%M"),
+                "end_time": event.end_time.strftime("%H:%M"),
+                "location": event.location or "",
+                "responsible_department_id": event.responsible_department_id or "",
+                "notes": event.notes or "",
+            },
+        })
+
     form = ChurchEventForm(request.POST or None,
                            instance=event, church=request.church)
     if request.method == "POST" and form.is_valid():
@@ -412,6 +429,8 @@ def event_edit(request, pk):
 def event_delete(request, pk):
     event = get_object_or_404(request.church.events, pk=pk)
     event.delete()
+    if _is_ajax(request):
+        return JsonResponse({"ok": True, "message": "Event deleted."})
     messages.success(request, "Event deleted.")
     return redirect("admin_dashboard")
 

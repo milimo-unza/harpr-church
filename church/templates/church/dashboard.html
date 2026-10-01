@@ -19,22 +19,10 @@
 </div>
 
 <section class="stat-grid">
-  <div class="stat-card">
-    <strong>{{ service_count }}</strong>
-    <span>Services in {{ month_label }}</span>
-  </div>
-  <div class="stat-card">
-    <strong>{{ completed_count }}</strong>
-    <span>Completed (all time)</span>
-  </div>
-  <div class="stat-card">
-    <strong>{{ pending_request_count }}</strong>
-    <span>Pending requests</span>
-  </div>
-  <div class="stat-card">
-    <strong>{{ recent_activity|length }}</strong>
-    <span>Recent actions</span>
-  </div>
+  <div class="stat-card"><strong>{{ service_count }}</strong><span>Services in {{ month_label }}</span></div>
+  <div class="stat-card"><strong>{{ completed_count }}</strong><span>Completed (all time)</span></div>
+  <div class="stat-card"><strong>{{ pending_request_count }}</strong><span>Pending requests</span></div>
+  <div class="stat-card"><strong>{{ recent_activity|length }}</strong><span>Recent actions</span></div>
 </section>
 
 <section class="week-grid" aria-label="Weekly calendar">
@@ -52,10 +40,11 @@
       </a>
       {% endfor %}
       {% for event in day.events %}
-      <a class="event-chip" href="{% url 'event_edit' event.pk %}">
+      <button type="button" class="event-chip"
+        data-edit-event="{{ event.pk }}">
         <strong>{{ event.title }}</strong>
         <small>{{ event.get_event_type_display }} · {{ event.start_time|time:"H:i" }}</small>
-      </a>
+      </button>
       {% endfor %}
       {% if not day.services and not day.events %}
       <span class="empty-day">Nothing scheduled</span>
@@ -65,6 +54,7 @@
   {% endfor %}
 </section>
 
+{# ---------- New event modal ---------- #}
 <div class="modal-backdrop" id="event-create-modal" hidden>
   <div class="modal" role="dialog" aria-modal="true">
     <div class="modal-head">
@@ -74,12 +64,9 @@
     <div class="modal-body">
       <form method="post" action="{% url 'event_create' %}">
         {% csrf_token %}
-        <div class="form-row">
-          <label for="event-title">Title</label>
-          <input name="title" id="event-title" required>
-        </div>
-        <div class="form-row">
-          <label for="event-type">Type</label>
+        <div class="form-row"><label for="event-title">Title</label>
+          <input name="title" id="event-title" required></div>
+        <div class="form-row"><label for="event-type">Type</label>
           <select name="event_type" id="event-type">
             <option value="rehearsal">Rehearsal / Practice</option>
             <option value="study">Bible Study</option>
@@ -87,39 +74,26 @@
             <option value="outreach">Outreach</option>
             <option value="fellowship">Fellowship</option>
             <option value="other">Other</option>
-          </select>
-        </div>
-        <div class="form-row">
-          <label for="event-date">Date</label>
-          <input type="date" name="date" id="event-date" required>
-        </div>
+          </select></div>
+        <div class="form-row"><label for="event-date">Date</label>
+          <input type="date" name="date" id="event-date" required></div>
         <div class="form-row two-up">
-          <div>
-            <label for="event-start">Start time</label>
-            <input type="time" name="start_time" id="event-start" required>
-          </div>
-          <div>
-            <label for="event-end">End time</label>
-            <input type="time" name="end_time" id="event-end" required>
-          </div>
+          <div><label for="event-start">Start time</label>
+            <input type="time" name="start_time" id="event-start" required></div>
+          <div><label for="event-end">End time</label>
+            <input type="time" name="end_time" id="event-end" required></div>
         </div>
-        <div class="form-row">
-          <label for="event-location">Location</label>
-          <input name="location" id="event-location">
-        </div>
-        <div class="form-row">
-          <label for="event-dept">Responsible department</label>
+        <div class="form-row"><label for="event-location">Location</label>
+          <input name="location" id="event-location"></div>
+        <div class="form-row"><label for="event-dept">Responsible department</label>
           <select name="responsible_department" id="event-dept">
             <option value="">— None —</option>
             {% for d in departments %}
             <option value="{{ d.pk }}">{{ d.name }}</option>
             {% endfor %}
-          </select>
-        </div>
-        <div class="form-row">
-          <label for="event-notes">Notes</label>
-          <textarea name="notes" id="event-notes" rows="3"></textarea>
-        </div>
+          </select></div>
+        <div class="form-row"><label for="event-notes">Notes</label>
+          <textarea name="notes" id="event-notes" rows="3"></textarea></div>
         <div class="form-actions">
           <button type="button" class="btn btn-ghost modal-close">Cancel</button>
           <button type="submit" class="btn btn-primary">Create event</button>
@@ -129,6 +103,7 @@
   </div>
 </div>
 
+{# ---------- New service modal ---------- #}
 <div class="modal-backdrop" id="service-create-modal" hidden>
   <div class="modal" role="dialog" aria-modal="true">
     <div class="modal-head">
@@ -138,26 +113,75 @@
     <div class="modal-body">
       <form method="post" action="{% url 'service_create' %}">
         {% csrf_token %}
-        <div class="form-row">
-          <label for="service-name">Name</label>
-          <input name="name" id="service-name" required>
-        </div>
-        <div class="form-row">
-          <label for="service-date">Date</label>
-          <input type="date" name="date" id="service-date" required>
-        </div>
-        <div class="form-row">
-          <label for="service-template">Template (optional)</label>
+        <div class="form-row"><label for="service-name">Name</label>
+          <input name="name" id="service-name" required></div>
+        <div class="form-row"><label for="service-date">Date</label>
+          <input type="date" name="date" id="service-date" required></div>
+        <div class="form-row"><label for="service-template">Template (optional)</label>
           <select name="template" id="service-template">
             <option value="">— None —</option>
             {% for t in service_templates %}
             <option value="{{ t.pk }}">{{ t.name }} ({{ t.get_day_of_week_display }})</option>
             {% endfor %}
-          </select>
-        </div>
+          </select></div>
         <div class="form-actions">
           <button type="button" class="btn btn-ghost modal-close">Cancel</button>
           <button type="submit" class="btn btn-primary">Create service</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{# ---------- Edit event modal (shared, populated via JS) ---------- #}
+<div class="modal-backdrop" id="event-edit-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <h2 id="event-edit-title">Edit event</h2>
+      <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="muted" id="event-edit-loading" style="margin-top:0;">Loading…</p>
+      <form method="post" id="event-edit-form" hidden>
+        {% csrf_token %}
+        <div class="form-row"><label for="ee-title">Title</label>
+          <input name="title" id="ee-title" required></div>
+        <div class="form-row"><label for="ee-type">Type</label>
+          <select name="event_type" id="ee-type">
+            <option value="rehearsal">Rehearsal / Practice</option>
+            <option value="study">Bible Study</option>
+            <option value="meeting">Meeting</option>
+            <option value="outreach">Outreach</option>
+            <option value="fellowship">Fellowship</option>
+            <option value="other">Other</option>
+          </select></div>
+        <div class="form-row"><label for="ee-date">Date</label>
+          <input type="date" name="date" id="ee-date" required></div>
+        <div class="form-row two-up">
+          <div><label for="ee-start">Start time</label>
+            <input type="time" name="start_time" id="ee-start" required></div>
+          <div><label for="ee-end">End time</label>
+            <input type="time" name="end_time" id="ee-end" required></div>
+        </div>
+        <div class="form-row"><label for="ee-location">Location</label>
+          <input name="location" id="ee-location"></div>
+        <div class="form-row"><label for="ee-dept">Responsible department</label>
+          <select name="responsible_department" id="ee-dept">
+            <option value="">— None —</option>
+            {% for d in departments %}
+            <option value="{{ d.pk }}">{{ d.name }}</option>
+            {% endfor %}
+          </select></div>
+        <div class="form-row"><label for="ee-notes">Notes</label>
+          <textarea name="notes" id="ee-notes" rows="3"></textarea></div>
+        <div class="form-errors" data-form-errors hidden></div>
+        <div class="form-actions">
+          <form method="post" id="event-edit-delete" style="margin-right:auto;">
+            {% csrf_token %}
+            <button type="button" class="btn btn-danger" data-delete-event>Delete</button>
+          </form>
+          <button type="button" class="btn btn-ghost modal-close">Cancel</button>
+          <button type="submit" class="btn btn-primary" form="event-edit-form">Save changes</button>
         </div>
       </form>
     </div>
@@ -186,6 +210,96 @@
           m.hidden = true;
         });
       }
+    });
+
+    // Edit event — fetch JSON, populate modal, submit via AJAX.
+    var editBackdrop = document.getElementById("event-edit-modal");
+    var editTitle = document.getElementById("event-edit-title");
+    var editLoading = document.getElementById("event-edit-loading");
+    var editForm = document.getElementById("event-edit-form");
+    var deleteBtn = editBackdrop.querySelector("[data-delete-event]");
+    var currentEventPk = null;
+
+    function fillForm(ev) {
+      document.getElementById("ee-title").value = ev.title || "";
+      document.getElementById("ee-type").value = ev.event_type || "other";
+      document.getElementById("ee-date").value = ev.date || "";
+      document.getElementById("ee-start").value = ev.start_time || "";
+      document.getElementById("ee-end").value = ev.end_time || "";
+      document.getElementById("ee-location").value = ev.location || "";
+      document.getElementById("ee-dept").value = ev.responsible_department_id || "";
+      document.getElementById("ee-notes").value = ev.notes || "";
+    }
+
+    document.querySelectorAll("[data-edit-event]").forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        currentEventPk = btn.dataset.editEvent;
+        editTitle.textContent = "Loading…";
+        editLoading.hidden = false;
+        editForm.hidden = true;
+        editBackdrop.hidden = false;
+        fetch("/events/" + currentEventPk + "/edit/", {
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            editTitle.textContent = "Edit " + data.event.title;
+            editLoading.hidden = true;
+            editForm.hidden = false;
+            fillForm(data.event);
+          })
+          .catch(function () {
+            editLoading.textContent = "Could not load event.";
+          });
+      });
+    });
+
+    editForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var errBox = editForm.querySelector("[data-form-errors]");
+      if (errBox) { errBox.hidden = true; errBox.textContent = ""; }
+      fetch("/events/" + currentEventPk + "/edit/", {
+        method: "POST",
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "Accept": "application/json",
+        },
+        body: new FormData(editForm),
+      })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (res) {
+          if (res.ok && res.d.ok) {
+            if (window.harprToast) window.harprToast(res.d.message || "Event updated.");
+            window.location.reload();
+          } else if (errBox) {
+            errBox.hidden = false;
+            var msgs = [];
+            var errs = (res.d && res.d.errors) || {};
+            Object.keys(errs).forEach(function (k) {
+              (errs[k] || []).forEach(function (m) { msgs.push(m); });
+            });
+            errBox.textContent = msgs.join(" ") || "Please check the form.";
+          }
+        })
+        .catch(function () {
+          if (errBox) { errBox.hidden = false; errBox.textContent = "Network error."; }
+        });
+    });
+
+    deleteBtn.addEventListener("click", function () {
+      if (!currentEventPk) return;
+      if (!confirm("Delete this event?")) return;
+      fetch("/events/" + currentEventPk + "/delete/", {
+        method: "POST",
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+      })
+        .then(function (r) { return r.json(); })
+        .then(function () {
+          if (window.harprToast) window.harprToast("Event deleted.");
+          window.location.reload();
+        })
+        .catch(function () {});
     });
   })();
 </script>
