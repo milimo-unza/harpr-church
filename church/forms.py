@@ -375,15 +375,24 @@ class PublicRequestForm(forms.ModelForm):
         email_re = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
         if email_re.match(contact):
             return contact
-        digits = re.sub(r"\D", "", contact)
         if not re.match(r"^[+\d][\d\s\-()]*$", contact):
             raise forms.ValidationError(
                 "Enter a valid phone number or email address."
             )
-        if len(digits) != 10:
-            raise forms.ValidationError(
-                "Phone number must be exactly 10 digits."
-            )
+        digits = re.sub(r"\D", "", contact)
+        is_international = contact.startswith("+")
+        if is_international:
+            # E.164-ish: 11-15 digits after the plus.
+            if not (11 <= len(digits) <= 15):
+                raise forms.ValidationError(
+                    "International number must have 11 to 15 digits."
+                )
+        else:
+            if len(digits) != 10:
+                raise forms.ValidationError(
+                    "Phone number must be exactly 10 digits, or start with + "
+                    "for an international number."
+                )
         return contact
 
     def clean(self):
