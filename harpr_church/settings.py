@@ -29,9 +29,9 @@ ALLOWED_HOSTS = [
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://*.replit.dev",
-    "https://*.replit.app",
-    "https://*.repl.co",
+    origin.strip()
+    for origin in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
+    if origin.strip()
 ]
 
 INSTALLED_APPS = [
