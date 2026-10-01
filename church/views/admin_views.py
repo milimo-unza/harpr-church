@@ -695,17 +695,23 @@ def request_respond(request, pk):
         messages.success(request, "Request updated.")
         return redirect("request_list")
 
-    if request.method == "POST" and _is_ajax(request):
-        return JsonResponse(
-            {"ok": False, "errors": _form_errors_json(form)},
-            status=400,
-        )
+    if request.method == "POST":
+        if _is_ajax(request):
+            return JsonResponse(
+                {"ok": False, "errors": _form_errors_json(form)},
+                status=400,
+            )
+        # Non-AJAX invalid POST: flash an error and bounce back to the list.
+        first_error = ""
+        for errs in form.errors.values():
+            if errs:
+                first_error = str(errs[0])
+                break
+        messages.error(request, first_error or "Could not process the request.")
+        return redirect("request_list")
 
-    return render(
-        request,
-        "church/request_respond.html",
-        {"form": form, "church_request": church_request},
-    )
+    # Non-POST (direct URL hit): the modal is the only interface now.
+    return redirect("request_list")
 
 
 @admin_required

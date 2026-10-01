@@ -18,3 +18,10 @@ class AIStatsTests(TestCase):
                 "overrun_count",
             },
         )
+
+    def test_empty_church_returns_zero_stats(self):
+        church = Church.objects.create(name="Empty", slug="empty-ai")
+        stats = gather_church_stats(church)
+        self.assertEqual(stats["service_count"], 0)
+        self.assertEqual(stats["avg_delay_minutes"], 0)
+        self.assertEqual(stats["most_delayed_item"], "N/A")
