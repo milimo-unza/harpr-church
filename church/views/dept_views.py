@@ -1,3 +1,4 @@
+import json
 from datetime import date, timedelta
 
 from django.contrib import messages
@@ -41,6 +42,7 @@ def dept_dashboard(request):
             "items": [],
             "pending_items": [],
             "roster": [],
+            "roster_json": "[]",
             "days": [],
             "week_start": timezone.localdate(),
             "week_end": timezone.localdate(),
@@ -98,10 +100,16 @@ def dept_dashboard(request):
         department=request.department
     ).order_by("name")
 
+    roster_json = json.dumps([
+        {"pk": m.pk, "name": m.name, "phone": m.phone}
+        for m in roster
+    ])
+
     return render(request, "church/dept_dashboard.html", {
         "items": dept_items,
         "pending_items": pending_items,
         "roster": roster,
+        "roster_json": roster_json,
         "days": days,
         "week_start": week_start,
         "week_end": week_end,
@@ -148,7 +156,7 @@ def dept_assignment_create(request, pk):
         messages.error(request, "Enter a name.")
         return redirect("dept_dashboard")
 
-    Assignment.objects.create(
+    assignment = Assignment.objects.create(
         service_item=item,
         person_name=person_name,
         role=role,
@@ -164,7 +172,7 @@ def dept_assignment_create(request, pk):
     if _is_ajax(request):
         return JsonResponse({
             "ok": True,
-            "redirect": "/dept/",
+            "assignment_id": assignment.pk,
             "message": f"{person_name} assigned to {item.title}.",
         })
 
@@ -260,3 +268,64 @@ def dept_request_create(request):
 def dept_request_list(request):
     requests = request.church.requests.filter(submitted_by=request.user)
     return render(request, "church/dept_requests.html", {"requests": requests})
+
+@dept_head_required
+def dept_service_schedule(request, pk):
+    """Return the full item list for a service, as JSON, for the week-grid popup."""
+    service = get_object_or_404(
+        Service,
+        pk=pk,
+        church=request.church,
+    )
+    dept_id = request.department.pk if request.department else None
+
+    items = []
+    for item in service.items.select_related("responsible_department").prefetch_related("assignments").order_by("order"):
+        is_mine = (
+            dept_id is not None
+            and item.responsible_department_id == dept_id
+        )
+        items.append({
+            "id": item.pk,
+            "time": item.planned_start.strftime("%H:%M"),
+            "title": item.title,
+            "department": item.responsible_department.name if item.responsible_department else "—",
+            "assigned": [a.person_name for a in item.assignments.all()],
+            "is_mine": is_mine,
+            "unassigned": not item.assignments.exists(),
+        })
+
+    return JsonResponse({
+        "service": {
+            "id": service.pk,
+            "name": service.name,
+            "date": service.date.strftime("%A, %d %B %Y"),
+            "status": service.get_status_display(),
+        },
+        "items": items,
+    })
+
+
+@dept_head_required
+def dept_event_detail(request, pk):
+    """Return one event's details as JSON, for the week-grid popup."""
+    from church.models import ChurchEvent
+
+    event = get_object_or_404(
+        ChurchEvent,
+        pk=pk,
+        church=request.church,
+    )
+    return JsonResponse({
+        "event": {
+            "id": event.pk,
+            "title": event.title,
+            "type": event.get_event_type_display(),
+            "date": event.date.strftime("%A, %d %B %Y"),
+            "start_time": event.start_time.strftime("%H:%M"),
+            "end_time": event.end_time.strftime("%H:%M"),
+            "location": event.location or "—",
+            "department": event.responsible_department.name if event.responsible_department else "—",
+            "notes": event.notes or "",
+        },
+    })

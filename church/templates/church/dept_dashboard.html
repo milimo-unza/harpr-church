@@ -27,16 +27,18 @@
     </header>
     <div class="week-col-body">
       {% for service in day.services %}
-      <div class="event-chip service-chip">
+      <button type="button" class="event-chip service-chip"
+        data-open-service="{{ service.pk }}">
         <strong>{{ service.name }}</strong>
         <small>Service · {{ service.get_status_display }}</small>
-      </div>
+      </button>
       {% endfor %}
       {% for event in day.events %}
-      <div class="event-chip">
+      <button type="button" class="event-chip"
+        data-open-event="{{ event.pk }}">
         <strong>{{ event.title }}</strong>
         <small>{{ event.get_event_type_display }} · {{ event.start_time|time:"H:i" }}</small>
-      </div>
+      </button>
       {% endfor %}
       {% if not day.services and not day.events %}
       <span class="empty-day">Nothing scheduled</span>
@@ -54,9 +56,9 @@
       <thead>
         <tr>
           <th>Date</th>
-          <th>Service</th>
-          <th>Item</th>
           <th>Time</th>
+          <th>Item</th>
+          <th>Service</th>
           <th>Assigned</th>
           <th></th>
         </tr>
@@ -65,9 +67,9 @@
         {% for item in pending_items %}
         <tr class="clickable-row" data-modal-open="assign-modal-{{ item.pk }}">
           <td class="mono">{{ item.planned_start|date:"d M Y" }}</td>
-          <td>{{ item.service.name }}</td>
-          <td><strong>{{ item.title }}</strong></td>
           <td class="mono">{{ item.planned_start|date:"H:i" }}</td>
+          <td><strong>{{ item.title }}</strong></td>
+          <td>{{ item.service.name }}</td>
           <td><span class="muted">Unassigned</span></td>
           <td><button type="button" class="btn btn-small">Assign</button></td>
         </tr>
@@ -88,9 +90,9 @@
       <thead>
         <tr>
           <th>Date</th>
-          <th>Service</th>
-          <th>Item</th>
           <th>Time</th>
+          <th>Item</th>
+          <th>Service</th>
           <th>Assigned</th>
           <th></th>
         </tr>
@@ -99,13 +101,17 @@
         {% for item in items %}
         <tr class="clickable-row" data-modal-open="assign-modal-{{ item.pk }}">
           <td class="mono">{{ item.planned_start|date:"d M Y" }}</td>
-          <td>{{ item.service.name }}</td>
-          <td><strong>{{ item.title }}</strong></td>
           <td class="mono">{{ item.planned_start|date:"H:i" }}</td>
+          <td><strong>{{ item.title }}</strong></td>
+          <td>{{ item.service.name }}</td>
           <td>
-            {% for a in item.assignments.all %}
-              {{ a.person_name }}{% if not forloop.last %}, {% endif %}
-            {% empty %}<span class="muted">Unassigned</span>{% endfor %}
+            <ul class="assignment-list" data-assignment-list>
+              {% for a in item.assignments.all %}
+              <li>{{ a.person_name }}</li>
+              {% empty %}
+              <li class="muted">Unassigned</li>
+              {% endfor %}
+            </ul>
           </td>
           <td><button type="button" class="btn btn-small">Edit</button></td>
         </tr>
@@ -130,25 +136,27 @@
         {{ item.service.name }} · {{ item.planned_start|date:"l, d F Y H:i" }}
       </p>
 
-      {% if item.assignments.exists %}
       <div class="form-row">
         <label>Currently assigned</label>
-        <div class="roster-chips">
+        <ul class="assignment-list" data-current-assignments>
           {% for a in item.assignments.all %}
-          <form method="post" action="{% url 'dept_assignment_delete' a.pk %}" class="roster-chip" data-ajax-form>
-            {% csrf_token %}
+          <li data-assignment-id="{{ a.pk }}">
             <span>{{ a.person_name }}</span>
-            <button type="submit" aria-label="Remove {{ a.person_name }}" title="Remove">×</button>
-          </form>
+            <form method="post" action="{% url 'dept_assignment_delete' a.pk %}" data-delete-form>
+              {% csrf_token %}
+              <button type="submit" aria-label="Remove {{ a.person_name }}" title="Remove">×</button>
+            </form>
+          </li>
+          {% empty %}
+          <li class="muted" data-empty>Unassigned</li>
           {% endfor %}
-        </div>
+        </ul>
       </div>
-      {% endif %}
 
       {% if roster %}
       <div class="form-row">
         <label>Saved team</label>
-        <div class="roster-chips" data-roster>
+        <div class="roster-chips">
           {% for member in roster %}
           <button type="button" class="roster-chip roster-chip--add" data-name="{{ member.name }}">
             + {{ member.name }}
@@ -158,11 +166,11 @@
       </div>
       {% endif %}
 
-      <form method="post" action="{% url 'dept_assignment_create' item.pk %}" data-ajax-form data-assign-form>
+      <form method="post" action="{% url 'dept_assignment_create' item.pk %}" data-assign-form>
         {% csrf_token %}
         <div class="form-row">
-          <label for="person-{{ item.pk }}">Person</label>
-          <input name="person_name" id="person-{{ item.pk }}" required autocomplete="off">
+          <label for="person-{{ item.pk }}">Add person</label>
+          <input name="person_name" id="person-{{ item.pk }}" required autocomplete="off" placeholder="Type a name or click a chip above">
         </div>
         <div class="form-row">
           <label class="checkbox-line">
@@ -172,8 +180,8 @@
         </div>
         <div class="form-errors" data-form-errors hidden></div>
         <div class="form-actions">
-          <button type="button" class="btn btn-ghost modal-close">Cancel</button>
-          <button type="submit" class="btn btn-primary">Assign</button>
+          <button type="button" class="btn btn-ghost modal-close">Done</button>
+          <button type="submit" class="btn btn-primary">Add</button>
         </div>
       </form>
     </div>
@@ -183,27 +191,38 @@
 
 <script>
   (function () {
+    var dirty = false;
+
     document.querySelectorAll("[data-modal-open]").forEach(function (btn) {
       btn.addEventListener("click", function () {
         var el = document.getElementById(btn.getAttribute("data-modal-open"));
         if (el) el.hidden = false;
       });
     });
+
+    function closeModal(backdrop) {
+      backdrop.hidden = true;
+      if (dirty) { window.location.reload(); }
+    }
+
     document.querySelectorAll(".modal-backdrop").forEach(function (backdrop) {
       backdrop.addEventListener("click", function (e) {
-        if (e.target === backdrop) backdrop.hidden = true;
+        if (e.target === backdrop) closeModal(backdrop);
       });
       backdrop.querySelectorAll(".modal-close").forEach(function (b) {
-        b.addEventListener("click", function () { backdrop.hidden = true; });
+        b.addEventListener("click", function () { closeModal(backdrop); });
       });
     });
+
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape") {
-        document.querySelectorAll(".modal-backdrop").forEach(function (m) { m.hidden = true; });
+        document.querySelectorAll(".modal-backdrop").forEach(function (m) {
+          if (!m.hidden) closeModal(m);
+        });
       }
     });
 
-    // Clicking a saved name fills the person field.
+    // Chip click fills the input.
     document.querySelectorAll(".modal").forEach(function (modal) {
       var form = modal.querySelector("[data-assign-form]");
       if (!form) return;
@@ -213,13 +232,16 @@
           if (input) { input.value = chip.dataset.name; input.focus(); }
         });
       });
-    });
 
-    // AJAX submit for assign + remove forms.
-    document.querySelectorAll("form[data-ajax-form]").forEach(function (form) {
+      // AJAX submit — append to the "currently assigned" list, clear input, keep open.
       form.addEventListener("submit", function (e) {
         e.preventDefault();
         var errBox = form.querySelector("[data-form-errors]");
+        if (errBox) { errBox.hidden = true; errBox.textContent = ""; }
+        var nameField = form.querySelector("input[name='person_name']");
+        var newName = nameField.value.trim();
+        if (!newName) return;
+
         fetch(form.action, {
           method: "POST",
           headers: {
@@ -230,17 +252,250 @@
         })
           .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
           .then(function (res) {
-            if (res.ok && res.d.ok) {
-              if (res.d.message && window.harprToast) window.harprToast(res.d.message);
-              window.location.reload();
-            } else if (errBox) {
-              errBox.hidden = false;
-              errBox.textContent = "Please enter a name.";
+            if (!(res.ok && res.d.ok)) {
+              if (errBox) { errBox.hidden = false; errBox.textContent = "Could not add. Try again."; }
+              return;
             }
+            dirty = true;
+            var list = modal.querySelector("[data-current-assignments]");
+            var empty = list.querySelector("[data-empty]");
+            if (empty) empty.remove();
+            var li = document.createElement("li");
+            li.dataset.assignmentId = res.d.assignment_id || "";
+            li.innerHTML = '<span></span>' +
+              '<form method="post" action="/dept/assignments/' + (res.d.assignment_id || "") + '/delete/" data-delete-form>' +
+              '<button type="submit" aria-label="Remove" title="Remove">×</button></form>';
+            li.querySelector("span").textContent = newName;
+            list.appendChild(li);
+            wireDeleteForm(li.querySelector("[data-delete-form]"));
+            nameField.value = "";
+            nameField.focus();
+            if (window.harprToast) window.harprToast(newName + " added.");
           })
           .catch(function () {
             if (errBox) { errBox.hidden = false; errBox.textContent = "Network error."; }
           });
+      });
+    });
+
+    function wireDeleteForm(form) {
+      if (!form) return;
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        fetch(form.action, {
+          method: "POST",
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "Accept": "application/json",
+          },
+          body: new FormData(form),
+        })
+          .then(function (r) { return r.json(); })
+          .then(function () {
+            dirty = true;
+            var li = form.closest("li");
+            if (li) li.remove();
+            if (window.harprToast) window.harprToast("Assignment removed.");
+          })
+          .catch(function () {});
+      });
+    }
+
+    document.querySelectorAll("[data-delete-form]").forEach(wireDeleteForm);
+  })();
+</script>
+
+{# ---------- Shared week-grid popup ---------- #}
+<div class="modal-backdrop" id="week-popup" hidden>
+  <div class="modal" role="dialog" aria-modal="true" style="max-width:640px;">
+    <div class="modal-head">
+      <h2 id="week-popup-title">Schedule</h2>
+      <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body" id="week-popup-body">
+      <p class="muted">Loading…</p>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  (function () {
+    var backdrop = document.getElementById("week-popup");
+    var titleEl = document.getElementById("week-popup-title");
+    var bodyEl = document.getElementById("week-popup-body");
+    if (!backdrop) return;
+
+    // Roster from the server, injected as JSON.
+    var roster = {{ roster_json|safe }};
+    var currentServicePk = null;
+
+    function escapeHtml(s) {
+      return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+      });
+    }
+
+    function close() {
+      backdrop.hidden = true;
+      currentServicePk = null;
+    }
+    backdrop.addEventListener("click", function (e) { if (e.target === backdrop) close(); });
+    backdrop.querySelectorAll(".modal-close").forEach(function (b) {
+      b.addEventListener("click", close);
+    });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
+
+    function renderRosterChips() {
+      if (!roster.length) return "";
+      var chips = roster.map(function (m) {
+        return '<button type="button" class="roster-chip roster-chip--add" data-fill-name="' +
+          escapeHtml(m.name) + '">+ ' + escapeHtml(m.name) + '</button>';
+      }).join("");
+      return '<div class="form-row" style="margin-top:12px;"><label>Saved team</label>' +
+        '<div class="roster-chips">' + chips + '</div></div>';
+    }
+
+    function openService(pk) {
+      currentServicePk = pk;
+      titleEl.textContent = "Loading…";
+      bodyEl.innerHTML = '<p class="muted">Loading…</p>';
+      backdrop.hidden = false;
+      fetch("/dept/schedule/" + pk + "/", {
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          titleEl.textContent = data.service.name + " — " + data.service.date;
+          var rows = data.items.map(function (it) {
+            var cls = it.is_mine ? ' class="is-mine"' : "";
+            var assigned = it.assigned.length ? it.assigned.join(", ") : '<span class="muted">Unassigned</span>';
+            var assignBtn = (it.is_mine && it.unassigned)
+              ? ' <button type="button" class="btn btn-small" data-assign-item="' + it.id + '" data-assign-title="' + escapeHtml(it.title) + '">Assign</button>'
+              : "";
+            return "<tr" + cls + ">" +
+              '<td class="mono">' + escapeHtml(it.time) + "</td>" +
+              "<td>" + escapeHtml(it.title) + assignBtn + "</td>" +
+              "<td>" + escapeHtml(it.department) + "</td>" +
+              "<td>" + assigned + "</td>" +
+              "</tr>";
+          }).join("");
+          bodyEl.innerHTML =
+            '<div style="margin-bottom:10px;">' +
+            '<span class="status-badge">' + escapeHtml(data.service.status) + "</span>" +
+            "</div>" +
+            '<table class="data-table" style="font-size:0.84rem;">' +
+            "<thead><tr><th>Time</th><th>Item</th><th>Department</th><th>Assigned</th></tr></thead>" +
+            "<tbody>" + rows + "</tbody></table>" +
+            '<div id="inline-assign-panel"></div>';
+
+          bodyEl.querySelectorAll("[data-assign-item]").forEach(function (btn) {
+            btn.addEventListener("click", function (e) {
+              e.stopPropagation();
+              showInlineAssign(btn.dataset.assignItem, btn.dataset.assignTitle);
+            });
+          });
+        })
+        .catch(function () {
+          bodyEl.innerHTML = '<p class="muted">Could not load schedule.</p>';
+        });
+    }
+
+    function showInlineAssign(itemId, itemTitle) {
+      var panel = document.getElementById("inline-assign-panel");
+      if (!panel) return;
+      var formAction = "/dept/items/" + itemId + "/assignments/new/";
+      panel.innerHTML =
+        '<div class="card" style="margin-top:16px; padding:16px; background:var(--surface-2);">' +
+        '<h3 style="margin:0 0 8px 0; font-size:1rem;">Assign someone to ' + escapeHtml(itemTitle) + '</h3>' +
+        renderRosterChips() +
+        '<form method="post" action="' + formAction + '" data-inline-assign>' +
+        '{% csrf_token %}' +
+        '<div class="form-row"><label>Person</label>' +
+        '<input name="person_name" required autocomplete="off" placeholder="Type a name or click a chip above">' +
+        '</div>' +
+        '<div class="form-row"><label class="checkbox-line">' +
+        '<input type="checkbox" name="save_to_roster" checked> Save this name to my team</label></div>' +
+        '<div class="form-actions" style="margin-top:8px;">' +
+        '<button type="button" class="btn btn-ghost" data-cancel-inline>Cancel</button>' +
+        '<button type="submit" class="btn btn-primary">Assign</button>' +
+        '</div></form></div>';
+
+      var form = panel.querySelector("[data-inline-assign]");
+      var input = form.querySelector("input[name='person_name']");
+      panel.querySelectorAll("[data-fill-name]").forEach(function (chip) {
+        chip.addEventListener("click", function () {
+          input.value = chip.dataset.fillName;
+          input.focus();
+        });
+      });
+      panel.querySelector("[data-cancel-inline]").addEventListener("click", function () {
+        panel.innerHTML = "";
+      });
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var fd = new FormData(form);
+        fetch(formAction, {
+          method: "POST",
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "Accept": "application/json",
+          },
+          body: fd,
+        })
+          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+          .then(function (res) {
+            if (!(res.ok && res.d.ok)) {
+              if (window.harprToast) window.harprToast("Could not assign.", "error");
+              return;
+            }
+            if (window.harprToast) window.harprToast(res.d.message || "Assigned.");
+            // Reload the schedule popup so the table reflects the new state.
+            if (currentServicePk) openService(currentServicePk);
+          })
+          .catch(function () {
+            if (window.harprToast) window.harprToast("Network error.", "error");
+          });
+      });
+
+      input.focus();
+    }
+
+    function openEvent(pk) {
+      titleEl.textContent = "Loading…";
+      bodyEl.innerHTML = '<p class="muted">Loading…</p>';
+      backdrop.hidden = false;
+      fetch("/dept/event/" + pk + "/", {
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          var e = data.event;
+          titleEl.textContent = e.title;
+          bodyEl.innerHTML =
+            "<p><strong>Type:</strong> " + escapeHtml(e.type) + "</p>" +
+            "<p><strong>Date:</strong> " + escapeHtml(e.date) + "</p>" +
+            "<p><strong>Time:</strong> " + escapeHtml(e.start_time) + " – " + escapeHtml(e.end_time) + "</p>" +
+            "<p><strong>Location:</strong> " + escapeHtml(e.location) + "</p>" +
+            "<p><strong>Responsible:</strong> " + escapeHtml(e.department) + "</p>" +
+            (e.notes ? "<p><strong>Notes:</strong> " + escapeHtml(e.notes) + "</p>" : "");
+        })
+        .catch(function () {
+          bodyEl.innerHTML = '<p class="muted">Could not load event.</p>';
+        });
+    }
+
+    document.querySelectorAll("[data-open-service]").forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        openService(btn.dataset.openService);
+      });
+    });
+    document.querySelectorAll("[data-open-event]").forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        openEvent(btn.dataset.openEvent);
       });
     });
   })();

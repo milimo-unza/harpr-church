@@ -152,4 +152,14 @@ urlpatterns = [
         name="dept_assignment_delete",
     ),
     path("dept/roster/", dept_views.dept_roster, name="dept_roster"),
+    path(
+        "dept/schedule/<int:pk>/",
+        dept_views.dept_service_schedule,
+        name="dept_service_schedule",
+    ),
+    path(
+        "dept/event/<int:pk>/",
+        dept_views.dept_event_detail,
+        name="dept_event_detail",
+    ),
 ]
