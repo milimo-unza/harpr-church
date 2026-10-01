@@ -5,8 +5,8 @@
   <p class="eyebrow">Department head</p>
   <h1>Submit request</h1>
   <p class="muted" style="margin-bottom: var(--space-4);">
-    Use this to ask the Programme Coordinator for a change to the programme.
-    If your request is date-based, add a start and end date below.
+    Announcements are text blurbs that run for a date range. Add to schedule
+    means you want to book the church for something at a specific time.
   </p>
 
   <div class="card form-card">
@@ -34,14 +34,38 @@
         {{ form.body }}
       </div>
 
-      <div class="form-row two-up" id="date-fields">
-        <div>
-          <label for="start-date">Start date</label>
-          <input type="date" name="start_date" id="start-date">
+      <div class="form-row" id="dates-announcement">
+        <label>Announcement runs</label>
+        <div class="form-row two-up" style="margin: 0;">
+          <div>
+            <label for="start-date">Start date</label>
+            <input type="date" name="start_date" id="start-date">
+          </div>
+          <div>
+            <label for="end-date">End date</label>
+            <input type="date" name="end_date" id="end-date">
+          </div>
         </div>
-        <div>
-          <label for="end-date">End date</label>
-          <input type="date" name="end_date" id="end-date">
+      </div>
+
+      <div class="form-row" id="schedule-fields" style="display:none;">
+        <label>Schedule request</label>
+        <div class="form-row two-up" style="margin: 0;">
+          <div>
+            <label for="sched-date">Date</label>
+            <input type="date" name="start_date" id="sched-date">
+          </div>
+          <div></div>
+        </div>
+        <div class="form-row two-up" style="margin-top: var(--space-3);">
+          <div>
+            <label for="sched-start">Start time</label>
+            <input type="time" name="start_time" id="sched-start">
+          </div>
+          <div>
+            <label for="sched-end">End time</label>
+            <input type="time" name="end_time" id="sched-end">
+          </div>
         </div>
       </div>
 
@@ -56,10 +80,19 @@
 <script>
   (function () {
     var typeSel = document.getElementById("{{ form.type.id_for_label }}");
-    var dates = document.getElementById("date-fields");
-    if (!typeSel || !dates) return;
+    var annBlock = document.getElementById("dates-announcement");
+    var schedBlock = document.getElementById("schedule-fields");
+    if (!typeSel) return;
+
+    // Hide the duplicate start_date in whichever block is inactive so the
+    // browser doesn't submit two "start_date" values.
     function sync() {
-      dates.style.display = typeSel.value === "announcement" ? "" : "none";
+      var isSched = typeSel.value === "schedule";
+      annBlock.style.display = isSched ? "none" : "";
+      schedBlock.style.display = isSched ? "" : "none";
+      // Disable the hidden date inputs so they don't submit.
+      annBlock.querySelectorAll("input").forEach(function (i) { i.disabled = isSched; });
+      schedBlock.querySelectorAll("input").forEach(function (i) { i.disabled = !isSched; });
     }
     typeSel.addEventListener("change", sync);
     sync();

@@ -11,22 +11,18 @@
   </div>
 </div>
 
+
+<h2 class="section-label">Pending</h2>
 <div class="card table-wrap">
   <table class="data-table">
     <thead>
       <tr>
-        <th>Status</th>
-        <th>Title</th>
-        <th>Type</th>
-        <th>Submitted</th>
-        <th>From</th>
-        <th></th>
+        <th>Title</th><th>Type</th><th>Submitted</th><th>From</th><th></th>
       </tr>
     </thead>
     <tbody>
-      {% for item in requests %}
+      {% for item in pending_requests %}
       <tr class="clickable-row" data-request-id="{{ item.pk }}">
-        <td><span class="status-badge status-{{ item.status }}">{{ item.get_status_display }}</span></td>
         <td><strong>{{ item.title }}</strong></td>
         <td>{{ item.get_type_display }}</td>
         <td class="mono">{{ item.created_at|date:"d M Y" }}</td>
@@ -34,7 +30,55 @@
         <td><button type="button" class="btn btn-small">Review</button></td>
       </tr>
       {% empty %}
-      <tr><td colspan="6" class="empty-state">No requests.</td></tr>
+      <tr><td colspan="5" class="empty-state">Nothing pending.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<h2 class="section-label">Approved</h2>
+<div class="card table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Title</th><th>Type</th><th>Submitted</th><th>From</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in approved_requests %}
+      <tr class="clickable-row" data-request-id="{{ item.pk }}">
+        <td><strong>{{ item.title }}</strong></td>
+        <td>{{ item.get_type_display }}</td>
+        <td class="mono">{{ item.created_at|date:"d M Y" }}</td>
+        <td>{% firstof item.submitter_name item.submitted_by.username "—" %}</td>
+        <td><button type="button" class="btn btn-small">View</button></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="empty-state">No approved requests.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<h2 class="section-label">Rejected</h2>
+<div class="card table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Title</th><th>Type</th><th>Submitted</th><th>From</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in rejected_requests %}
+      <tr class="clickable-row" data-request-id="{{ item.pk }}">
+        <td><strong>{{ item.title }}</strong></td>
+        <td>{{ item.get_type_display }}</td>
+        <td class="mono">{{ item.created_at|date:"d M Y" }}</td>
+        <td>{% firstof item.submitter_name item.submitted_by.username "—" %}</td>
+        <td><button type="button" class="btn btn-small">View</button></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="empty-state">No rejected requests.</td></tr>
       {% endfor %}
     </tbody>
   </table>
@@ -93,7 +137,12 @@
           titleEl.textContent = d.title;
 
           var dates = "";
-          if (d.start_date || d.end_date) {
+          if (d.type === "schedule") {
+            dates = '<p><strong>When:</strong> ' + esc(d.start_date || "—") +
+              (d.requested_start_time ? " · " + esc(d.requested_start_time) : "") +
+              (d.requested_end_time ? " – " + esc(d.requested_end_time) : "") +
+              "</p>";
+          } else if (d.start_date || d.end_date) {
             dates = '<p><strong>Runs:</strong> ' + esc(d.start_date || "—") +
               " to " + esc(d.end_date || "—") + "</p>";
           }
@@ -132,15 +181,15 @@
             scheduleFields =
               '<div class="form-row two-up">' +
               '<div><label for="ev-date">Date</label>' +
-              '<input type="date" name="event_date" id="ev-date" value="' + esc(d.start_date || "") + '"></div>' +
+              '<input type="date" name="event_date" id="ev-date" value="' + esc(d.start_date || "") + '" required></div>' +
               '<div><label for="ev-location">Location</label>' +
               '<input name="event_location" id="ev-location" value="Main church campus"></div>' +
               "</div>" +
               '<div class="form-row two-up">' +
               '<div><label for="ev-start">Start time</label>' +
-              '<input type="time" name="event_start" id="ev-start" required></div>' +
+              '<input type="time" name="event_start" id="ev-start" value="' + esc(d.requested_start_time || "") + '" required></div>' +
               '<div><label for="ev-end">End time</label>' +
-              '<input type="time" name="event_end" id="ev-end" required></div>' +
+              '<input type="time" name="event_end" id="ev-end" value="' + esc(d.requested_end_time || "") + '" required></div>' +
               "</div>" +
               '<div class="form-row"><label for="ev-dept">Responsible department</label>' +
               '<select name="event_department" id="ev-dept">' + deptOptions + "</select></div>";
@@ -159,6 +208,7 @@
             "<p>" + esc(d.body).replace(/\\n/g, "<br>") + "</p>" +
             "<hr>" +
             '<form id="respond-form">' +
+            '<input type="hidden" name="request_type" value="' + esc(d.type) + '">' +
             '<div class="form-row"><label for="resp-status">Decision</label>' +
             '<select name="status" id="resp-status">' +
             '<option value="approved">Approve</option>' +

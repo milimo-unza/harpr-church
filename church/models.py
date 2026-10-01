@@ -293,11 +293,8 @@ class Person(models.Model):
 
 class Request(models.Model):
     TYPE_CHOICES = [
-        ("song", "Song / Music"),
         ("announcement", "Announcement"),
-        ("person_swap", "Person Swap / Addition"),
-        ("event", "Event Addition"),
-        ("other", "Other"),
+        ("schedule", "Add to schedule"),
     ]
     STATUS_CHOICES = [
         ("pending", "Pending"),
@@ -332,6 +329,8 @@ class Request(models.Model):
     responded_at = models.DateTimeField(null=True, blank=True)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
+    requested_start_time = models.TimeField(null=True, blank=True)
+    requested_end_time = models.TimeField(null=True, blank=True)
     approved_text = models.TextField(
         blank=True,
         help_text="The coordinator's reworded version, used to create the Announcement on approval.",

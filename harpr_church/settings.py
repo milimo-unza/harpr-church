@@ -89,7 +89,8 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-LANGUAGE_CODE = "en-us"
+# en-gb forces 24-hour time inputs in browsers; en-us would render 12-hour.
+LANGUAGE_CODE = "en-gb"
 TIME_ZONE = "Africa/Lusaka"
 USE_I18N = True
 USE_TZ = True

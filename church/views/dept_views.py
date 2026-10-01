@@ -246,21 +246,34 @@ def dept_request_create(request):
         initial["title"] = about[:200]
     form = RequestForm(request.POST or None, church=request.church, initial=initial)
     if request.method == "POST" and form.is_valid():
+        from datetime import time as _time
         church_request = form.save(commit=False)
         church_request.church = request.church
         church_request.submitted_by = request.user
-        # Dates apply only to announcement-type requests.
+        start_raw = request.POST.get("start_date", "").strip()
+        end_raw = request.POST.get("end_date", "").strip()
+        if start_raw:
+            try:
+                church_request.start_date = date.fromisoformat(start_raw)
+            except ValueError:
+                pass
         if church_request.type == "announcement":
-            start_raw = request.POST.get("start_date", "").strip()
-            end_raw = request.POST.get("end_date", "").strip()
-            if start_raw:
-                try:
-                    church_request.start_date = date.fromisoformat(start_raw)
-                except ValueError:
-                    pass
             if end_raw:
                 try:
                     church_request.end_date = date.fromisoformat(end_raw)
+                except ValueError:
+                    pass
+        elif church_request.type == "schedule":
+            start_t = request.POST.get("start_time", "").strip()
+            end_t = request.POST.get("end_time", "").strip()
+            if start_t:
+                try:
+                    church_request.requested_start_time = _time.fromisoformat(start_t)
+                except ValueError:
+                    pass
+            if end_t:
+                try:
+                    church_request.requested_end_time = _time.fromisoformat(end_t)
                 except ValueError:
                     pass
         church_request.save()
@@ -289,6 +302,8 @@ def dept_request_detail(request, pk):
         "type_display": church_request.get_type_display(),
         "start_date": church_request.start_date.isoformat() if church_request.start_date else "",
         "end_date": church_request.end_date.isoformat() if church_request.end_date else "",
+        "requested_start_time": church_request.requested_start_time.strftime("%H:%M") if church_request.requested_start_time else "",
+        "requested_end_time": church_request.requested_end_time.strftime("%H:%M") if church_request.requested_end_time else "",
         "status": church_request.status,
         "status_display": church_request.get_status_display(),
         "admin_response": church_request.admin_response or "",
@@ -315,20 +330,22 @@ def dept_request_edit(request, pk):
 
     form = RequestForm(request.POST or None, church=request.church, instance=church_request)
     if form.is_valid():
+        from datetime import time as _time
         obj = form.save(commit=False)
         obj.church = request.church
         obj.submitted_by = request.user
-        # Dates only apply to announcement-type requests.
-        if obj.type == "announcement":
-            start_raw = request.POST.get("start_date", "").strip()
-            end_raw = request.POST.get("end_date", "").strip()
-            if start_raw:
-                try:
-                    obj.start_date = date.fromisoformat(start_raw)
-                except ValueError:
-                    obj.start_date = None
-            else:
+        start_raw = request.POST.get("start_date", "").strip()
+        end_raw = request.POST.get("end_date", "").strip()
+        if start_raw:
+            try:
+                obj.start_date = date.fromisoformat(start_raw)
+            except ValueError:
                 obj.start_date = None
+        else:
+            obj.start_date = None
+        if obj.type == "announcement":
+            obj.requested_start_time = None
+            obj.requested_end_time = None
             if end_raw:
                 try:
                     obj.end_date = date.fromisoformat(end_raw)
@@ -336,9 +353,18 @@ def dept_request_edit(request, pk):
                     obj.end_date = None
             else:
                 obj.end_date = None
-        else:
-            obj.start_date = None
+        elif obj.type == "schedule":
             obj.end_date = None
+            start_t = request.POST.get("start_time", "").strip()
+            end_t = request.POST.get("end_time", "").strip()
+            try:
+                obj.requested_start_time = _time.fromisoformat(start_t) if start_t else None
+            except ValueError:
+                obj.requested_start_time = None
+            try:
+                obj.requested_end_time = _time.fromisoformat(end_t) if end_t else None
+            except ValueError:
+                obj.requested_end_time = None
         obj.save()
         if _is_ajax(request):
             return JsonResponse({"ok": True, "message": "Request updated."})

@@ -6,12 +6,17 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from church.models import (
+    AIInsight,
     Announcement,
     Assignment,
+    Bulletin,
     Church,
     ChurchEvent,
     Department,
+    DepartmentMember,
     Membership,
+    Notification,
+    Request,
     Service,
     ServiceItem,
     ServiceItemTemplate,
@@ -23,12 +28,10 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = "Rebuild the Harpr Church demonstration data."
+    help = "Rebuild the Harpr Church demonstration data from scratch."
 
     def handle(self, *args, **options):
-        # Deterministic so repeated runs give the same demo numbers.
         rng = random.Random(20260705)
-
         today = timezone.localdate()
 
         church, _ = Church.objects.update_or_create(
@@ -44,6 +47,16 @@ class Command(BaseCommand):
                 "is_active": True,
             },
         )
+
+        # Wipe demo-scoped data so PKs don't collide with stale notifications.
+        AIInsight.objects.filter(church=church).delete()
+        Announcement.objects.filter(church=church).delete()
+        Request.objects.filter(church=church).delete()
+        Bulletin.objects.filter(church=church).delete()
+        ServiceLog.objects.filter(church=church).delete()
+        Service.objects.filter(church=church).delete()
+        ChurchEvent.objects.filter(church=church).delete()
+        DepartmentMember.objects.filter(church=church).delete()
 
         departments = {}
         for slug, name, color in [
@@ -64,8 +77,7 @@ class Command(BaseCommand):
             "coordinator", "coordinator@example.com", "Programme", "Coordinator"
         )
         Membership.objects.update_or_create(
-            user=coordinator,
-            church=church,
+            user=coordinator, church=church,
             defaults={"role": "admin", "department": None, "is_active": True},
         )
 
@@ -78,8 +90,7 @@ class Command(BaseCommand):
         for username, (dept_slug, title) in heads.items():
             user = self._user(username, f"{username}@example.com", title, "Head")
             Membership.objects.update_or_create(
-                user=user,
-                church=church,
+                user=user, church=church,
                 defaults={
                     "role": "dept_head",
                     "department": departments[dept_slug],
@@ -87,9 +98,23 @@ class Command(BaseCommand):
                 },
             )
 
+        # Rosters for each department.
+        roster_names = {
+            "media": ["Chanda Mwape", "Brian Sakala", "Bupe Banda"],
+            "music": ["Ruth Mwansa", "Mwaka Zulu", "Chanda Tembo"],
+            "ushering": ["Moses Lungu", "Esther Chileshe", "Andrew Sakala"],
+            "pastors": ["Pastor Phiri", "Pastor Banda", "Pastor Mulenga"],
+        }
+        for dept_slug, names in roster_names.items():
+            for name in names:
+                DepartmentMember.objects.get_or_create(
+                    church=church,
+                    department=departments[dept_slug],
+                    name=name,
+                )
+
         template, _ = ServiceTemplate.objects.update_or_create(
-            church=church,
-            name="Sunday Worship Service",
+            church=church, name="Sunday Worship Service",
             defaults={
                 "day_of_week": 6,
                 "default_start_time": time(8, 0),
@@ -113,8 +138,7 @@ class Command(BaseCommand):
         ]
         for order, (title, duration, dept_slug) in enumerate(item_specs):
             ServiceItemTemplate.objects.update_or_create(
-                template=template,
-                order=order,
+                template=template, order=order,
                 defaults={
                     "title": title,
                     "default_duration_minutes": duration,
@@ -130,24 +154,18 @@ class Command(BaseCommand):
             service_dates.append(cursor)
             cursor += timedelta(days=7)
 
-        Service.objects.filter(church=church).delete()
-
         names = {
             "Sermon": ["Pastor Phiri", "Pastor Banda", "Pastor Mulenga"],
             "Worship Songs": ["Ruth Mwansa", "Mwaka Zulu", "Chanda Tembo"],
             "Offering": ["Moses Lungu", "Esther Chileshe", "Andrew Sakala"],
             "Scripture Reading": ["Grace Mumba", "Brian Kunda", "Naomi Sampa"],
         }
-
-        # Items that tend to slip. Gives the AI report something to talk about.
         delay_prone = {"Pre-Service Music": (3, 12), "Worship Songs": (0, 6), "Sermon": (-2, 4)}
 
         for idx, service_date in enumerate(service_dates):
             is_past = service_date < today
             service, _ = Service.objects.update_or_create(
-                church=church,
-                date=service_date,
-                name="Sunday Worship Service",
+                church=church, date=service_date, name="Sunday Worship Service",
                 defaults={
                     "template": template,
                     "status": "completed" if is_past else "draft",
@@ -168,8 +186,7 @@ class Command(BaseCommand):
                     actual_duration = None
 
                 item, _ = ServiceItem.objects.update_or_create(
-                    service=service,
-                    order=order,
+                    service=service, order=order,
                     defaults={
                         "title": title,
                         "planned_start": start,
@@ -189,7 +206,6 @@ class Command(BaseCommand):
                     )
                 start += timedelta(minutes=duration)
 
-        ChurchEvent.objects.filter(church=church).delete()
         event_templates = [
             ("Choir Practice", "rehearsal", 2, time(18, 0), time(19, 30), "music"),
             ("Bible Study", "study", 4, time(18, 30), time(20, 0), "pastors"),
@@ -205,17 +221,13 @@ class Command(BaseCommand):
                 break
             for title, event_type, day_offset, start_time, end_time, dept_slug in event_templates:
                 ChurchEvent.objects.create(
-                    church=church,
-                    title=title,
-                    event_type=event_type,
+                    church=church, title=title, event_type=event_type,
                     date=week_start + timedelta(days=day_offset),
-                    start_time=start_time,
-                    end_time=end_time,
+                    start_time=start_time, end_time=end_time,
                     location="Main church campus",
                     responsible_department=departments[dept_slug],
                 )
 
-        Announcement.objects.filter(church=church).delete()
         announcements = [
             ("Mid-week prayer meeting moves to Wednesday at 18:00. All are welcome.",
              today - timedelta(days=60), today - timedelta(days=30)),
@@ -232,33 +244,56 @@ class Command(BaseCommand):
         ]
         for body, start_date, end_date in announcements:
             Announcement.objects.create(
-                church=church,
-                body=body,
-                start_date=start_date,
-                end_date=end_date,
-                is_paused=False,
-                show_on_public=True,
+                church=church, body=body,
+                start_date=start_date, end_date=end_date,
+                is_paused=False, show_on_public=True,
             )
 
-        ServiceLog.objects.filter(church=church).delete()
-        recent_service = Service.objects.filter(
-            church=church, date__lt=today
-        ).order_by("-date").first()
-        if recent_service:
-            ServiceLog.objects.create(
+        # Sample pending requests so the coordinator inbox isn't empty.
+        sample_requests = [
+            ("announcement", "Harvest Thanksgiving Choir",
+             "We would like the choir to sing a special number at the harvest service.",
+             today - timedelta(days=10), today + timedelta(days=20), None, None),
+            ("schedule", "Prayer meeting",
+             "Need to use the chapel hall for prayer meeting this Sunday.",
+             today + timedelta(days=3), None, time(14, 0), time(16, 0)),
+            ("schedule", "Band practice",
+             "Requesting the main hall for band practice on Friday evening.",
+             today + timedelta(days=5), None, time(18, 0), time(20, 0)),
+        ]
+        media_membership = Membership.objects.filter(church=church, role="dept_head").first()
+        for r_type, title, body, start_d, end_d, start_t, end_t in sample_requests:
+            Request.objects.create(
                 church=church,
-                user=coordinator,
-                service=recent_service,
-                action="frozen",
-                details="Bulletin frozen for Sunday.",
+                submitted_by=media_membership.user if media_membership else None,
+                submitter_name="Media Head",
+                submitter_contact="media_head@example.com",
+                type=r_type,
+                title=title,
+                body=body,
+                start_date=start_d,
+                end_date=end_d,
+                requested_start_time=start_t,
+                requested_end_time=end_t,
+                status="pending",
             )
-            ServiceLog.objects.create(
-                church=church,
-                user=coordinator,
-                service=recent_service,
-                action="item_completed",
-                details="Service marked complete.",
-            )
+
+        ServiceLog.objects.create(
+            church=church,
+            user=coordinator,
+            service=Service.objects.filter(church=church, date__lt=today).order_by("-date").first(),
+            action="frozen",
+            details="Bulletin frozen for Sunday.",
+        )
+        ServiceLog.objects.create(
+            church=church,
+            user=coordinator,
+            action="item_completed",
+            details="Service marked complete.",
+        )
+
+        # Clear notifications so stale PK references don't 404.
+        Notification.objects.filter(church=church).delete()
 
         self.stdout.write(self.style.SUCCESS("Harpr demo data rebuilt."))
         self.stdout.write("Coordinator: coordinator / harpr2026")

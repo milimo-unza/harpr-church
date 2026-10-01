@@ -81,17 +81,15 @@ class AssignmentForm(forms.ModelForm):
 
 
 class RequestForm(forms.ModelForm):
+    """Department head submission. Two types: announcement, schedule."""
+
     class Meta:
         model = Request
-        fields = ["type", "title", "body", "target_service"]
+        fields = ["type", "title", "body"]
         widgets = {"body": forms.Textarea(attrs={"rows": 5})}
 
     def __init__(self, *args, church=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["target_service"].required = False
-        self.fields["target_service"].queryset = (
-            church.services.all() if church else Service.objects.none()
-        )
         _style_fields(self)
 
 
@@ -111,12 +109,9 @@ class RequestResponseForm(forms.ModelForm):
 
 
 class RequestApproveForm(forms.Form):
-    """Coordinator's response to a request.
-
-    On approve, `approved_text` is required and is what becomes the
-    Announcement body. On reject, `approved_text` is optional and is kept
-    as the coordinator's note.
-    """
+    """Coordinator's response. `approved_text` is required only for
+    announcement approvals — it becomes the public announcement body.
+    Schedule approvals treat it as optional notes."""
 
     status = forms.ChoiceField(choices=[
         ("approved", "Approved"),
@@ -131,8 +126,9 @@ class RequestApproveForm(forms.Form):
     def clean(self):
         cleaned = super().clean()
         status = cleaned.get("status")
+        req_type = self.data.get("request_type", "")
         text = (cleaned.get("approved_text") or "").strip()
-        if status == "approved" and not text:
+        if status == "approved" and req_type == "announcement" and not text:
             raise forms.ValidationError(
                 "Please write your own wording before approving."
             )

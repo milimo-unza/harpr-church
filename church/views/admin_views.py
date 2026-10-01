@@ -320,7 +320,7 @@ def service_freeze(request, pk):
         request.user,
         "Bulletin frozen",
         f"{service.name} is now locked for publication.",
-        url=f"/services/{service.pk}/",
+        url="/services/",
         church=request.church,
     )
     messages.success(request, "Bulletin frozen.")
@@ -418,10 +418,18 @@ def event_delete(request, pk):
 
 @admin_required
 def request_list(request):
-    requests = request.church.requests.select_related(
+    qs = request.church.requests.select_related(
         "submitted_by", "target_service"
-    ).order_by("status", "-created_at")
-    return render(request, "church/requests.html", {"requests": requests})
+    ).order_by("-created_at")
+    pending = [r for r in qs if r.status == "pending"]
+    approved = [r for r in qs if r.status == "approved"]
+    rejected = [r for r in qs if r.status == "rejected"]
+    return render(request, "church/requests.html", {
+        "requests": qs,
+        "pending_requests": pending,
+        "approved_requests": approved,
+        "rejected_requests": rejected,
+    })
 
 
 @admin_required
@@ -432,7 +440,8 @@ def request_detail_json(request, pk):
         "id": church_request.pk,
         "title": church_request.title,
         "body": church_request.body,
-        "type": church_request.get_type_display(),
+        "type": church_request.type,
+        "type_display": church_request.get_type_display(),
         "submitter_name": church_request.submitter_name or "",
         "submitter_contact": church_request.submitter_contact or "",
         "start_date": church_request.start_date.isoformat() if church_request.start_date else "",
@@ -441,9 +450,14 @@ def request_detail_json(request, pk):
         "status_display": church_request.get_status_display(),
         "admin_response": church_request.admin_response or "",
         "approved_text": church_request.approved_text or "",
+        "requested_start_time": church_request.requested_start_time.strftime("%H:%M") if church_request.requested_start_time else "",
+        "requested_end_time": church_request.requested_end_time.strftime("%H:%M") if church_request.requested_end_time else "",
         "created_at": church_request.created_at.strftime("%d %b %Y %H:%M"),
         "responded_at": church_request.responded_at.strftime("%d %b %Y %H:%M") if church_request.responded_at else "",
-        "target_service": church_request.target_service.name if church_request.target_service else "",
+        "departments": [
+            {"id": d.pk, "name": d.name}
+            for d in request.church.departments.all()
+        ],
     })
 
 
@@ -452,7 +466,12 @@ def request_respond(request, pk):
     """Approve or reject a request. AJAX from the modal, still works as a
     non-JS fallback. On approve, creates the Announcement immediately."""
     church_request = get_object_or_404(request.church.requests, pk=pk)
-    form = RequestApproveForm(request.POST or None)
+    # Tell the form which type it's dealing with so it knows whether the
+    # wording field is required.
+    form = RequestApproveForm(
+        request.POST or None,
+        initial={"request_type": church_request.type},
+    )
     if request.method == "POST" and form.is_valid():
         data = form.cleaned_data
         church_request.status = data["status"]
@@ -462,20 +481,60 @@ def request_respond(request, pk):
         church_request.responded_at = timezone.now()
         church_request.save()
 
-        announcement_created = False
+        created_kind = ""
         if church_request.status == "approved":
-            body = (church_request.approved_text or "").strip()
-            start = church_request.start_date or timezone.localdate()
-            end = church_request.end_date or (start + timedelta(days=30))
-            Announcement.objects.create(
-                church=request.church,
-                body=body,
-                start_date=start,
-                end_date=end,
-                is_paused=False,
-                show_on_public=True,
-            )
-            announcement_created = True
+            if church_request.type == "announcement":
+                body = (church_request.approved_text or "").strip()
+                start = church_request.start_date or timezone.localdate()
+                end = church_request.end_date or (start + timedelta(days=30))
+                Announcement.objects.create(
+                    church=request.church,
+                    body=body,
+                    start_date=start,
+                    end_date=end,
+                    is_paused=False,
+                    show_on_public=True,
+                )
+                created_kind = "Announcement created."
+
+            elif church_request.type == "schedule":
+                from datetime import date as _date, time as _time
+                ev_date_raw = request.POST.get("event_date", "").strip()
+                ev_start_raw = request.POST.get("event_start", "").strip()
+                ev_end_raw = request.POST.get("event_end", "").strip()
+                location = request.POST.get("event_location", "").strip() or "Main church campus"
+                dept_id = request.POST.get("event_department", "").strip()
+
+                ev_start = ev_end = None
+                try:
+                    ev_date = _date.fromisoformat(ev_date_raw) if ev_date_raw else (church_request.start_date or timezone.localdate())
+                except ValueError:
+                    ev_date = church_request.start_date or timezone.localdate()
+                try:
+                    ev_start = _time.fromisoformat(ev_start_raw) if ev_start_raw else church_request.requested_start_time
+                except ValueError:
+                    ev_start = church_request.requested_start_time
+                try:
+                    ev_end = _time.fromisoformat(ev_end_raw) if ev_end_raw else church_request.requested_end_time
+                except ValueError:
+                    ev_end = church_request.requested_end_time
+
+                if ev_start and ev_end and ev_end > ev_start:
+                    dept = None
+                    if dept_id:
+                        dept = request.church.departments.filter(pk=dept_id).first()
+                    ChurchEvent.objects.create(
+                        church=request.church,
+                        title=church_request.title,
+                        event_type="other",
+                        date=ev_date,
+                        start_time=ev_start,
+                        end_time=ev_end,
+                        location=location,
+                        responsible_department=dept,
+                        notes=church_request.approved_text or church_request.body,
+                    )
+                    created_kind = "Event added to schedule."
 
         if church_request.submitted_by:
             notify_user(
@@ -489,10 +548,10 @@ def request_respond(request, pk):
             return JsonResponse({
                 "ok": True,
                 "redirect": "/requests/",
-                "announcement_created": announcement_created,
+                "created_kind": created_kind,
                 "message": (
-                    "Request approved. Announcement created."
-                    if announcement_created
+                    f"Request approved. {created_kind}"
+                    if created_kind
                     else "Request updated."
                 ),
             })

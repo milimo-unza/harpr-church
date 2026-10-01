@@ -92,7 +92,12 @@
           titleEl.textContent = d.title;
 
           var dates = "";
-          if (d.start_date || d.end_date) {
+          if (d.type === "schedule") {
+            dates = '<p><strong>When:</strong> ' + esc(d.start_date || "—") +
+              (d.requested_start_time ? " · " + esc(d.requested_start_time) : "") +
+              (d.requested_end_time ? " – " + esc(d.requested_end_time) : "") +
+              "</p>";
+          } else if (d.start_date || d.end_date) {
             dates = '<p><strong>Runs:</strong> ' + esc(d.start_date || "—") +
               " to " + esc(d.end_date || "—") + "</p>";
           }
