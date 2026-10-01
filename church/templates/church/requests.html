@@ -25,7 +25,10 @@
       <tr class="clickable-row" data-request-id="{{ item.pk }}">
         <td><strong>{{ item.title }}</strong></td>
         <td>{{ item.get_type_display }}</td>
-        <td class="mono">{{ item.created_at|date:"d M Y" }}</td>
+        <td class="mono">
+          {{ item.created_at|date:"d M Y" }}
+          <small class="waiting-badge">{{ item.created_at|timesince }} ago</small>
+        </td>
         <td>{% firstof item.submitter_name item.submitted_by.username "—" %}</td>
         <td><button type="button" class="btn btn-small">Review</button></td>
       </tr>

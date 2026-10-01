@@ -18,6 +18,7 @@ urlpatterns = [
     path("services/", admin_views.service_list, name="service_list"),
     path("services/new/", admin_views.service_create, name="service_create"),
     path("services/<int:pk>/", admin_views.service_detail, name="service_detail"),
+    path("services/<int:pk>/delete/", admin_views.service_delete, name="service_delete"),
     path("services/<int:pk>/freeze/",
          admin_views.service_freeze, name="service_freeze"),
     path("services/<int:pk>/unfreeze/",
@@ -36,6 +37,11 @@ urlpatterns = [
         "services/<int:pk>/items/<int:item_pk>/recalculate/",
         admin_views.service_item_recalculate,
         name="service_item_recalculate",
+    ),
+    path(
+        "services/<int:pk>/items/<int:item_pk>/delete/",
+        admin_views.service_item_delete,
+        name="service_item_delete",
     ),
     path(
         "services/<int:pk>/items/<int:item_pk>/assignments/new/",

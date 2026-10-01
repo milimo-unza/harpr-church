@@ -2082,3 +2082,25 @@ text-align: center;
 background: var(--surface-2);
 color: var(--fg);
 }
+
+/* Waiting time indicator on pending request rows */
+.waiting-badge {
+display: block;
+margin-top: 2px;
+color: var(--warn);
+font-family: var(--font-sans);
+font-size: 0.7rem;
+font-weight: 500;
+letter-spacing: 0.01em;
+}
+
+.freeze-lock-note {
+font-family: var(--font-mono);
+font-size: 0.72rem;
+letter-spacing: 0.08em;
+text-transform: uppercase;
+color: var(--muted-fg);
+padding: 6px 10px;
+border: 1px dashed var(--border);
+border-radius: var(--radius-sm);
+}

@@ -7,7 +7,14 @@
     <h1>{{ service.name }}</h1>
     <span class="status-badge status-{{ service.status }}">{{ service.get_status_display }}</span>
   </div>
-  <button type="button" class="btn btn-primary" data-modal-open="item-create-modal">Add item</button>
+  <div class="button-row">
+    {% if service.status != "frozen" %}
+    <button type="button" class="btn btn-primary" data-modal-open="item-create-modal">Add item</button>
+    <button type="button" class="btn btn-danger" data-modal-open="service-delete-modal">Delete service</button>
+    {% else %}
+    <span class="freeze-lock-note">Frozen. Unfreeze to edit.</span>
+    {% endif %}
+  </div>
 </div>
 
 {% if service.status == "frozen" %}
@@ -43,10 +50,18 @@
         <td><span class="status-badge status-{{ item.status }}">{{ item.get_status_display }}</span></td>
         <td>
           <div class="row-actions-inline">
+            {% if service.status == "frozen" %}
+            <span class="muted" style="font-size:0.78rem;">Locked</span>
+            {% else %}
             <button type="button" class="btn btn-small"
               data-modal-open="item-edit-modal-{{ item.pk }}">Edit</button>
             <button type="button" class="btn btn-small"
               data-modal-open="item-assign-modal-{{ item.pk }}">+ Person</button>
+            <button type="button" class="btn btn-small"
+              data-modal-open="item-shift-modal-{{ item.pk }}">Shift</button>
+            <button type="button" class="btn btn-small btn-danger"
+              data-modal-open="item-delete-modal-{{ item.pk }}">×</button>
+            {% endif %}
           </div>
         </td>
       </tr>
@@ -73,6 +88,25 @@
   <a class="btn btn-ghost"
     href="{% url 'public_bulletin_pdf' service.church.slug service.date.year service.date.month service.date.day %}">Download
     PDF</a>
+</div>
+
+<div class="modal-backdrop" id="service-delete-modal" hidden>
+  <div class="modal modal--narrow" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <h2>Delete service?</h2>
+      <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>Deleting <strong>{{ service.name }}</strong> removes all of its items and assignments. This cannot be undone.</p>
+      <form method="post" action="{% url 'service_delete' service.pk %}">
+        {% csrf_token %}
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost modal-close">Cancel</button>
+          <button type="submit" class="btn btn-danger">Delete service</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 
 <div class="modal-backdrop" id="item-create-modal" hidden>
@@ -199,6 +233,61 @@
         <div class="form-actions">
           <button type="button" class="btn btn-ghost modal-close">Cancel</button>
           <button type="submit" class="btn btn-primary">Add person</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+{% for item in service.items.all %}
+<div class="modal-backdrop" id="item-shift-modal-{{ item.pk }}" hidden>
+  <div class="modal modal--narrow" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <h2>Shift times from {{ item.title }}</h2>
+      <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="muted" style="margin-top:0;">
+        Everything after this item will shift by the same delay. Locked and
+        already-completed items are left alone.
+      </p>
+      <form method="post" action="{% url 'service_item_recalculate' service.pk item.pk %}">
+        {% csrf_token %}
+        <div class="form-row">
+          <label for="shift-start-{{ item.pk }}">Actual start</label>
+          <input type="datetime-local" name="actual_start" id="shift-start-{{ item.pk }}"
+            value="{{ item.planned_start|date:'Y-m-d\TH:i' }}" required>
+        </div>
+        <div class="form-row">
+          <label for="shift-reason-{{ item.pk }}">Reason</label>
+          <input name="reason" id="shift-reason-{{ item.pk }}"
+            placeholder="e.g. Sermon ran 12 minutes over" required>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost modal-close">Cancel</button>
+          <button type="submit" class="btn btn-primary">Shift times</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+{% for item in service.items.all %}
+<div class="modal-backdrop" id="item-delete-modal-{{ item.pk }}" hidden>
+  <div class="modal modal--narrow" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <h2>Delete {{ item.title }}?</h2>
+      <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>This removes the item and all its assignments from this service. Cannot be undone.</p>
+      <form method="post" action="{% url 'service_item_delete' service.pk item.pk %}">
+        {% csrf_token %}
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost modal-close">Cancel</button>
+          <button type="submit" class="btn btn-danger">Delete item</button>
         </div>
       </form>
     </div>

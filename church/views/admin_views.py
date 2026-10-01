@@ -63,6 +63,18 @@ def _form_errors_json(form):
     return {field: [str(e) for e in errs] for field, errs in form.errors.items()}
 
 
+def _frozen_response(request, service):
+    """Standard response when an action is blocked because the service is frozen."""
+    msg = (
+        f"{service.name} is frozen. Unfreeze it with a reason before "
+        "editing its items."
+    )
+    if _is_ajax(request):
+        return JsonResponse({"ok": False, "errors": {"__all__": [msg]}}, status=400)
+    messages.error(request, msg)
+    return redirect("service_detail", pk=service.pk)
+
+
 @admin_required
 def admin_dashboard(request):
     from datetime import date, timedelta
@@ -212,6 +224,31 @@ def service_create(request):
 
 
 @admin_required
+@require_POST
+def service_delete(request, pk):
+    """Delete a service. Only allowed when not frozen."""
+    service = get_object_or_404(request.church.services, pk=pk)
+    if service.status == "frozen":
+        messages.error(
+            request,
+            "Unfreeze this service before deleting it.",
+        )
+        return redirect("service_detail", pk=service.pk)
+    name = service.name
+    service.delete()
+    log_action(
+        church=request.church,
+        user=request.user,
+        action="created",
+        details=f"Service deleted: {name}",
+    )
+    if _is_ajax(request):
+        return JsonResponse({"ok": True, "message": f"{name} deleted."})
+    messages.success(request, f"{name} deleted.")
+    return redirect("service_list")
+
+
+@admin_required
 def service_detail(request, pk):
     service = get_object_or_404(
         request.church.services.prefetch_related(
@@ -234,6 +271,8 @@ def service_detail(request, pk):
 @admin_required
 def service_item_create(request, pk):
     service = get_object_or_404(request.church.services, pk=pk)
+    if service.status == "frozen":
+        return _frozen_response(request, service)
     form = ServiceItemForm(request.POST or None, church=request.church)
     if request.method == "POST" and form.is_valid():
         item = form.save(commit=False)
@@ -273,6 +312,8 @@ def service_item_create(request, pk):
 @admin_required
 def service_item_edit(request, pk, item_pk):
     service = get_object_or_404(request.church.services, pk=pk)
+    if service.status == "frozen":
+        return _frozen_response(request, service)
     item = get_object_or_404(service.items, pk=item_pk)
     form = ServiceItemForm(request.POST or None,
                            instance=item, church=request.church)
@@ -309,8 +350,32 @@ def service_item_edit(request, pk, item_pk):
 
 @admin_required
 @require_POST
+def service_item_delete(request, pk, item_pk):
+    service = get_object_or_404(request.church.services, pk=pk)
+    if service.status == "frozen":
+        return _frozen_response(request, service)
+    item = get_object_or_404(service.items, pk=item_pk)
+    title = item.title
+    item.delete()
+    log_action(
+        church=request.church,
+        user=request.user,
+        action="item_edited",
+        details=f"Deleted item: {title} from {service.name}",
+        service=service,
+    )
+    if _is_ajax(request):
+        return JsonResponse({"ok": True, "message": f"{title} deleted."})
+    messages.success(request, f"{title} deleted.")
+    return redirect("service_detail", pk=service.pk)
+
+
+@admin_required
+@require_POST
 def service_item_recalculate(request, pk, item_pk):
     service = get_object_or_404(request.church.services, pk=pk)
+    if service.status == "frozen":
+        return _frozen_response(request, service)
     item = get_object_or_404(service.items, pk=item_pk)
     form = RecalculateForm(request.POST)
     if form.is_valid():
@@ -361,6 +426,8 @@ def service_unfreeze(request, pk):
 @require_POST
 def assignment_create(request, pk, item_pk):
     service = get_object_or_404(request.church.services, pk=pk)
+    if service.status == "frozen":
+        return _frozen_response(request, service)
     item = get_object_or_404(service.items, pk=item_pk)
     form = AssignmentForm(request.POST)
     if form.is_valid():
