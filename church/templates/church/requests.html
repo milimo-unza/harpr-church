@@ -1,3 +1,226 @@
 {% extends "church/base.html" %}
 {% block title %}Requests · Harpr Church{% endblock %}
-{% block content %}<div class="page-head"><div><p class="eyebrow">Inbox</p><h1>Requests</h1></div></div><div class="card table-wrap"><table class="data-table"><thead><tr><th>Status</th><th>Title</th><th>Type</th><th>Submitted</th><th></th></tr></thead><tbody>{% for item in requests %}<tr><td>{{ item.get_status_display }}</td><td>{{ item.title }}</td><td>{{ item.get_type_display }}</td><td>{{ item.created_at|date:"d M Y" }}</td><td><a href="{% url 'request_respond' item.pk %}">Respond</a></td></tr>{% empty %}<tr><td colspan="5" class="empty-state">No requests.</td></tr>{% endfor %}</tbody></table></div>{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Inbox</p>
+    <h1>Requests</h1>
+    <p class="muted" style="margin-top:6px;">
+      Click any row to review the original submission and approve or reject it.
+    </p>
+  </div>
+</div>
+
+<div class="card table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Status</th>
+        <th>Title</th>
+        <th>Type</th>
+        <th>Submitted</th>
+        <th>From</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in requests %}
+      <tr class="clickable-row" data-request-id="{{ item.pk }}">
+        <td><span class="status-badge status-{{ item.status }}">{{ item.get_status_display }}</span></td>
+        <td><strong>{{ item.title }}</strong></td>
+        <td>{{ item.get_type_display }}</td>
+        <td class="mono">{{ item.created_at|date:"d M Y" }}</td>
+        <td>{% firstof item.submitter_name item.submitted_by.username "—" %}</td>
+        <td><button type="button" class="btn btn-small">Review</button></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="empty-state">No requests.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="modal-backdrop" id="request-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" style="max-width:560px;">
+    <div class="modal-head">
+      <h2 id="request-modal-title">Request</h2>
+      <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body" id="request-modal-body">
+      <p class="muted">Loading…</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var backdrop = document.getElementById("request-modal");
+    var titleEl = document.getElementById("request-modal-title");
+    var bodyEl = document.getElementById("request-modal-body");
+    if (!backdrop) return;
+
+    function esc(s) {
+      return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+      });
+    }
+
+    function close() { backdrop.hidden = true; }
+    backdrop.querySelectorAll(".modal-close").forEach(function (b) {
+      b.addEventListener("click", close);
+    });
+    backdrop.addEventListener("click", function (e) { if (e.target === backdrop) close(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
+
+    function getCookie(name) {
+      var v = null;
+      document.cookie.split(";").forEach(function (c) {
+        var parts = c.trim().split("=");
+        if (parts[0] === name) v = decodeURIComponent(parts[1]);
+      });
+      return v;
+    }
+
+    function open(pk) {
+      titleEl.textContent = "Loading…";
+      bodyEl.innerHTML = '<p class="muted">Loading…</p>';
+      backdrop.hidden = false;
+      fetch("/requests/" + pk + "/detail/", {
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          titleEl.textContent = d.title;
+
+          var dates = "";
+          if (d.start_date || d.end_date) {
+            dates = '<p><strong>Runs:</strong> ' + esc(d.start_date || "—") +
+              " to " + esc(d.end_date || "—") + "</p>";
+          }
+          var submitter = "";
+          if (d.submitter_name || d.submitter_contact) {
+            submitter = "<p><strong>From:</strong> " + esc(d.submitter_name || "—") +
+              (d.submitter_contact ? " (" + esc(d.submitter_contact) + ")" : "") + "</p>";
+          }
+
+          if (d.status !== "pending") {
+            bodyEl.innerHTML =
+              '<p><strong>Type:</strong> ' + esc(d.type_display) + "</p>" +
+              submitter + dates +
+              "<hr>" +
+              '<p><strong>Original submission:</strong></p>' +
+              "<p>" + esc(d.body).replace(/\\n/g, "<br>") + "</p>" +
+              "<hr>" +
+              '<p><strong>Status:</strong> ' + esc(d.status_display) + "</p>" +
+              "<p><strong>Your response:</strong></p>" +
+              "<p>" + esc(d.admin_response || "—").replace(/\\n/g, "<br>") + "</p>" +
+              '<div class="form-actions"><button type="button" class="btn btn-ghost modal-close">Close</button></div>';
+            bodyEl.querySelectorAll(".modal-close").forEach(function (b) {
+              b.addEventListener("click", close);
+            });
+            return;
+          }
+
+          var isSchedule = d.type === "schedule";
+
+          var scheduleFields = "";
+          if (isSchedule) {
+            var deptOptions = '<option value="">— None —</option>';
+            (d.departments || []).forEach(function (dep) {
+              deptOptions += '<option value="' + dep.id + '">' + esc(dep.name) + "</option>";
+            });
+            scheduleFields =
+              '<div class="form-row two-up">' +
+              '<div><label for="ev-date">Date</label>' +
+              '<input type="date" name="event_date" id="ev-date" value="' + esc(d.start_date || "") + '"></div>' +
+              '<div><label for="ev-location">Location</label>' +
+              '<input name="event_location" id="ev-location" value="Main church campus"></div>' +
+              "</div>" +
+              '<div class="form-row two-up">' +
+              '<div><label for="ev-start">Start time</label>' +
+              '<input type="time" name="event_start" id="ev-start" required></div>' +
+              '<div><label for="ev-end">End time</label>' +
+              '<input type="time" name="event_end" id="ev-end" required></div>' +
+              "</div>" +
+              '<div class="form-row"><label for="ev-dept">Responsible department</label>' +
+              '<select name="event_department" id="ev-dept">' + deptOptions + "</select></div>";
+          }
+
+          var wordingLabel = isSchedule ? "Notes (optional)" : "Your wording";
+          var wordingPlaceholder = isSchedule
+            ? "Any notes about the event."
+            : "Required if approving. This becomes the announcement.";
+
+          bodyEl.innerHTML =
+            '<p><strong>Type:</strong> ' + esc(d.type_display) + "</p>" +
+            submitter + dates +
+            "<hr>" +
+            '<p><strong>Original submission:</strong></p>' +
+            "<p>" + esc(d.body).replace(/\\n/g, "<br>") + "</p>" +
+            "<hr>" +
+            '<form id="respond-form">' +
+            '<div class="form-row"><label for="resp-status">Decision</label>' +
+            '<select name="status" id="resp-status">' +
+            '<option value="approved">Approve</option>' +
+            '<option value="rejected">Reject</option>' +
+            "</select></div>" +
+            scheduleFields +
+            '<div class="form-row"><label for="resp-text">' + wordingLabel + "</label>" +
+            '<textarea name="approved_text" id="resp-text" rows="4" placeholder="' + wordingPlaceholder + '"></textarea></div>' +
+            '<div class="form-errors" data-form-errors hidden></div>' +
+            '<div class="form-actions">' +
+            '<button type="button" class="btn btn-ghost modal-close">Cancel</button>' +
+            '<button type="submit" class="btn btn-primary">Save response</button>' +
+            "</div></form>";
+
+          bodyEl.querySelectorAll(".modal-close").forEach(function (b) {
+            b.addEventListener("click", close);
+          });
+
+          var form = document.getElementById("respond-form");
+          form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            var errBox = form.querySelector("[data-form-errors]");
+            if (errBox) { errBox.hidden = true; errBox.textContent = ""; }
+            fetch("/requests/" + pk + "/respond/", {
+              method: "POST",
+              headers: {
+                "X-Requested-With": "XMLHttpRequest",
+                "Accept": "application/json",
+                "X-CSRFToken": getCookie("csrftoken"),
+              },
+              body: new FormData(form),
+            })
+              .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+              .then(function (res) {
+                if (res.ok && res.j.ok) {
+                  if (window.harprToast) window.harprToast(res.j.message || "Updated.");
+                  window.location.reload();
+                } else if (errBox) {
+                  errBox.hidden = false;
+                  var msgs = [];
+                  var errs = (res.j && res.j.errors) || {};
+                  Object.keys(errs).forEach(function (k) {
+                    (errs[k] || []).forEach(function (m) { msgs.push(m); });
+                  });
+                  errBox.textContent = msgs.join(" ") || "Please check the form.";
+                }
+              })
+              .catch(function () {
+                if (errBox) { errBox.hidden = false; errBox.textContent = "Network error."; }
+              });
+          });
+        })
+        .catch(function () {
+          bodyEl.innerHTML = '<p class="muted">Could not load request.</p>';
+        });
+    }
+
+    document.querySelectorAll("[data-request-id]").forEach(function (row) {
+      row.addEventListener("click", function () {
+        open(row.dataset.requestId);
+      });
+    });
+  })();
+</script>
+{% endblock %}

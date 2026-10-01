@@ -2,19 +2,45 @@
 {% block title %}Request · {{ church.name }}{% endblock %}
 {% block content %}
 <div class="public-card narrow-page">
-    <h2>Request an addition</h2>
-    <form method="post">
-        {% csrf_token %}
-        <p>
-            <label for="submitter_name">Your name</label>
-            <input class="form-input" name="submitter_name" id="submitter_name" required>
-        </p>
-        <p>
-            <label for="submitter_contact">Contact</label>
-            <input class="form-input" name="submitter_contact" id="submitter_contact">
-        </p>
-        {{ form.as_p }}
-        <button class="btn btn-primary" type="submit">Submit request</button>
-    </form>
+  <h2>Request an announcement</h2>
+  <p class="muted">
+    Send the church an announcement. The programme coordinator will review
+    it and write the final wording before it goes on the public page.
+  </p>
+  <form method="post">
+    {% csrf_token %}
+
+    <p>
+      <label for="submitter_name">Your name</label>
+      <input class="form-input" name="submitter_name" id="submitter_name" required>
+    </p>
+    <p>
+      <label for="submitter_contact">Contact (phone or email)</label>
+      <input class="form-input" name="submitter_contact" id="submitter_contact">
+    </p>
+
+    <p>
+      <label for="{{ form.title.id_for_label }}">Title</label>
+      {{ form.title }}
+    </p>
+
+    <p>
+      <label for="{{ form.body.id_for_label }}">What would you like announced?</label>
+      {{ form.body }}
+    </p>
+
+    <div class="form-row two-up">
+      <div>
+        <label for="start_date">Start date</label>
+        <input type="date" name="start_date" id="start_date">
+      </div>
+      <div>
+        <label for="end_date">End date</label>
+        <input type="date" name="end_date" id="end_date">
+      </div>
+    </div>
+
+    <button class="btn btn-primary" type="submit">Submit request</button>
+  </form>
 </div>
 {% endblock %}

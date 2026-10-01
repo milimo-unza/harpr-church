@@ -1,3 +1,227 @@
 {% extends "church/base.html" %}
 {% block title %}My requests · Harpr Church{% endblock %}
-{% block content %}<div class="page-head"><div><p class="eyebrow">Department head</p><h1>My requests</h1></div><a class="btn btn-primary" href="{% url 'dept_request_create' %}">New request</a></div><div class="card table-wrap"><table class="data-table"><thead><tr><th>Title</th><th>Status</th><th>Created</th></tr></thead><tbody>{% for item in requests %}<tr><td>{{ item.title }}</td><td>{{ item.get_status_display }}</td><td>{{ item.created_at|date:"d M Y" }}</td></tr>{% empty %}<tr><td colspan="3" class="empty-state">No requests.</td></tr>{% endfor %}</tbody></table></div>{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Department head</p>
+    <h1>My requests</h1>
+    <p class="muted" style="margin-top:6px;">
+      Click any row to view, edit, or withdraw a pending request.
+    </p>
+  </div>
+  <a class="btn btn-primary" href="{% url 'dept_request_create' %}">New request</a>
+</div>
+
+<div class="card table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Type</th>
+        <th>Status</th>
+        <th>Created</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in requests %}
+      <tr class="clickable-row" data-request-id="{{ item.pk }}">
+        <td><strong>{{ item.title }}</strong></td>
+        <td>{{ item.get_type_display }}</td>
+        <td><span class="status-badge status-{{ item.status }}">{{ item.get_status_display }}</span></td>
+        <td class="mono">{{ item.created_at|date:"d M Y" }}</td>
+        <td><button type="button" class="btn btn-small">View</button></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="empty-state">No requests.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="modal-backdrop" id="dept-request-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" style="max-width:560px;">
+    <div class="modal-head">
+      <h2 id="dept-request-title">Request</h2>
+      <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body" id="dept-request-body">
+      <p class="muted">Loading…</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var backdrop = document.getElementById("dept-request-modal");
+    var titleEl = document.getElementById("dept-request-title");
+    var bodyEl = document.getElementById("dept-request-body");
+    if (!backdrop) return;
+
+    function esc(s) {
+      return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+      });
+    }
+
+    function close() { backdrop.hidden = true; }
+    backdrop.querySelectorAll(".modal-close").forEach(function (b) {
+      b.addEventListener("click", close);
+    });
+    backdrop.addEventListener("click", function (e) { if (e.target === backdrop) close(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
+
+    function getCookie(name) {
+      var v = null;
+      document.cookie.split(";").forEach(function (c) {
+        var parts = c.trim().split("=");
+        if (parts[0] === name) v = decodeURIComponent(parts[1]);
+      });
+      return v;
+    }
+
+    function open(pk) {
+      titleEl.textContent = "Loading…";
+      bodyEl.innerHTML = '<p class="muted">Loading…</p>';
+      backdrop.hidden = false;
+      fetch("/dept/requests/" + pk + "/", {
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          titleEl.textContent = d.title;
+
+          var dates = "";
+          if (d.start_date || d.end_date) {
+            dates = '<p><strong>Runs:</strong> ' + esc(d.start_date || "—") +
+              " to " + esc(d.end_date || "—") + "</p>";
+          }
+
+          if (!d.is_pending) {
+            bodyEl.innerHTML =
+              '<p><strong>Type:</strong> ' + esc(d.type_display) + "</p>" +
+              dates +
+              '<p><strong>Status:</strong> ' + esc(d.status_display) + "</p>" +
+              "<hr>" +
+              '<p><strong>Your submission:</strong></p>' +
+              "<p>" + esc(d.body).replace(/\\n/g, "<br>") + "</p>" +
+              "<hr>" +
+              '<p><strong>Coordinator response:</strong></p>' +
+              "<p>" + esc(d.admin_response || "—").replace(/\\n/g, "<br>") + "</p>" +
+              '<div class="form-actions"><button type="button" class="btn btn-ghost modal-close">Close</button></div>';
+            bodyEl.querySelectorAll(".modal-close").forEach(function (b) {
+              b.addEventListener("click", close);
+            });
+            return;
+          }
+
+          // Editable form for pending requests.
+          var typeOptions = ["song", "announcement", "person_swap", "event", "other"];
+          var typeLabels = {
+            song: "Song / Music",
+            announcement: "Announcement",
+            person_swap: "Person Swap / Addition",
+            event: "Event Addition",
+            other: "Other",
+          };
+          var typeSelect = typeOptions.map(function (t) {
+            return '<option value="' + t + '"' + (d.type === t ? " selected" : "") + ">" + typeLabels[t] + "</option>";
+          }).join("");
+
+          bodyEl.innerHTML =
+            '<form id="dept-edit-form">' +
+            '<div class="form-row"><label for="dr-type">Type</label>' +
+            '<select name="type" id="dr-type">' + typeSelect + "</select></div>" +
+            '<div class="form-row"><label for="dr-title">Title</label>' +
+            '<input name="title" id="dr-title" value="' + esc(d.title) + '" required></div>' +
+            '<div class="form-row"><label for="dr-body">Details</label>' +
+            '<textarea name="body" id="dr-body" rows="4" required>' + esc(d.body) + "</textarea></div>" +
+            '<div class="form-row two-up" id="dr-dates" ' + (d.type === "announcement" ? "" : 'style="display:none;"') + ">" +
+            '<div><label for="dr-start">Start date</label>' +
+            '<input type="date" name="start_date" id="dr-start" value="' + esc(d.start_date) + '"></div>' +
+            '<div><label for="dr-end">End date</label>' +
+            '<input type="date" name="end_date" id="dr-end" value="' + esc(d.end_date) + '"></div>' +
+            "</div>" +
+            '<div class="form-errors" data-form-errors hidden></div>' +
+            '<div class="form-actions">' +
+            '<button type="button" class="btn btn-danger" data-withdraw>Withdraw</button>' +
+            '<button type="button" class="btn btn-ghost modal-close">Cancel</button>' +
+            '<button type="submit" class="btn btn-primary">Save changes</button>' +
+            "</div></form>";
+
+          var form = document.getElementById("dept-edit-form");
+          var datesRow = document.getElementById("dr-dates");
+          var typeSel = document.getElementById("dr-type");
+          typeSel.addEventListener("change", function () {
+            datesRow.style.display = typeSel.value === "announcement" ? "" : "none";
+          });
+
+          bodyEl.querySelectorAll(".modal-close").forEach(function (b) {
+            b.addEventListener("click", close);
+          });
+
+          form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            var errBox = form.querySelector("[data-form-errors]");
+            if (errBox) { errBox.hidden = true; errBox.textContent = ""; }
+            fetch("/dept/requests/" + pk + "/edit/", {
+              method: "POST",
+              headers: {
+                "X-Requested-With": "XMLHttpRequest",
+                "Accept": "application/json",
+                "X-CSRFToken": getCookie("csrftoken"),
+              },
+              body: new FormData(form),
+            })
+              .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+              .then(function (res) {
+                if (res.ok && res.j.ok) {
+                  if (window.harprToast) window.harprToast(res.j.message || "Saved.");
+                  window.location.reload();
+                } else if (errBox) {
+                  errBox.hidden = false;
+                  var msgs = [];
+                  var errs = (res.j && res.j.errors) || {};
+                  Object.keys(errs).forEach(function (k) {
+                    (errs[k] || []).forEach(function (m) { msgs.push(m); });
+                  });
+                  errBox.textContent = msgs.join(" ") || "Please check the form.";
+                }
+              })
+              .catch(function () {});
+          });
+
+          var withdrawBtn = form.querySelector("[data-withdraw]");
+          if (withdrawBtn) {
+            withdrawBtn.addEventListener("click", function () {
+              if (!confirm("Withdraw this request? This cannot be undone.")) return;
+              fetch("/dept/requests/" + pk + "/delete/", {
+                method: "POST",
+                headers: {
+                  "X-Requested-With": "XMLHttpRequest",
+                  "Accept": "application/json",
+                  "X-CSRFToken": getCookie("csrftoken"),
+                },
+              })
+                .then(function (r) { return r.json(); })
+                .then(function () {
+                  if (window.harprToast) window.harprToast("Request withdrawn.");
+                  window.location.reload();
+                })
+                .catch(function () {});
+            });
+          }
+        })
+        .catch(function () {
+          bodyEl.innerHTML = '<p class="muted">Could not load request.</p>';
+        });
+    }
+
+    document.querySelectorAll("[data-request-id]").forEach(function (row) {
+      row.addEventListener("click", function () {
+        open(row.dataset.requestId);
+      });
+    });
+  })();
+</script>
+{% endblock %}

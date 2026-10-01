@@ -34,20 +34,15 @@
         {{ form.body }}
       </div>
 
-      <div class="form-row two-up">
+      <div class="form-row two-up" id="date-fields">
         <div>
-          <label for="start-date">Start date (optional)</label>
+          <label for="start-date">Start date</label>
           <input type="date" name="start_date" id="start-date">
         </div>
         <div>
-          <label for="end-date">End date (optional)</label>
+          <label for="end-date">End date</label>
           <input type="date" name="end_date" id="end-date">
         </div>
-      </div>
-
-      <div class="form-row">
-        <label for="{{ form.target_service.id_for_label }}">Target service (optional)</label>
-        {{ form.target_service }}
       </div>
 
       <div class="form-actions">
@@ -57,4 +52,17 @@
     </form>
   </div>
 </div>
+
+<script>
+  (function () {
+    var typeSel = document.getElementById("{{ form.type.id_for_label }}");
+    var dates = document.getElementById("date-fields");
+    if (!typeSel || !dates) return;
+    function sync() {
+      dates.style.display = typeSel.value === "announcement" ? "" : "none";
+    }
+    typeSel.addEventListener("change", sync);
+    sync();
+  })();
+</script>
 {% endblock %}

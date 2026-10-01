@@ -51,6 +51,11 @@ urlpatterns = [
         admin_views.request_respond,
         name="request_respond",
     ),
+    path(
+        "requests/<int:pk>/detail/",
+        admin_views.request_detail_json,
+        name="request_detail_json",
+    ),
     path("departments/", admin_views.department_list, name="department_list"),
     path(
         "departments/new/",
@@ -161,5 +166,20 @@ urlpatterns = [
         "dept/event/<int:pk>/",
         dept_views.dept_event_detail,
         name="dept_event_detail",
+    ),
+    path(
+        "dept/requests/<int:pk>/",
+        dept_views.dept_request_detail,
+        name="dept_request_detail",
+    ),
+    path(
+        "dept/requests/<int:pk>/edit/",
+        dept_views.dept_request_edit,
+        name="dept_request_edit",
+    ),
+    path(
+        "dept/requests/<int:pk>/delete/",
+        dept_views.dept_request_delete,
+        name="dept_request_delete",
     ),
 ]

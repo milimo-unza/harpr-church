@@ -473,13 +473,17 @@
         .then(function (data) {
           var e = data.event;
           titleEl.textContent = e.title;
+          var requestUrl = "/dept/requests/new/?about=" + encodeURIComponent(e.title);
           bodyEl.innerHTML =
             "<p><strong>Type:</strong> " + escapeHtml(e.type) + "</p>" +
             "<p><strong>Date:</strong> " + escapeHtml(e.date) + "</p>" +
             "<p><strong>Time:</strong> " + escapeHtml(e.start_time) + " – " + escapeHtml(e.end_time) + "</p>" +
             "<p><strong>Location:</strong> " + escapeHtml(e.location) + "</p>" +
             "<p><strong>Responsible:</strong> " + escapeHtml(e.department) + "</p>" +
-            (e.notes ? "<p><strong>Notes:</strong> " + escapeHtml(e.notes) + "</p>" : "");
+            (e.notes ? "<p><strong>Notes:</strong> " + escapeHtml(e.notes) + "</p>" : "") +
+            '<div class="form-actions" style="margin-top:16px;">' +
+            '<a class="btn btn-ghost" href="' + requestUrl + '">Submit a request about this event</a>' +
+            "</div>";
         })
         .catch(function () {
           bodyEl.innerHTML = '<p class="muted">Could not load event.</p>';

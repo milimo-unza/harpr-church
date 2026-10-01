@@ -332,6 +332,10 @@ class Request(models.Model):
     responded_at = models.DateTimeField(null=True, blank=True)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
+    approved_text = models.TextField(
+        blank=True,
+        help_text="The coordinator's reworded version, used to create the Announcement on approval.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

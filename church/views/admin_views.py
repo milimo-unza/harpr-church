@@ -24,6 +24,7 @@ from church.forms import (
     MemberEditForm,
     MemberInviteForm,
     RecalculateForm,
+    RequestApproveForm,
     RequestResponseForm,
     ServiceForm,
     ServiceItemForm,
@@ -424,24 +425,91 @@ def request_list(request):
 
 
 @admin_required
-def request_respond(request, pk):
+def request_detail_json(request, pk):
+    """JSON blob for the coordinator's request modal."""
     church_request = get_object_or_404(request.church.requests, pk=pk)
-    form = RequestResponseForm(request.POST or None, instance=church_request)
+    return JsonResponse({
+        "id": church_request.pk,
+        "title": church_request.title,
+        "body": church_request.body,
+        "type": church_request.get_type_display(),
+        "submitter_name": church_request.submitter_name or "",
+        "submitter_contact": church_request.submitter_contact or "",
+        "start_date": church_request.start_date.isoformat() if church_request.start_date else "",
+        "end_date": church_request.end_date.isoformat() if church_request.end_date else "",
+        "status": church_request.status,
+        "status_display": church_request.get_status_display(),
+        "admin_response": church_request.admin_response or "",
+        "approved_text": church_request.approved_text or "",
+        "created_at": church_request.created_at.strftime("%d %b %Y %H:%M"),
+        "responded_at": church_request.responded_at.strftime("%d %b %Y %H:%M") if church_request.responded_at else "",
+        "target_service": church_request.target_service.name if church_request.target_service else "",
+    })
+
+
+@admin_required
+def request_respond(request, pk):
+    """Approve or reject a request. AJAX from the modal, still works as a
+    non-JS fallback. On approve, creates the Announcement immediately."""
+    church_request = get_object_or_404(request.church.requests, pk=pk)
+    form = RequestApproveForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        church_request = form.save(commit=False)
+        data = form.cleaned_data
+        church_request.status = data["status"]
+        church_request.admin_response = data.get("approved_text", "") or ""
+        church_request.approved_text = data.get("approved_text", "") or ""
         church_request.responded_by = request.user
         church_request.responded_at = timezone.now()
         church_request.save()
+
+        announcement_created = False
+        if church_request.status == "approved":
+            body = (church_request.approved_text or "").strip()
+            start = church_request.start_date or timezone.localdate()
+            end = church_request.end_date or (start + timedelta(days=30))
+            Announcement.objects.create(
+                church=request.church,
+                body=body,
+                start_date=start,
+                end_date=end,
+                is_paused=False,
+                show_on_public=True,
+            )
+            announcement_created = True
+
         if church_request.submitted_by:
             notify_user(
                 church_request.submitted_by,
-                f"Request {church_request.status}",
+                f"Request {church_request.get_status_display().lower()}",
                 church_request.admin_response,
                 church=request.church,
             )
+
+        if _is_ajax(request):
+            return JsonResponse({
+                "ok": True,
+                "redirect": "/requests/",
+                "announcement_created": announcement_created,
+                "message": (
+                    "Request approved. Announcement created."
+                    if announcement_created
+                    else "Request updated."
+                ),
+            })
         messages.success(request, "Request updated.")
         return redirect("request_list")
-    return render(request, "church/request_respond.html", {"form": form, "church_request": church_request})
+
+    if request.method == "POST" and _is_ajax(request):
+        return JsonResponse(
+            {"ok": False, "errors": _form_errors_json(form)},
+            status=400,
+        )
+
+    return render(
+        request,
+        "church/request_respond.html",
+        {"form": form, "church_request": church_request},
+    )
 
 
 @admin_required

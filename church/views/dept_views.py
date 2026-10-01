@@ -240,24 +240,29 @@ def dept_roster(request):
 
 @dept_head_required
 def dept_request_create(request):
-    form = RequestForm(request.POST or None, church=request.church)
+    initial = {}
+    about = request.GET.get("about", "").strip()
+    if about:
+        initial["title"] = about[:200]
+    form = RequestForm(request.POST or None, church=request.church, initial=initial)
     if request.method == "POST" and form.is_valid():
         church_request = form.save(commit=False)
         church_request.church = request.church
         church_request.submitted_by = request.user
-        # Optional date window.
-        start_raw = request.POST.get("start_date", "").strip()
-        end_raw = request.POST.get("end_date", "").strip()
-        if start_raw:
-            try:
-                church_request.start_date = date.fromisoformat(start_raw)
-            except ValueError:
-                pass
-        if end_raw:
-            try:
-                church_request.end_date = date.fromisoformat(end_raw)
-            except ValueError:
-                pass
+        # Dates apply only to announcement-type requests.
+        if church_request.type == "announcement":
+            start_raw = request.POST.get("start_date", "").strip()
+            end_raw = request.POST.get("end_date", "").strip()
+            if start_raw:
+                try:
+                    church_request.start_date = date.fromisoformat(start_raw)
+                except ValueError:
+                    pass
+            if end_raw:
+                try:
+                    church_request.end_date = date.fromisoformat(end_raw)
+                except ValueError:
+                    pass
         church_request.save()
         messages.success(request, "Request submitted.")
         return redirect("dept_request_list")
@@ -268,6 +273,109 @@ def dept_request_create(request):
 def dept_request_list(request):
     requests = request.church.requests.filter(submitted_by=request.user)
     return render(request, "church/dept_requests.html", {"requests": requests})
+
+
+@dept_head_required
+def dept_request_detail(request, pk):
+    """JSON for the dept head's request modal."""
+    church_request = get_object_or_404(
+        request.church.requests, pk=pk, submitted_by=request.user
+    )
+    return JsonResponse({
+        "id": church_request.pk,
+        "title": church_request.title,
+        "body": church_request.body,
+        "type": church_request.type,
+        "type_display": church_request.get_type_display(),
+        "start_date": church_request.start_date.isoformat() if church_request.start_date else "",
+        "end_date": church_request.end_date.isoformat() if church_request.end_date else "",
+        "status": church_request.status,
+        "status_display": church_request.get_status_display(),
+        "admin_response": church_request.admin_response or "",
+        "created_at": church_request.created_at.strftime("%d %b %Y %H:%M"),
+        "is_pending": church_request.status == "pending",
+    })
+
+
+@dept_head_required
+@require_POST
+def dept_request_edit(request, pk):
+    """Dept head edits a pending request. Blocked once approved/rejected."""
+    church_request = get_object_or_404(
+        request.church.requests, pk=pk, submitted_by=request.user
+    )
+    if church_request.status != "pending":
+        if _is_ajax(request):
+            return JsonResponse(
+                {"ok": False, "errors": {"__all__": ["Only pending requests can be edited."]}},
+                status=400,
+            )
+        messages.error(request, "Only pending requests can be edited.")
+        return redirect("dept_request_list")
+
+    form = RequestForm(request.POST or None, church=request.church, instance=church_request)
+    if form.is_valid():
+        obj = form.save(commit=False)
+        obj.church = request.church
+        obj.submitted_by = request.user
+        # Dates only apply to announcement-type requests.
+        if obj.type == "announcement":
+            start_raw = request.POST.get("start_date", "").strip()
+            end_raw = request.POST.get("end_date", "").strip()
+            if start_raw:
+                try:
+                    obj.start_date = date.fromisoformat(start_raw)
+                except ValueError:
+                    obj.start_date = None
+            else:
+                obj.start_date = None
+            if end_raw:
+                try:
+                    obj.end_date = date.fromisoformat(end_raw)
+                except ValueError:
+                    obj.end_date = None
+            else:
+                obj.end_date = None
+        else:
+            obj.start_date = None
+            obj.end_date = None
+        obj.save()
+        if _is_ajax(request):
+            return JsonResponse({"ok": True, "message": "Request updated."})
+        messages.success(request, "Request updated.")
+        return redirect("dept_request_list")
+
+    if _is_ajax(request):
+        return JsonResponse({"ok": False, "errors": _form_errors_json(form)}, status=400)
+    messages.error(request, "Could not update request.")
+    return redirect("dept_request_list")
+
+
+@dept_head_required
+@require_POST
+def dept_request_delete(request, pk):
+    """Dept head withdraws a pending request. Blocked once approved/rejected."""
+    church_request = get_object_or_404(
+        request.church.requests, pk=pk, submitted_by=request.user
+    )
+    if church_request.status != "pending":
+        if _is_ajax(request):
+            return JsonResponse(
+                {"ok": False, "errors": {"__all__": ["Only pending requests can be withdrawn."]}},
+                status=400,
+            )
+        messages.error(request, "Only pending requests can be withdrawn.")
+        return redirect("dept_request_list")
+
+    church_request.delete()
+    if _is_ajax(request):
+        return JsonResponse({"ok": True, "message": "Request withdrawn."})
+    messages.success(request, "Request withdrawn.")
+    return redirect("dept_request_list")
+
+
+def _form_errors_json(form):
+    return {field: [str(e) for e in errs] for field, errs in form.errors.items()}
 
 @dept_head_required
 def dept_service_schedule(request, pk):

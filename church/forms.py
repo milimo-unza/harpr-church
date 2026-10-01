@@ -110,6 +110,35 @@ class RequestResponseForm(forms.ModelForm):
         _style_fields(self)
 
 
+class RequestApproveForm(forms.Form):
+    """Coordinator's response to a request.
+
+    On approve, `approved_text` is required and is what becomes the
+    Announcement body. On reject, `approved_text` is optional and is kept
+    as the coordinator's note.
+    """
+
+    status = forms.ChoiceField(choices=[
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+    ])
+    approved_text = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 4}),
+        required=False,
+        label="Your wording",
+    )
+
+    def clean(self):
+        cleaned = super().clean()
+        status = cleaned.get("status")
+        text = (cleaned.get("approved_text") or "").strip()
+        if status == "approved" and not text:
+            raise forms.ValidationError(
+                "Please write your own wording before approving."
+            )
+        return cleaned
+
+
 class DepartmentForm(forms.ModelForm):
     class Meta:
         model = Department

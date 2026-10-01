@@ -79,6 +79,20 @@ def public_request(request, slug):
         church_request.submitter_contact = request.POST.get(
             "submitter_contact", "").strip()
         church_request.submitted_by = None
+        # Dates only apply to announcement-type requests.
+        if church_request.type == "announcement":
+            start_raw = request.POST.get("start_date", "").strip()
+            end_raw = request.POST.get("end_date", "").strip()
+            if start_raw:
+                try:
+                    church_request.start_date = date.fromisoformat(start_raw)
+                except ValueError:
+                    pass
+            if end_raw:
+                try:
+                    church_request.end_date = date.fromisoformat(end_raw)
+                except ValueError:
+                    pass
         church_request.save()
         return redirect("public_schedule", slug=church.slug)
     return render(
