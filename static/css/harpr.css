@@ -1869,3 +1869,45 @@ background: var(--accent-soft);
 tr.is-mine td:first-child {
 border-left: 2px solid var(--accent);
 }
+
+/* Roster checklist in the dept assignment modal */
+.roster-checklist {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 6px;
+}
+.roster-check {
+display: flex;
+align-items: center;
+gap: 8px;
+padding: 6px 10px;
+border: 1px solid var(--border);
+border-radius: var(--radius-sm);
+background: var(--surface);
+cursor: pointer;
+font-size: 0.86rem;
+font-family: var(--font-sans);
+text-transform: none;
+letter-spacing: 0;
+color: var(--fg);
+font-weight: 450;
+}
+.roster-check:hover {
+background: var(--surface-2);
+border-color: var(--accent);
+}
+.roster-check input[type="checkbox"] {
+width: auto;
+margin: 0;
+}
+@media (max-width: 480px) {
+.roster-checklist { grid-template-columns: 1fr; }
+}
+
+/* x-first layout for assignment list */
+.assignment-list li {
+gap: 4px;
+}
+.assignment-list li button {
+padding: 0 4px 0 0;
+}

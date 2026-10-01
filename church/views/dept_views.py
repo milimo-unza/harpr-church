@@ -143,40 +143,59 @@ def dept_assignment_create(request, pk):
         responsible_department=request.department,
     )
 
-    person_name = request.POST.get("person_name", "").strip()
+    # Accept both a single name and a list of names.
+    names = request.POST.getlist("person_name")
+    # Free-text fallback.
+    free_text = request.POST.get("free_text_name", "").strip()
+    if free_text:
+        names.append(free_text)
+    # De-dupe, drop blanks.
+    names = [n.strip() for n in names if n and n.strip()]
+    # Preserve order but remove repeats.
+    seen = set()
+    names = [n for n in names if not (n in seen or seen.add(n))]
+
     role = request.POST.get("role", "").strip() or item.title
     save_to_roster = request.POST.get("save_to_roster") == "on"
 
-    if not person_name:
+    if not names:
         if _is_ajax(request):
             return JsonResponse(
-                {"ok": False, "errors": {"person_name": ["A name is required."]}},
+                {"ok": False, "errors": {"person_name": ["Pick at least one person."]}},
                 status=400,
             )
-        messages.error(request, "Enter a name.")
+        messages.error(request, "Pick at least one person.")
         return redirect("dept_dashboard")
 
-    assignment = Assignment.objects.create(
-        service_item=item,
-        person_name=person_name,
-        role=role,
-    )
-
-    if save_to_roster:
-        DepartmentMember.objects.get_or_create(
-            church=request.church,
-            department=request.department,
-            name=person_name,
+    created = []
+    skipped = []
+    for name in names:
+        # Don't create a duplicate for the same person on the same item.
+        if Assignment.objects.filter(service_item=item, person_name=name).exists():
+            skipped.append(name)
+            continue
+        assignment = Assignment.objects.create(
+            service_item=item,
+            person_name=name,
+            role=role,
         )
+        created.append(assignment)
+        if save_to_roster:
+            DepartmentMember.objects.get_or_create(
+                church=request.church,
+                department=request.department,
+                name=name,
+            )
 
+    summary = ", ".join(a.person_name for a in created)
     if _is_ajax(request):
         return JsonResponse({
             "ok": True,
-            "assignment_id": assignment.pk,
-            "message": f"{person_name} assigned to {item.title}.",
+            "assignment_ids": [a.pk for a in created],
+            "message": f"Assigned: {summary}",
         })
 
-    messages.success(request, f"{person_name} assigned to {item.title}.")
+    messages.success(request, f"Assigned: {summary}")
     return redirect("dept_dashboard")
 
 

@@ -141,11 +141,11 @@
         <ul class="assignment-list" data-current-assignments>
           {% for a in item.assignments.all %}
           <li data-assignment-id="{{ a.pk }}">
-            <span>{{ a.person_name }}</span>
             <form method="post" action="{% url 'dept_assignment_delete' a.pk %}" data-delete-form>
               {% csrf_token %}
               <button type="submit" aria-label="Remove {{ a.person_name }}" title="Remove">×</button>
             </form>
+            <span>{{ a.person_name }}</span>
           </li>
           {% empty %}
           <li class="muted" data-empty>Unassigned</li>
@@ -155,33 +155,33 @@
 
       {% if roster %}
       <div class="form-row">
-        <label>Saved team</label>
-        <div class="roster-chips">
+        <label>Pick from your saved team</label>
+        <div class="roster-checklist">
           {% for member in roster %}
-          <button type="button" class="roster-chip roster-chip--add" data-name="{{ member.name }}">
-            + {{ member.name }}
-          </button>
+          <label class="roster-check">
+            <input type="checkbox" name="person_name" value="{{ member.name }}" form="assign-form-{{ item.pk }}">
+            <span>{{ member.name }}</span>
+          </label>
           {% endfor %}
         </div>
       </div>
       {% endif %}
 
-      <form method="post" action="{% url 'dept_assignment_create' item.pk %}" data-assign-form>
+      <form method="post" action="{% url 'dept_assignment_create' item.pk %}" data-assign-form id="assign-form-{{ item.pk }}">
         {% csrf_token %}
         <div class="form-row">
-          <label for="person-{{ item.pk }}">Add person</label>
-          <input name="person_name" id="person-{{ item.pk }}" required autocomplete="off" placeholder="Type a name or click a chip above">
+          <label for="free-text-{{ item.pk }}">Or type a name not in your team</label>
+          <input name="free_text_name" id="free-text-{{ item.pk }}" autocomplete="off" placeholder="Optional">
         </div>
         <div class="form-row">
           <label class="checkbox-line">
             <input type="checkbox" name="save_to_roster" checked>
-            Save this name to my team
+            Save new names to my team
           </label>
         </div>
         <div class="form-errors" data-form-errors hidden></div>
         <div class="form-actions">
-          <button type="button" class="btn btn-ghost modal-close">Done</button>
-          <button type="submit" class="btn btn-primary">Add</button>
+          <button type="submit" class="btn btn-primary">Assign selected</button>
         </div>
       </form>
     </div>
@@ -238,9 +238,14 @@
         e.preventDefault();
         var errBox = form.querySelector("[data-form-errors]");
         if (errBox) { errBox.hidden = true; errBox.textContent = ""; }
-        var nameField = form.querySelector("input[name='person_name']");
-        var newName = nameField.value.trim();
-        if (!newName) return;
+
+        var fd = new FormData(form);
+        var checked = fd.getAll("person_name").filter(function (n) { return n && n.trim(); });
+        var free = (fd.get("free_text_name") || "").trim();
+        if (!checked.length && !free) {
+          if (errBox) { errBox.hidden = false; errBox.textContent = "Pick at least one person or type a name."; }
+          return;
+        }
 
         fetch(form.action, {
           method: "POST",
@@ -248,29 +253,16 @@
             "X-Requested-With": "XMLHttpRequest",
             "Accept": "application/json",
           },
-          body: new FormData(form),
+          body: fd,
         })
           .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
           .then(function (res) {
             if (!(res.ok && res.d.ok)) {
-              if (errBox) { errBox.hidden = false; errBox.textContent = "Could not add. Try again."; }
+              if (errBox) { errBox.hidden = false; errBox.textContent = "Could not assign. Try again."; }
               return;
             }
-            dirty = true;
-            var list = modal.querySelector("[data-current-assignments]");
-            var empty = list.querySelector("[data-empty]");
-            if (empty) empty.remove();
-            var li = document.createElement("li");
-            li.dataset.assignmentId = res.d.assignment_id || "";
-            li.innerHTML = '<span></span>' +
-              '<form method="post" action="/dept/assignments/' + (res.d.assignment_id || "") + '/delete/" data-delete-form>' +
-              '<button type="submit" aria-label="Remove" title="Remove">×</button></form>';
-            li.querySelector("span").textContent = newName;
-            list.appendChild(li);
-            wireDeleteForm(li.querySelector("[data-delete-form]"));
-            nameField.value = "";
-            nameField.focus();
-            if (window.harprToast) window.harprToast(newName + " added.");
+            if (window.harprToast) window.harprToast(res.d.message || "Assigned.");
+            window.location.reload();
           })
           .catch(function () {
             if (errBox) { errBox.hidden = false; errBox.textContent = "Network error."; }
