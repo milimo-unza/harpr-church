@@ -27,14 +27,14 @@
     </header>
     <div class="week-col-body">
       {% for service in day.services %}
-      <button type="button" class="event-chip service-chip"
+      <button type="button" class="event-chip service-chip {% if service.has_my_items %}event-chip--mine{% endif %}"
         data-open-service="{{ service.pk }}">
         <strong>{{ service.name }}</strong>
         <small>Service · {{ service.get_status_display }}</small>
       </button>
       {% endfor %}
       {% for event in day.events %}
-      <button type="button" class="event-chip"
+      <button type="button" class="event-chip {% if event.is_mine %}event-chip--mine{% endif %}"
         data-open-event="{{ event.pk }}">
         <strong>{{ event.title }}</strong>
         <small>{{ event.get_event_type_display }} · {{ event.start_time|time:"H:i" }}</small>
@@ -158,9 +158,12 @@
         <label>Pick from your saved team</label>
         <div class="roster-checklist">
           {% for member in roster %}
-          <label class="roster-check">
-            <input type="checkbox" name="person_name" value="{{ member.name }}" form="assign-form-{{ item.pk }}">
-            <span>{{ member.name }}</span>
+          <label class="roster-check{% if member.name in item.assigned_names %} roster-check--done{% endif %}"
+            {% if member.name in item.assigned_names %}title="Already assigned"{% endif %}>
+            <input type="checkbox" name="person_name" value="{{ member.name }}"
+              form="assign-form-{{ item.pk }}"
+              {% if member.name in item.assigned_names %}disabled{% endif %}>
+            <span>{{ member.name }}{% if member.name in item.assigned_names %} ✓{% endif %}</span>
           </label>
           {% endfor %}
         </div>

@@ -74,13 +74,31 @@ def dept_dashboard(request):
         date__range=(week_start, week_end)
     ).select_related("responsible_department")
 
+    dept_id = request.department.pk if request.department else None
+
     days = []
     for day_offset in range(7):
         day = week_start + timedelta(days=day_offset)
+        # Flag services/events whose responsible department matches.
+        day_services = []
+        for s in services:
+            if s.date != day:
+                continue
+            s.has_my_items = any(
+                it.responsible_department_id == dept_id
+                for it in s.items.all()
+            ) if dept_id else False
+            day_services.append(s)
+        day_events = []
+        for e in events:
+            if e.date != day:
+                continue
+            e.is_mine = (e.responsible_department_id == dept_id) if dept_id else False
+            day_events.append(e)
         days.append({
             "date": day,
-            "services": [s for s in services if s.date == day],
-            "events": [e for e in events if e.date == day],
+            "services": day_services,
+            "events": day_events,
         })
 
     # The department's own items — future and today, ordered by time.
@@ -94,6 +112,11 @@ def dept_dashboard(request):
         .prefetch_related("assignments")
         .order_by("planned_start")
     )
+
+    # Annotate each item with the set of names already assigned so the
+    # template can grey them out in the picker.
+    for item in dept_items:
+        item.assigned_names = {a.person_name for a in item.assignments.all()}
 
     pending_items = [item for item in dept_items if not item.assignments.exists()]
     roster = DepartmentMember.objects.filter(
@@ -239,6 +262,17 @@ def dept_roster(request):
                 messages.success(request, f"{name} added to your team.")
             else:
                 messages.error(request, "Enter a name.")
+        elif action == "update":
+            member_id = request.POST.get("member_id")
+            phone = request.POST.get("phone", "").strip()
+            member = DepartmentMember.objects.filter(
+                pk=member_id,
+                department=request.department,
+            ).first()
+            if member:
+                member.phone = phone
+                member.save(update_fields=["phone"])
+                messages.success(request, f"{member.name} updated.")
         elif action == "remove":
             member_id = request.POST.get("member_id")
             DepartmentMember.objects.filter(

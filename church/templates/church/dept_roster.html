@@ -14,17 +14,20 @@
   </div>
 
   <div class="card">
+    <div class="card-head">
+      <h2>Add someone</h2>
+    </div>
     <form method="post">
       {% csrf_token %}
       <input type="hidden" name="action" value="add">
       <div class="form-row two-up">
         <div>
           <label for="member-name">Name</label>
-          <input name="name" id="member-name" required>
+          <input name="name" id="member-name" required placeholder="Full name">
         </div>
         <div>
           <label for="member-phone">Phone (optional)</label>
-          <input name="phone" id="member-phone">
+          <input name="phone" id="member-phone" placeholder="0971234567">
         </div>
       </div>
       <div class="form-actions">
@@ -33,35 +36,41 @@
     </form>
   </div>
 
-  <div class="card table-wrap">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Phone</th>
-          <th style="width:100px;"></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for member in roster %}
-        <tr>
-          <td>{{ member.name }}</td>
-          <td class="mono">{{ member.phone|default:"—" }}</td>
-          <td>
-            <form method="post" style="display:inline;">
-              {% csrf_token %}
-              <input type="hidden" name="action" value="remove">
-              <input type="hidden" name="member_id" value="{{ member.pk }}">
-              <button type="submit" class="btn btn-small btn-danger"
-                onclick="return confirm('Remove {{ member.name }} from your team?')">Remove</button>
-            </form>
-          </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="3" class="empty-state">No saved team members yet.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="card">
+    <div class="card-head">
+      <h2>Team roster</h2>
+      <small class="muted">{{ roster|length }} member{{ roster|length|pluralize }}</small>
+    </div>
+
+    {% if roster %}
+    <ul class="roster-rows">
+      {% for member in roster %}
+      <li class="roster-row">
+        <span class="roster-avatar">{{ member.name|slice:":2"|upper }}</span>
+        <span class="roster-info">
+          <span class="roster-name">{{ member.name }}</span>
+          <span class="roster-phone muted">{{ member.phone|default:"No phone saved" }}</span>
+        </span>
+        <form method="post" class="roster-edit">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="update">
+          <input type="hidden" name="member_id" value="{{ member.pk }}">
+          <input name="phone" value="{{ member.phone }}" placeholder="Phone" class="roster-input">
+          <button type="submit" class="btn btn-small">Save</button>
+        </form>
+        <form method="post" class="roster-remove">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="remove">
+          <input type="hidden" name="member_id" value="{{ member.pk }}">
+          <button type="submit" class="btn btn-small btn-danger"
+            onclick="return confirm('Remove {{ member.name }} from your team?')">Remove</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted">No saved team members yet. Add someone above.</p>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
