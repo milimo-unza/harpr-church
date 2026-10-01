@@ -2104,3 +2104,22 @@ padding: 6px 10px;
 border: 1px dashed var(--border);
 border-radius: var(--radius-sm);
 }
+
+/* Department load table */
+.dept-dot {
+display: inline-block;
+width: 10px;
+height: 10px;
+border-radius: 50%;
+margin-right: 8px;
+vertical-align: middle;
+}
+.uncovered-count {
+display: inline-block;
+padding: 2px 8px;
+border-radius: var(--radius-pill);
+background: rgba(168, 122, 42, 0.12);
+color: var(--warn);
+font-weight: 600;
+font-size: 0.8rem;
+}

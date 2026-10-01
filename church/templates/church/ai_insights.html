@@ -33,6 +33,39 @@
 </div>
 {% endif %}
 
+{% if dept_load %}
+<section style="margin-bottom: var(--space-5);">
+  <h2 class="section-label">Department load — next 60 days</h2>
+  <div class="card table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Department</th>
+          <th>Upcoming items</th>
+          <th>Assignments</th>
+          <th>Uncovered</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in dept_load %}
+        <tr>
+          <td>
+            <span class="dept-dot" style="background: {{ d.color }};"></span>
+            {{ d.name }}
+          </td>
+          <td class="mono">{{ d.items }}</td>
+          <td class="mono">{{ d.assignments }}</td>
+          <td class="mono">
+            {% if d.uncovered %}<span class="uncovered-count">{{ d.uncovered }}</span>{% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
 <div class="card insight-card">
   <div class="card-head">
     <h2>Commentary</h2>

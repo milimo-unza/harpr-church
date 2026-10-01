@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.db import transaction
+from django.db import models, transaction
 from django.db.models import Count
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -1008,6 +1008,44 @@ def gather_church_stats(church):
     }
 
 
+def gather_department_load(church):
+    """Count upcoming service items per department over the next 60 days."""
+    from datetime import timedelta as _td
+    from django.db.models import Count as _Count
+    today = timezone.localdate()
+    horizon = today + _td(days=60)
+    rows = (
+        church.departments
+        .annotate(
+            upcoming_items=_Count(
+                "serviceitem",
+                filter=models.Q(
+                    serviceitem__planned_start__date__gte=today,
+                    serviceitem__planned_start__date__lte=horizon,
+                ),
+            ),
+            upcoming_assignments=_Count(
+                "serviceitem__assignments",
+                filter=models.Q(
+                    serviceitem__planned_start__date__gte=today,
+                    serviceitem__planned_start__date__lte=horizon,
+                ),
+            ),
+        )
+        .order_by("-upcoming_items", "name")
+    )
+    return [
+        {
+            "name": d.name,
+            "color": d.color,
+            "items": d.upcoming_items,
+            "assignments": d.upcoming_assignments,
+            "uncovered": max(0, d.upcoming_items - d.upcoming_assignments),
+        }
+        for d in rows
+    ]
+
+
 @admin_required
 def ai_insights(request):
     cutoff = timezone.now() - timedelta(hours=24)
@@ -1017,7 +1055,12 @@ def ai_insights(request):
         return render(
             request,
             "church/ai_insights.html",
-            {"insight": cached.content, "stats": cached.raw_stats, "cached": True},
+            {
+                "insight": cached.content,
+                "stats": cached.raw_stats,
+                "cached": True,
+                "dept_load": gather_department_load(request.church),
+            },
         )
     stats = gather_church_stats(request.church)
     if stats["service_count"] < 3:
@@ -1028,6 +1071,7 @@ def ai_insights(request):
                 "insight": "Not enough data yet. Complete at least 3 services to see AI insights.",
                 "stats": stats,
                 "cached": False,
+                "dept_load": gather_department_load(request.church),
             },
         )
 
@@ -1045,6 +1089,7 @@ def ai_insights(request):
                 "stats": stats,
                 "cached": False,
                 "no_key": True,
+                "dept_load": gather_department_load(request.church),
             },
         )
 
@@ -1101,6 +1146,7 @@ def ai_insights(request):
             "stats": stats,
             "cached": False,
             "error_detail": error_detail,
+            "dept_load": gather_department_load(request.church),
         },
     )
 
