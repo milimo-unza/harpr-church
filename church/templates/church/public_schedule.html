@@ -54,9 +54,9 @@
 {% if announcements %}
 <section class="public-card">
     <h2>Announcements</h2>
-    <ul class="public-links">
+    <ul class="announcement-list">
         {% for announcement in announcements %}
-        <li>{{ announcement.body }}</li>
+        <li class="announcement-item">{{ announcement.body }}</li>
         {% endfor %}
     </ul>
 </section>

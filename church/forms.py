@@ -337,3 +337,68 @@ class ChurchSignupForm(forms.Form):
             for slug, name in Department.DEFAULT_DEPARTMENTS:
                 Department.objects.create(church=church, slug=slug, name=name)
         return church, user
+
+
+class PublicRequestForm(forms.ModelForm):
+    """Used by the public. Announcements only.
+
+    Validates name, contact (email or phone), title, body, and date range.
+    """
+
+    submitter_name = forms.CharField(
+        max_length=200, required=True, label="Your name"
+    )
+    submitter_contact = forms.CharField(
+        max_length=200, required=True, label="Contact (phone or email)"
+    )
+    start_date = forms.DateField(
+        required=True,
+        widget=forms.DateInput(attrs={"type": "date"}),
+        label="Start date",
+    )
+    end_date = forms.DateField(
+        required=True,
+        widget=forms.DateInput(attrs={"type": "date"}),
+        label="End date",
+    )
+
+    class Meta:
+        model = Request
+        fields = ["title", "body"]
+        widgets = {"body": forms.Textarea(attrs={"rows": 5})}
+
+    def clean_submitter_contact(self):
+        import re
+        contact = (self.cleaned_data.get("submitter_contact") or "").strip()
+        if not contact:
+            raise forms.ValidationError("Enter a phone number or email.")
+        email_re = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+        if email_re.match(contact):
+            return contact
+        digits = re.sub(r"\D", "", contact)
+        if not re.match(r"^[+\d][\d\s\-()]*$", contact):
+            raise forms.ValidationError(
+                "Enter a valid phone number or email address."
+            )
+        if len(digits) != 10:
+            raise forms.ValidationError(
+                "Phone number must be exactly 10 digits."
+            )
+        return contact
+
+    def clean(self):
+        cleaned = super().clean()
+        start = cleaned.get("start_date")
+        end = cleaned.get("end_date")
+        if start and end and end < start:
+            raise forms.ValidationError(
+                "End date must be on or after the start date."
+            )
+        return cleaned
+
+    def save(self, commit=True):
+        obj = super().save(commit=False)
+        obj.type = "announcement"
+        if commit:
+            obj.save()
+        return obj

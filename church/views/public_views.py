@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
-from church.forms import RequestForm
+from church.forms import PublicRequestForm, RequestForm
 from church.models import Church, Service
 from church.services.pdf import generate_bulletin_pdf
 from church.services.qr import generate_qr_png
@@ -69,32 +69,51 @@ def get_object_or_404_date(year, month, day):
 
 
 def public_request(request, slug):
+    from django.contrib import messages
+
     church = get_object_or_404(Church, slug=slug, is_active=True)
-    form = RequestForm(request.POST or None, church=church)
+    form = PublicRequestForm(request.POST or None)
+
     if request.method == "POST" and form.is_valid():
         church_request = form.save(commit=False)
         church_request.church = church
+        church_request.type = "announcement"
         church_request.submitter_name = request.POST.get(
             "submitter_name", "").strip()
         church_request.submitter_contact = request.POST.get(
             "submitter_contact", "").strip()
         church_request.submitted_by = None
-        # Dates only apply to announcement-type requests.
-        if church_request.type == "announcement":
-            start_raw = request.POST.get("start_date", "").strip()
-            end_raw = request.POST.get("end_date", "").strip()
-            if start_raw:
-                try:
-                    church_request.start_date = date.fromisoformat(start_raw)
-                except ValueError:
-                    pass
-            if end_raw:
-                try:
-                    church_request.end_date = date.fromisoformat(end_raw)
-                except ValueError:
-                    pass
+
+        start_raw = request.POST.get("start_date", "").strip()
+        end_raw = request.POST.get("end_date", "").strip()
+        if start_raw:
+            try:
+                church_request.start_date = date.fromisoformat(start_raw)
+            except ValueError:
+                pass
+        if end_raw:
+            try:
+                church_request.end_date = date.fromisoformat(end_raw)
+            except ValueError:
+                pass
+
         church_request.save()
+        messages.success(
+            request,
+            "Thank you. Your request has been sent to the programme "
+            "coordinator for review.",
+        )
         return redirect("public_schedule", slug=church.slug)
+
+    if request.method == "POST":
+        # Show the first error so the user knows what went wrong.
+        errors = []
+        for field_errors in form.errors.values():
+            errors.extend([str(e) for e in field_errors])
+        # Also collect errors from the manual fields we validate below.
+        if errors:
+            messages.error(request, errors[0])
+
     return render(
         request,
         "church/public_request_form.html",

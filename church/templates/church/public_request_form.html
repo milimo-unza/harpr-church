@@ -7,36 +7,50 @@
     Send the church an announcement. The programme coordinator will review
     it and write the final wording before it goes on the public page.
   </p>
+
+  {% if form.non_field_errors %}
+  <div class="form-errors">
+    {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+  </div>
+  {% endif %}
+
   <form method="post">
     {% csrf_token %}
 
     <p>
-      <label for="submitter_name">Your name</label>
-      <input class="form-input" name="submitter_name" id="submitter_name" required>
+      <label for="{{ form.submitter_name.id_for_label }}">Your name</label>
+      {{ form.submitter_name }}
+      {% if form.submitter_name.errors %}<div class="form-error">{{ form.submitter_name.errors.0 }}</div>{% endif %}
     </p>
+
     <p>
-      <label for="submitter_contact">Contact (phone or email)</label>
-      <input class="form-input" name="submitter_contact" id="submitter_contact">
+      <label for="{{ form.submitter_contact.id_for_label }}">Contact (phone or email)</label>
+      {{ form.submitter_contact }}
+      {% if form.submitter_contact.errors %}<div class="form-error">{{ form.submitter_contact.errors.0 }}</div>{% endif %}
     </p>
 
     <p>
       <label for="{{ form.title.id_for_label }}">Title</label>
       {{ form.title }}
+      {% if form.title.errors %}<div class="form-error">{{ form.title.errors.0 }}</div>{% endif %}
     </p>
 
     <p>
       <label for="{{ form.body.id_for_label }}">What would you like announced?</label>
       {{ form.body }}
+      {% if form.body.errors %}<div class="form-error">{{ form.body.errors.0 }}</div>{% endif %}
     </p>
 
     <div class="form-row two-up">
       <div>
-        <label for="start_date">Start date</label>
-        <input type="date" name="start_date" id="start_date">
+        <label for="{{ form.start_date.id_for_label }}">Start date</label>
+        {{ form.start_date }}
+        {% if form.start_date.errors %}<div class="form-error">{{ form.start_date.errors.0 }}</div>{% endif %}
       </div>
       <div>
-        <label for="end_date">End date</label>
-        <input type="date" name="end_date" id="end_date">
+        <label for="{{ form.end_date.id_for_label }}">End date</label>
+        {{ form.end_date }}
+        {% if form.end_date.errors %}<div class="form-error">{{ form.end_date.errors.0 }}</div>{% endif %}
       </div>
     </div>
 
