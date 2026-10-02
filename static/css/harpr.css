@@ -565,7 +565,6 @@ p {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: var(--space-4);
   margin-bottom: var(--space-5);
-  max-width: 900px;
 }
 
 .uncovered-count {
