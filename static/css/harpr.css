@@ -1414,16 +1414,16 @@ p {
   .sidebar {
     position: fixed;
     top: 0;
-    left: 0;
+    left: -260px;
     bottom: 0;
     width: 260px;
-    transform: translateX(-100%);
-    transition: transform 0.25s ease;
+    transition: left 0.25s ease;
     z-index: var(--z-sidebar);
+    transform: none;
   }
 
   body.sidebar-open .sidebar {
-    transform: translateX(0);
+    left: 0;
   }
 
   .sidebar-overlay {
@@ -1543,10 +1543,10 @@ p {
     position: fixed !important;
     left: 1rem;
     right: 1rem;
-    bottom: 1rem;
+    bottom: 6rem;
     top: auto;
     width: auto;
-    max-height: 70vh;
+    max-height: 60vh;
     overflow-y: auto;
     z-index: 95;
   }
