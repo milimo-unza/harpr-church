@@ -61,6 +61,15 @@
         </form>
     </div>
 
+    <div class="card form-card account-actions">
+        <p class="eyebrow">Account</p>
+        <div class="form-row">
+            <label>Delete your account</label>
+            <p class="muted">Your account will be deactivated and you will be signed out. Only a programme coordinator can restore it.</p>
+        </div>
+        <a class="btn btn-ghost" href="{% url 'account_delete' %}">Delete account</a>
+    </div>
+
     <div class="card qr-display">
         <h2>Public schedule QR</h2>
         <img src="{% url 'church_qr' church.slug %}" alt="QR code for public schedule">
