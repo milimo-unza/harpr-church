@@ -90,6 +90,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LANGUAGE_CODE = "en-gb"
+FORMAT_MODULE_PATH = ["harpr_church.formats"]
 TIME_ZONE = "Africa/Lusaka"
 USE_I18N = True
 USE_TZ = True
