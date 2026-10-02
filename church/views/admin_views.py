@@ -791,7 +791,8 @@ def member_list(request):
 @admin_required
 def member_invite(request):
     import secrets
-    from django.core.mail import send_mail
+    from django.core.mail import BadHeaderError, send_mail
+    from django.template.loader import render_to_string
     from django.urls import reverse
 
     form = MemberInviteForm(request.POST or None, church=request.church)
@@ -809,19 +810,29 @@ def member_invite(request):
         accept_url = request.build_absolute_uri(
             reverse("accept_invitation", kwargs={"token": token})
         )
-        send_mail(
-            subject=f"You're invited to join {request.church.name} on Harpr",
-            message=(
-                f"{request.user.get_full_name() or request.user.username} "
-                f"has invited you to join {request.church.name} on Harpr.\n\n"
-                f"Click this link to set your password and accept:\n"
-                f"{accept_url}\n\n"
-                f"This link expires in 7 days and can only be used once."
-            ),
-            from_email="harpr@localhost",
-            recipient_list=[data["email"]],
-            fail_silently=False,
-        )
+        context = {
+            "inviter": request.user,
+            "church": request.church,
+            "accept_url": accept_url,
+            "role": data["role"],
+            "department": data.get("department"),
+            "expires_days": 7,
+        }
+        subject = f"You are invited to {request.church.name} on Harpr"
+        message = render_to_string("emails/invitation.txt", context)
+        try:
+            # Resend on the free tier only delivers to the account's own address
+            # until a domain is verified. See notes in the README.
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [data["email"]],
+            )
+        except (BadHeaderError, Exception):
+            messages.error(
+                request, f"Could not send invitation email to {data['email']}.")
+            return redirect("member_list")
         messages.success(request, f"Invitation sent to {data['email']}.")
         return redirect("member_list")
     return render(

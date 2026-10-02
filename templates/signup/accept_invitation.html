@@ -33,8 +33,7 @@
             <div class="auth-form-header">
                 <h1>Join {{ invitation.church.name }}</h1>
                 <p class="subtitle">
-                    You were invited as a {{ invitation.get_role_display }}{% if invitation.department %} for {{
-                    invitation.department.name }}{% endif %}.
+                    You were invited as a {{ invitation.get_role_display }}{% if invitation.department %} for {{ invitation.department.name }}{% endif %}.
                 </p>
             </div>
 

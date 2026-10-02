@@ -1,0 +1,16 @@
+Hi,
+
+{{ inviter.get_full_name|default:inviter.username }} has invited you to
+help run {{ church.name }} on Harpr, a church programme planner.
+
+Your role: {{ role|title }}{% if department %} ({{ department.name }}){% endif %}
+
+Set your password and accept the invitation here:
+{{ accept_url }}
+
+The link expires in {{ expires_days }} days and can only be used once.
+
+If you were not expecting this, you can ignore this email.
+
+Harpr
+{{ church.name }}
