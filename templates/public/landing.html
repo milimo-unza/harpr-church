@@ -64,8 +64,9 @@
                 if (!saved.length) { section.hidden = true; return; }
                 section.hidden = false;
                 list.innerHTML = saved.map(function (c) {
-                    return '<li><a class="btn btn-ghost" href="/c/' + c.slug + '/">' +
-                        c.name + '</a></li>';
+                    var label = c.name && c.name !== "undefined" ? c.name : c.slug;
+                    return '<li><a class="saved-church-link" href="/c/' + c.slug + '/">' +
+                        label + '</a></li>';
                 }).join("");
             }
 

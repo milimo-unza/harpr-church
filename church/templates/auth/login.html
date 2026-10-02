@@ -36,8 +36,7 @@
   <main class="auth-center">
     <div class="auth-form-card">
       <div class="auth-form-header">
-        <h1>Welcome back!</h1>
-        <p class="subtitle">Log in to your Harpr account</p>
+        <h1>Sign in</h1>
       </div>
 
       {% if form.non_field_errors %}
@@ -72,14 +71,7 @@
         <button type="submit" class="auth-btn-primary">Log in</button>
       </form>
 
-      <div class="auth-divider">New to Harpr?</div>
-      <a href="{% url 'church_signup' %}" class="auth-btn-outline">Create a church account</a>
-
-      <p class="auth-legal">
-        By continuing, you acknowledge that you understand and agree to the
-        <a href="{% url 'terms' %}">Terms &amp; Conditions</a> and
-        <a href="{% url 'privacy' %}">Privacy Policy</a>.
-      </p>
+      <p class="auth-legal">New to Harpr? <a href="{% url 'church_signup' %}">Create a church account</a>.</p>
     </div>
   </main>
 

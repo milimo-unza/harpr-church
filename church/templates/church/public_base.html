@@ -76,7 +76,7 @@
                 try {
                     var saved = JSON.parse(localStorage.getItem("harpr-saved-churches") || "[]");
                     if (!saved.some(function (c) { return c.slug === churchSlug; })) {
-                        saved.push({ slug: churchSlug, name: churchName });
+                        saved.push({ slug: churchSlug, name: churchName || churchSlug });
                         localStorage.setItem("harpr-saved-churches", JSON.stringify(saved));
                     }
                 } catch (e) { }

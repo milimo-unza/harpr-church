@@ -167,20 +167,6 @@ p {
   margin: 0 0 var(--space-4);
 }
 
-/* 2.5 Content width constraints */
-.page-head,
-.stat-grid,
-.week-grid,
-.data-table,
-.item-table,
-.public-table,
-.card,
-.form-card,
-.table-wrap,
-.insight-card {
-  max-width: 1280px;
-}
-
 /* 3. Layout */
 .layout {
   display: flex;
@@ -494,7 +480,7 @@ p {
 
 .section-label {
   display: block;
-  margin: 0 0 var(--space-3);
+  margin: var(--space-5) 0 var(--space-4);
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -581,7 +567,7 @@ p {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: var(--space-4);
   margin-bottom: var(--space-5);
-  max-width: 900px;
+
 }
 
 .uncovered-count {
@@ -954,6 +940,39 @@ p {
   border-color: rgba(181, 98, 62, 0.15);
 }
 
+.week-col-body .event-chip,
+.week-col-body .service-chip {
+  display: block;
+  border: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  background: var(--card);
+  text-align: left;
+  width: 100%;
+  color: var(--text);
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: none;
+}
+
+.week-col-body .event-chip strong,
+.week-col-body .service-chip strong {
+  display: block;
+  font-size: 0.82rem;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+  margin-bottom: 0.15rem;
+}
+
+.week-col-body .event-chip small,
+.week-col-body .service-chip small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
 .roster-chip--add {
   background: var(--primary-soft);
   color: var(--primary-dark);
@@ -1242,10 +1261,15 @@ p {
   box-shadow: var(--shadow-sm);
 }
 
+.public-card+.public-card {
+  margin-top: var(--space-5);
+}
+
 .public-links {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-4);
+  margin-top: var(--space-4);
 }
 
 .public-flash {
@@ -1453,6 +1477,7 @@ p {
     left: 0;
     bottom: 0;
     width: 260px;
+    padding-top: var(--space-9);
     transform: translateX(-100%);
     transition: transform 0.25s ease;
     z-index: var(--z-sidebar);
