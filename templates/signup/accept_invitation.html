@@ -23,7 +23,11 @@
             <div class="auth-topbar-brand"><strong>Harpr</strong><small>Church programmes</small></div>
         </div>
         <div class="auth-topbar-actions">
-            <button type="button" class="icon-btn" id="theme-toggle" aria-label="Toggle theme">◐</button>
+            <button type="button" class="icon-btn" id="theme-toggle" aria-label="Toggle theme">
+                <svg viewBox="0 0 24 24" aria-hidden="true" class="icon-svg">
+                    <path d="M21 12.8A9 9 0 0 1 11.2 3a9 9 0 1 0 9.8 9.8Z" fill="currentColor" />
+                </svg>
+            </button>
             <a href="{% url 'home' %}">← Back to home</a>
         </div>
     </header>
@@ -33,7 +37,8 @@
             <div class="auth-form-header">
                 <h1>Join {{ invitation.church.name }}</h1>
                 <p class="subtitle">
-                    You were invited as a {{ invitation.get_role_display }}{% if invitation.department %} for {{ invitation.department.name }}{% endif %}.
+                    You were invited as a {{ invitation.get_role_display }}{% if invitation.department %} for {{
+                    invitation.department.name }}{% endif %}.
                 </p>
             </div>
 
@@ -67,13 +72,13 @@
                 <div class="auth-field auth-field--password">
                     <label for="password1">Password</label>
                     <input type="password" name="password1" id="password1" required autocomplete="new-password">
-                    <button type="button" class="pwd-toggle" data-pwd-toggle aria-label="Show password">👁</button>
+                    <button type="button" class="pwd-toggle" data-pwd-toggle aria-label="Show password">Show</button>
                 </div>
 
                 <div class="auth-field auth-field--password">
                     <label for="password2">Confirm password</label>
                     <input type="password" name="password2" id="password2" required autocomplete="new-password">
-                    <button type="button" class="pwd-toggle" data-pwd-toggle aria-label="Show password">👁</button>
+                    <button type="button" class="pwd-toggle" data-pwd-toggle aria-label="Show password">Show</button>
                 </div>
 
                 <button type="submit" class="auth-btn-primary">Accept invitation</button>
@@ -101,7 +106,8 @@
                     if (!input) return;
                     var isPwd = input.type === "password";
                     input.type = isPwd ? "text" : "password";
-                    btn.textContent = isPwd ? "🙈" : "👁";
+                    btn.textContent = isPwd ? "Hide" : "Show";
+                    btn.setAttribute("aria-label", isPwd ? "Hide password" : "Show password");
                 });
             });
         })();

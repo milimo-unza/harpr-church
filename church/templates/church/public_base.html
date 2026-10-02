@@ -27,7 +27,11 @@
             {% if not user.is_authenticated %}
             <a href="{% url 'login' %}">Sign in</a>
             {% endif %}
-            <button type="button" class="icon-btn" id="theme-toggle" aria-label="Toggle theme">◐</button>
+            <button type="button" class="icon-btn" id="theme-toggle" aria-label="Toggle theme">
+                <svg viewBox="0 0 24 24" aria-hidden="true" class="icon-svg">
+                    <path d="M21 12.8A9 9 0 0 1 11.2 3a9 9 0 1 0 9.8 9.8Z" fill="currentColor" />
+                </svg>
+            </button>
         </nav>
     </header>
 

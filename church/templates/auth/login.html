@@ -28,7 +28,11 @@
       </div>
     </div>
     <div class="auth-topbar-actions">
-      <button type="button" class="icon-btn" id="theme-toggle" aria-label="Toggle theme">◐</button>
+      <button type="button" class="icon-btn" id="theme-toggle" aria-label="Toggle theme">
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="icon-svg">
+          <path d="M21 12.8A9 9 0 0 1 11.2 3a9 9 0 1 0 9.8 9.8Z" fill="currentColor" />
+        </svg>
+      </button>
       <a href="{% url 'home' %}">← Back to home</a>
     </div>
   </header>
@@ -61,7 +65,7 @@
         <div class="auth-field auth-field--password">
           <label for="{{ form.password.id_for_label }}">Password</label>
           {{ form.password }}
-          <button type="button" class="pwd-toggle" data-pwd-toggle aria-label="Show password">👁</button>
+          <button type="button" class="pwd-toggle" data-pwd-toggle aria-label="Show password">Show</button>
         </div>
 
         <div class="auth-forgot">
@@ -89,7 +93,8 @@
           if (!input) return;
           var isPwd = input.type === "password";
           input.type = isPwd ? "text" : "password";
-          btn.textContent = isPwd ? "🙈" : "👁";
+          btn.textContent = isPwd ? "Hide" : "Show";
+          btn.setAttribute("aria-label", isPwd ? "Hide password" : "Show password");
         });
       });
     })();

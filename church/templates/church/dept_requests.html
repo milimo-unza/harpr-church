@@ -36,7 +36,9 @@
         <td><button type="button" class="btn btn-small">View</button></td>
       </tr>
       {% empty %}
-      <tr><td colspan="5" class="empty-state">No requests.</td></tr>
+      <tr>
+        <td colspan="5" class="empty-state">No requests.</td>
+      </tr>
       {% endfor %}
     </tbody>
   </table>
@@ -46,7 +48,7 @@
   <div class="modal" role="dialog" aria-modal="true" style="max-width:560px;">
     <div class="modal-head">
       <h2 id="dept-request-title">Request</h2>
-      <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+      <button type="button" class="icon-btn modal-close" aria-label="Close">Close</button>
     </div>
     <div class="modal-body" id="dept-request-body">
       <p class="muted">Loading…</p>
@@ -196,7 +198,7 @@
                   errBox.textContent = msgs.join(" ") || "Please check the form.";
                 }
               })
-              .catch(function () {});
+              .catch(function () { });
           });
 
           var withdrawBtn = form.querySelector("[data-withdraw]");
@@ -216,7 +218,7 @@
                   if (window.harprToast) window.harprToast("Request withdrawn.");
                   window.location.reload();
                 })
-                .catch(function () {});
+                .catch(function () { });
             });
           }
         })

@@ -81,7 +81,7 @@
   <div class="modal" role="dialog" aria-modal="true">
     <div class="modal-head">
       <h2>New announcement</h2>
-      <button type="button" class="icon-btn modal-close" aria-label="Close">&#x2715;</button>
+      <button type="button" class="icon-btn modal-close" aria-label="Close">Close</button>
     </div>
     <div class="modal-body">
       <form method="post" action="{% url 'announcement_create' %}">
@@ -119,7 +119,7 @@
     <div class="modal" role="dialog" aria-modal="true">
       <div class="modal-head">
         <h2>Edit announcement</h2>
-        <button type="button" class="icon-btn modal-close" aria-label="Close">&#x2715;</button>
+        <button type="button" class="icon-btn modal-close" aria-label="Close">Close</button>
       </div>
       <div class="modal-body">
         <form method="post" action="{% url 'announcement_edit' announcement.pk %}">
@@ -158,7 +158,7 @@
     <div class="modal" role="dialog" aria-modal="true">
       <div class="modal-head">
         <h2>Edit announcement</h2>
-        <button type="button" class="icon-btn modal-close" aria-label="Close">&#x2715;</button>
+        <button type="button" class="icon-btn modal-close" aria-label="Close">Close</button>
       </div>
       <div class="modal-body">
         <form method="post" action="{% url 'announcement_edit' announcement.pk %}">

@@ -94,7 +94,7 @@
   <div class="modal modal--narrow" role="dialog" aria-modal="true">
     <div class="modal-head">
       <h2>Delete service?</h2>
-      <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+      <button type="button" class="icon-btn modal-close" aria-label="Close">Close</button>
     </div>
     <div class="modal-body">
       <p>Deleting <strong>{{ service.name }}</strong> removes all of its items and assignments. This cannot be undone.
@@ -114,7 +114,7 @@
   <div class="modal" role="dialog" aria-modal="true">
     <div class="modal-head">
       <h2>Add item</h2>
-      <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+      <button type="button" class="icon-btn modal-close" aria-label="Close">Close</button>
     </div>
     <div class="modal-body">
       <form method="post" action="{% url 'service_item_create' service.pk %}">
@@ -163,7 +163,7 @@
   <div class="modal" role="dialog" aria-modal="true">
     <div class="modal-head">
       <h2>Edit {{ item.title }}</h2>
-      <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+      <button type="button" class="icon-btn modal-close" aria-label="Close">Close</button>
     </div>
     <div class="modal-body">
       <form method="post" action="{% url 'service_item_edit' service.pk item.pk %}">
@@ -215,7 +215,7 @@
   <div class="modal" role="dialog" aria-modal="true">
     <div class="modal-head">
       <h2>Add person to {{ item.title }}</h2>
-      <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+      <button type="button" class="icon-btn modal-close" aria-label="Close">Close</button>
     </div>
     <div class="modal-body">
       <form method="post" action="{% url 'assignment_create' service.pk item.pk %}">
@@ -247,7 +247,7 @@
   <div class="modal modal--narrow" role="dialog" aria-modal="true">
     <div class="modal-head">
       <h2>Shift times from {{ item.title }}</h2>
-      <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+      <button type="button" class="icon-btn modal-close" aria-label="Close">Close</button>
     </div>
     <div class="modal-body">
       <p class="muted" style="margin-top:0;">
@@ -280,7 +280,7 @@
   <div class="modal modal--narrow" role="dialog" aria-modal="true">
     <div class="modal-head">
       <h2>Delete {{ item.title }}?</h2>
-      <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
+      <button type="button" class="icon-btn modal-close" aria-label="Close">Close</button>
     </div>
     <div class="modal-body">
       <p>This removes the item and all its assignments from this service. Cannot be undone.</p>

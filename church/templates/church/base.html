@@ -73,17 +73,34 @@
         <div class="footer-actions" role="toolbar" aria-label="Account and activity">
           <form method="post" action="{% url 'logout' %}">
             {% csrf_token %}
-            <button class="icon-btn" type="submit" aria-label="Sign out" title="Sign out">⏻</button>
+            <button class="icon-btn" type="submit" aria-label="Sign out" title="Sign out">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+            </button>
           </form>
 
-          <button class="icon-btn" id="theme-toggle" type="button" aria-label="Toggle theme"
-            title="Toggle theme">◐</button>
+          <button class="icon-btn" id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle theme">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4l1.4-1.4M17 7l1.4-1.4" />
+            </svg>
+          </button>
 
           {% if is_coordinator %}
           <div class="footer-popover" data-activity-root>
             <button class="icon-btn" type="button" data-activity-toggle aria-label="Recent actions"
               title="Recent actions">
-              <span aria-hidden="true">≡</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="4" y1="6" x2="20" y2="6" />
+                <line x1="4" y1="12" x2="20" y2="12" />
+                <line x1="4" y1="18" x2="14" y2="18" />
+              </svg>
             </button>
             <div class="footer-dropdown" data-activity-dropdown hidden>
               <div class="footer-dropdown-head">Recent actions</div>
@@ -97,7 +114,11 @@
           <div class="footer-popover" data-notification-root>
             <button class="icon-btn" type="button" data-notification-toggle aria-label="Notifications"
               title="Notifications">
-              <span aria-hidden="true">◔</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true" class="icon-svg" width="18" height="18" fill="none"
+                stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5" />
+                <path d="M10 20a2 2 0 0 0 4 0" />
+              </svg>
               <span class="notif-badge" data-notification-badge hidden>0</span>
             </button>
             <div class="footer-dropdown" data-notification-dropdown hidden></div>
