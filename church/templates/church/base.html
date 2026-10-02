@@ -35,6 +35,8 @@
           href="{% url 'admin_dashboard' %}">Dashboard</a>
         <a class="navlink {% if request.resolver_match.url_name == 'service_list' or request.resolver_match.url_name == 'service_detail' %}active{% endif %}"
           href="{% url 'service_list' %}">Services</a>
+        <a class="navlink {% if request.resolver_match.url_name == 'template_list' or request.resolver_match.url_name == 'template_create' or request.resolver_match.url_name == 'template_edit' %}active{% endif %}"
+          href="{% url 'template_list' %}">Templates</a>
         <a class="navlink {% if request.resolver_match.url_name == 'request_list' or request.resolver_match.url_name == 'request_respond' %}active{% endif %}"
           href="{% url 'request_list' %}">Requests</a>
         <a class="navlink {% if request.resolver_match.url_name == 'department_list' or request.resolver_match.url_name == 'department_create' or request.resolver_match.url_name == 'department_edit' %}active{% endif %}"

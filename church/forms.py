@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import time as _time, timedelta
 
 from django import forms
 from django.contrib.auth import get_user_model
@@ -14,10 +14,49 @@ from church.models import (
     Request,
     Service,
     ServiceItem,
+    ServiceItemTemplate,
     ServiceTemplate,
 )
 
 User = get_user_model()
+
+
+class ServiceTemplateForm(forms.ModelForm):
+    class Meta:
+        model = ServiceTemplate
+        fields = [
+            "name",
+            "day_of_week",
+            "default_start_time",
+            "default_duration_minutes",
+            "is_active",
+        ]
+        widgets = {
+            "default_start_time": forms.TimeInput(attrs={"type": "time"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        add_input_class(self)
+
+
+class ServiceItemTemplateForm(forms.ModelForm):
+    class Meta:
+        model = ServiceItemTemplate
+        fields = [
+            "title",
+            "default_duration_minutes",
+            "responsible_department",
+            "notes",
+        ]
+        widgets = {"notes": forms.Textarea(attrs={"rows": 3})}
+
+    def __init__(self, *args, church=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["responsible_department"].queryset = (
+            church.departments.all() if church else Department.objects.none()
+        )
+        add_input_class(self)
 
 
 class ServiceForm(forms.ModelForm):
@@ -386,6 +425,31 @@ class ChurchSignupForm(forms.Form):
             Membership.objects.create(user=user, church=church, role="admin")
             for slug, name in Department.DEFAULT_DEPARTMENTS:
                 Department.objects.create(church=church, slug=slug, name=name)
+
+            starter = ServiceTemplate.objects.create(
+                church=church,
+                name="Sunday Worship Service",
+                day_of_week=int(church.worship_day),
+                default_start_time=_time(8, 0),
+                default_duration_minutes=120,
+                is_active=True,
+            )
+            for order, (title, minutes, slug) in enumerate([
+                ("Opening Prayer", 10, "pastors"),
+                ("Worship Songs", 25, "music"),
+                ("Sermon", 45, "pastors"),
+                ("Announcements", 10, "pastors"),
+                ("Benediction", 5, "pastors"),
+            ]):
+                ServiceItemTemplate.objects.create(
+                    template=starter,
+                    order=order,
+                    title=title,
+                    default_duration_minutes=minutes,
+                    responsible_department=Department.objects.get(
+                        church=church, slug=slug
+                    ),
+                )
         return church, user
 
 

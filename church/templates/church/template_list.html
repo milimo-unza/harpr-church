@@ -1,0 +1,48 @@
+{% extends "church/base.html" %}
+{% block title %}Templates · Harpr Church{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <p class="eyebrow">Programme planning</p>
+        <h1>Templates</h1>
+    </div>
+    <a class="btn btn-primary" href="{% url 'template_create' %}">New template</a>
+</div>
+
+<div class="card table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Day</th>
+                <th>Start time</th>
+                <th>Items</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for template in templates %}
+            <tr>
+                <td><a href="{% url 'template_edit' template.pk %}">{{ template.name }}</a></td>
+                <td>{{ template.get_day_of_week_display }}</td>
+                <td>{{ template.default_start_time|time:"H:i" }}</td>
+                <td>{{ template.items.count }}</td>
+                <td>
+                    <div class="row-actions-inline">
+                        <a class="btn btn-small" href="{% url 'template_edit' template.pk %}">Edit</a>
+                        <form method="post" action="{% url 'template_delete' template.pk %}" class="inline-form">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-small btn-danger">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="empty-state">No templates yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

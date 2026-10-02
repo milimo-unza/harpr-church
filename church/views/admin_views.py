@@ -28,6 +28,8 @@ from church.forms import (
     RequestResponseForm,
     ServiceForm,
     ServiceItemForm,
+    ServiceItemTemplateForm,
+    ServiceTemplateForm,
 )
 from church.models import (
     AIInsight,
@@ -179,6 +181,92 @@ def generate_year(request):
     call_command("generate_year", church=request.church.slug, year=year)
     messages.success(request, f"Generated services for {year}.")
     return redirect("service_list")
+
+
+@admin_required
+def template_list(request):
+    templates = request.church.service_templates.all().order_by("name")
+    return render(
+        request,
+        "church/template_list.html",
+        {"templates": templates},
+    )
+
+
+@admin_required
+def template_create(request):
+    form = ServiceTemplateForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        template = form.save(commit=False)
+        template.church = request.church
+        template.save()
+        messages.success(request, "Template created.")
+        return redirect("template_edit", pk=template.pk)
+    return render(
+        request,
+        "church/template_form.html",
+        {"form": form, "title": "New template"},
+    )
+
+
+@admin_required
+def template_edit(request, pk):
+    template = get_object_or_404(request.church.service_templates, pk=pk)
+    form = ServiceTemplateForm(request.POST or None, instance=template)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Template saved.")
+        return redirect("template_edit", pk=template.pk)
+    item_form = ServiceItemTemplateForm(church=request.church)
+    return render(
+        request,
+        "church/template_form.html",
+        {
+            "form": form,
+            "template": template,
+            "item_form": item_form,
+            "items": template.items.all().order_by("order"),
+            "title": f"Edit {template.name}",
+        },
+    )
+
+
+@admin_required
+@require_POST
+def template_delete(request, pk):
+    template = get_object_or_404(request.church.service_templates, pk=pk)
+    template.delete()
+    messages.success(request, "Template deleted.")
+    return redirect("template_list")
+
+
+@admin_required
+@require_POST
+def template_item_create(request, pk):
+    template = get_object_or_404(request.church.service_templates, pk=pk)
+    form = ServiceItemTemplateForm(request.POST, church=request.church)
+    if form.is_valid():
+        item = form.save(commit=False)
+        item.template = template
+        item.order = (
+            template.items.order_by("-order").first().order + 1
+            if template.items.exists() else 0
+        )
+        item.save()
+        messages.success(request, "Item added.")
+    else:
+        messages.error(request, "Check the item form.")
+    return redirect("template_edit", pk=template.pk)
+
+
+@admin_required
+@require_POST
+def template_item_delete(request, pk, item_pk):
+    template = get_object_or_404(request.church.service_templates, pk=pk)
+    item = get_object_or_404(template.items, pk=item_pk)
+    item.delete()
+    messages.success(request, "Item removed.")
+    return redirect("template_edit", pk=template.pk)
 
 
 @admin_required
