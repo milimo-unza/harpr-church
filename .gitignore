@@ -44,3 +44,4 @@ desktop.ini
 *.log
 logs/
 CLEANUP_CHECKLIST.md
+scripts/
