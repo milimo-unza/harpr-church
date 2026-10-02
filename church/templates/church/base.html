@@ -26,6 +26,8 @@
 <body>
   <div class="layout">
     <aside class="sidebar">
+      <button class="sidebar-close" type="button" aria-label="Close menu"
+        onclick="document.body.classList.remove('sidebar-open')">✕</button>
       <a class="sidebar-brand" href="{% url 'home' %}">
         <span class="brand-mark" aria-hidden="true">H</span>
         <span class="brand-text">
@@ -79,11 +81,13 @@
             <button class="icon-btn" type="submit" aria-label="Sign out" title="Sign out">⏻</button>
           </form>
 
-          <button class="icon-btn" id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle theme">◐</button>
+          <button class="icon-btn" id="theme-toggle" type="button" aria-label="Toggle theme"
+            title="Toggle theme">◐</button>
 
           {% if is_coordinator %}
           <div class="footer-popover" data-activity-root>
-            <button class="icon-btn" type="button" data-activity-toggle aria-label="Recent actions" title="Recent actions">
+            <button class="icon-btn" type="button" data-activity-toggle aria-label="Recent actions"
+              title="Recent actions">
               <span aria-hidden="true">≡</span>
             </button>
             <div class="footer-dropdown" data-activity-dropdown hidden>
@@ -96,7 +100,8 @@
           {% endif %}
 
           <div class="footer-popover" data-notification-root>
-            <button class="icon-btn" type="button" data-notification-toggle aria-label="Notifications" title="Notifications">
+            <button class="icon-btn" type="button" data-notification-toggle aria-label="Notifications"
+              title="Notifications">
               <span aria-hidden="true">◔</span>
               <span class="notif-badge" data-notification-badge hidden>0</span>
             </button>
@@ -107,9 +112,12 @@
     </aside>
 
     <main class="main">
+      <button class="sidebar-toggle" type="button" aria-label="Open menu"
+        onclick="document.body.classList.add('sidebar-open')">☰</button>
       {% block content %}{% endblock %}
     </main>
   </div>
+  <div class="sidebar-overlay" onclick="document.body.classList.remove('sidebar-open')"></div>
 
   <div id="toast-stack" class="toast-stack" aria-live="polite" aria-atomic="true"></div>
   {% if messages %}
