@@ -57,6 +57,10 @@ class ServiceItemForm(forms.ModelForm):
 
     def __init__(self, *args, church=None, **kwargs):
         super().__init__(*args, **kwargs)
+        if not self.instance.pk:
+            self.fields["planned_start"].initial = timezone.localtime().strftime(
+                "%Y-%m-%dT%H:%M"
+            )
         self.fields["responsible_department"].queryset = (
             church.departments.all() if church else Department.objects.none()
         )

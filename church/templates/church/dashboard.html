@@ -76,7 +76,7 @@
             <option value="other">Other</option>
           </select></div>
         <div class="form-row"><label for="event-date">Date</label>
-          <input type="date" name="date" id="event-date" required></div>
+          <input type="date" name="date" id="event-date" value="{% now 'Y-m-d' %}" required></div>
         <div class="form-row two-up">
           <div><label for="event-start">Start time</label>
             <input type="time" name="start_time" id="event-start" required></div>

@@ -181,10 +181,14 @@
             (d.departments || []).forEach(function (dep) {
               deptOptions += '<option value="' + dep.id + '">' + esc(dep.name) + "</option>";
             });
+            var now = new Date();
+            var todayIso = now.getFullYear() + "-" +
+              String(now.getMonth() + 1).padStart(2, "0") + "-" +
+              String(now.getDate()).padStart(2, "0");
             scheduleFields =
               '<div class="form-row two-up">' +
               '<div><label for="ev-date">Date</label>' +
-              '<input type="date" name="event_date" id="ev-date" value="' + esc(d.start_date || "") + '" required></div>' +
+              '<input type="date" name="event_date" id="ev-date" value="' + esc(d.start_date || todayIso) + '" required></div>' +
               '<div><label for="ev-location">Location</label>' +
               '<input name="event_location" id="ev-location" value="Main church campus"></div>' +
               "</div>" +
