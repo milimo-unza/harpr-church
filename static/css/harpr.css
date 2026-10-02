@@ -30,9 +30,9 @@
   --space-7: 32px;
   --space-8: 40px;
   --space-9: 48px;
-  --font-sans: "Inter", "Segoe UI", sans-serif;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-serif: Georgia, "Times New Roman", serif;
-  --font-mono: "JetBrains Mono", "SFMono-Regular", monospace;
+  --font-mono: "Courier New", Courier, monospace;
   --sidebar-width: 240px;
   --z-overlay: 40;
   --z-sidebar: 50;
@@ -165,6 +165,20 @@ h3 {
 
 p {
   margin: 0 0 var(--space-4);
+}
+
+/* 2.5 Content width constraints */
+.page-head,
+.stat-grid,
+.week-grid,
+.data-table,
+.item-table,
+.public-table,
+.card,
+.form-card,
+.table-wrap,
+.insight-card {
+  max-width: 1280px;
 }
 
 /* 3. Layout */
@@ -358,8 +372,6 @@ p {
   display: none;
 }
 
-.sidebar-toggle,
-
 /* 4. Sidebar internals */
 .icon-btn {
   width: 2.2rem;
@@ -477,7 +489,7 @@ p {
   flex-wrap: wrap;
   border-bottom: 1px solid var(--border);
   padding-bottom: var(--space-4);
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-5);
 }
 
 .section-label {
@@ -566,9 +578,10 @@ p {
 
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: var(--space-4);
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-5);
+  max-width: 900px;
 }
 
 .uncovered-count {
@@ -839,6 +852,15 @@ p {
 .btn-small {
   padding: 0.46rem 0.7rem;
   font-size: 0.8rem;
+}
+
+.btn-icon {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  line-height: 1;
 }
 
 .btn-block {
@@ -1123,9 +1145,10 @@ p {
 /* 14. Week grid */
 .week-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(140px, 1fr));
   gap: var(--space-3);
-  margin-top: var(--space-5);
+  margin-top: var(--space-4);
+  overflow-x: auto;
 }
 
 .week-col {
@@ -1151,6 +1174,8 @@ p {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  overflow: hidden;
+  word-break: break-word;
 }
 
 .week-nav {
@@ -1405,13 +1430,13 @@ p {
 }
 
 /* 17. Responsive media queries at the bottom */
-@media (min-width: 900px) {
+@media (min-width: 1025px) {
   .main {
     margin-left: 0;
   }
 }
 
-@media (max-width: 899px) {
+@media (max-width: 1024px) {
 
 
 
@@ -1455,7 +1480,7 @@ p {
 
   .main {
     margin-left: 0;
-    padding: var(--space-6) var(--space-5);
+    padding: var(--space-4) var(--space-4);
   }
 
 
@@ -1465,7 +1490,7 @@ p {
     -webkit-overflow-scrolling: touch;
   }
 
-  .data-table,
+  .item-table,
   .public-table {
     min-width: 640px;
   }
@@ -1478,15 +1503,66 @@ p {
     padding: var(--space-5) var(--space-4);
   }
 
+  .stat-card {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .stat-card strong {
+    font-size: 1.4rem;
+  }
+
+  .stat-card span {
+    font-size: 0.78rem;
+  }
+
   .page-head {
-    gap: var(--space-4);
-    padding-bottom: var(--space-5);
-    margin-bottom: var(--space-5);
+    gap: var(--space-3);
+    padding-bottom: var(--space-3);
+    margin-bottom: var(--space-4);
   }
 
   .form-actions,
   .button-row {
     gap: var(--space-3);
+  }
+
+  .button-row {
+    gap: var(--space-2);
+  }
+
+  .button-row .btn {
+    width: auto;
+  }
+
+  .row-actions-inline {
+    flex-wrap: nowrap;
+    gap: var(--space-2);
+  }
+
+  .row-actions-inline .btn {
+    width: auto;
+    padding: 0.35rem 0.6rem;
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+
+  .week-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: var(--space-1);
+  }
+
+  .week-nav .btn {
+    flex: 0 0 auto;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.8rem;
+  }
+
+  .week-nav .muted {
+    display: none;
   }
 
   h1 {
@@ -1498,11 +1574,15 @@ p {
   }
 
   .stat-grid {
-    gap: var(--space-3);
+    display: none;
   }
 
   .sidebar-brand {
     padding-top: 2.75rem;
+  }
+
+  .sidebar .sidebar-brand {
+    display: none;
   }
 
   .two-up {
@@ -1510,7 +1590,16 @@ p {
   }
 
   .week-grid {
+    display: grid;
     grid-template-columns: 1fr;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+    overflow: visible;
+  }
+
+  .week-grid .week-col {
+    min-height: auto;
+    padding: var(--space-3);
   }
 
   .public-topbar,
@@ -1527,13 +1616,14 @@ p {
     gap: var(--space-2);
     background: var(--surface);
     border-bottom: 1px solid var(--border);
-    padding: var(--space-2) var(--space-3);
-    margin: calc(var(--space-6) * -1) calc(var(--space-5) * -1) var(--space-5);
+    padding: var(--space-3) var(--space-4);
+    margin: 0 0 var(--space-4) 0;
     position: sticky;
     top: 0;
     z-index: 60;
   }
-  .mobile-topbar > .icon-btn {
+
+  .mobile-topbar>.icon-btn {
     flex: 0 0 auto;
     width: 2rem;
     height: 2rem;
@@ -1543,6 +1633,7 @@ p {
     border-radius: 8px;
     font-size: 0.95rem;
   }
+
   .mobile-topbar-brand {
     flex: 0 0 auto;
     display: inline-flex;
@@ -1554,11 +1645,13 @@ p {
     color: var(--text);
     text-decoration: none;
   }
+
   .mobile-topbar-brand .brand-mark {
     width: 1.6rem;
     height: 1.6rem;
     font-size: 0.85rem;
   }
+
   .mobile-topbar-actions {
     margin-left: auto;
     display: inline-flex;
@@ -1567,6 +1660,7 @@ p {
     align-items: center;
     gap: var(--space-2);
   }
+
   .mobile-topbar-actions .icon-btn {
     flex: 0 0 auto;
     width: 2rem;
@@ -1574,6 +1668,7 @@ p {
     padding: 0;
     font-size: 0.95rem;
   }
+
   .mobile-topbar-actions .footer-popover {
     position: static;
     display: inline-flex;
@@ -1595,6 +1690,7 @@ p {
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
     z-index: 70;
   }
+
   .footer-dropdown-head {
     position: sticky;
     top: 0;
@@ -1608,9 +1704,11 @@ p {
     font-weight: 700;
     z-index: 1;
   }
+
   .footer-dropdown-body {
     padding: var(--space-3);
   }
+
   .notif-item,
   .notif-item--static {
     display: block;
@@ -1622,11 +1720,13 @@ p {
     color: var(--text);
     text-decoration: none;
   }
+
   .notif-item strong {
     display: block;
     margin-bottom: 0.2rem;
     font-size: 0.88rem;
   }
+
   .notif-item small {
     display: block;
     color: var(--muted);
@@ -1647,6 +1747,13 @@ p {
 
   .btn {
     width: 100%;
+  }
+
+  .week-nav .btn,
+  .button-row .btn,
+  .filter-tabs a,
+  .row-actions-inline .btn {
+    width: auto;
   }
 
   .form-actions {

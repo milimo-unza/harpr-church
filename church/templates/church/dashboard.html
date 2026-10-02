@@ -10,11 +10,13 @@
       <a class="btn btn-small" href="{% url 'admin_dashboard' %}">Today</a>
       <a class="btn btn-small" href="?week={{ next_week|date:'Y-m-d' }}">Next →</a>
       <span class="muted" style="margin-left:8px;">{{ week_start|date:"d M" }} — {{ week_end|date:"d M Y" }}</span>
+      <div class="button-row">
+        <button type="button" class="btn btn-primary btn-icon" data-modal-open="event-create-modal"
+          aria-label="New event" title="New event">+</button>
+        <button type="button" class="btn btn-ghost btn-icon" data-modal-open="service-create-modal"
+          aria-label="New service" title="New service">+</button>
+      </div>
     </div>
-  </div>
-  <div class="button-row">
-    <button type="button" class="btn btn-primary" data-modal-open="event-create-modal">New event</button>
-    <button type="button" class="btn btn-ghost" data-modal-open="service-create-modal">New service</button>
   </div>
 </div>
 
