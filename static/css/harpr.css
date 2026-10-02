@@ -308,12 +308,10 @@ p {
   position: absolute;
   right: 0;
   bottom: calc(100% + 0.5rem);
-  width: 220px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: var(--shadow-md);
-  overflow: hidden;
+  top: auto;
+  width: 260px;
+  max-height: 60vh;
+  overflow-y: auto;
   z-index: 20;
 }
 
@@ -567,7 +565,7 @@ p {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: var(--space-4);
   margin-bottom: var(--space-5);
-
+  max-width: 900px;
 }
 
 .uncovered-count {
@@ -1473,14 +1471,15 @@ p {
 
   .sidebar {
     position: fixed;
-    top: 0;
+    top: var(--space-9);
     left: 0;
     bottom: 0;
     width: 260px;
-    padding-top: var(--space-9);
     transform: translateX(-100%);
     transition: transform 0.25s ease;
     z-index: var(--z-sidebar);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   body.sidebar-open .sidebar {
@@ -1809,5 +1808,25 @@ p {
 
   .footer-actions {
     flex-wrap: wrap;
+  }
+
+  .auth-topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .auth-topbar-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .auth-center {
+    padding: 1rem;
+  }
+
+  .auth-form-card {
+    padding: var(--space-5);
   }
 }
