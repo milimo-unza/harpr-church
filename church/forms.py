@@ -83,6 +83,29 @@ class ServiceItemForm(forms.ModelForm):
         )
         add_input_class(self)
 
+    def clean(self):
+        cleaned = super().clean()
+        if not self.service:
+            return cleaned
+
+        start = cleaned.get("planned_start")
+        duration = cleaned.get("planned_duration_minutes")
+        if not start or duration is None:
+            return cleaned
+
+        stop = start + timedelta(minutes=duration)
+        overlaps = []
+        for item in self.service.items.exclude(pk=self.instance.pk):
+            item_stop = item.planned_start + timedelta(
+                minutes=item.planned_duration_minutes or 0
+            )
+            if start < item_stop and stop > item.planned_start:
+                overlaps.append(item.title)
+
+        if overlaps:
+            raise forms.ValidationError(f"Overlaps with: {', '.join(overlaps)}")
+        return cleaned
+
 
 class AssignmentForm(forms.ModelForm):
     class Meta:
