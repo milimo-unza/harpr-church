@@ -1,6 +1,7 @@
 from django.urls import path
 
 from church.views import (
+    accounts,
     admin_views,
     api_views,
     dept_views,
@@ -18,7 +19,8 @@ urlpatterns = [
     path("services/", admin_views.service_list, name="service_list"),
     path("services/new/", admin_views.service_create, name="service_create"),
     path("services/<int:pk>/", admin_views.service_detail, name="service_detail"),
-    path("services/<int:pk>/delete/", admin_views.service_delete, name="service_delete"),
+    path("services/<int:pk>/delete/",
+         admin_views.service_delete, name="service_delete"),
     path("services/<int:pk>/freeze/",
          admin_views.service_freeze, name="service_freeze"),
     path("services/<int:pk>/unfreeze/",
@@ -81,6 +83,7 @@ urlpatterns = [
     path("members/", admin_views.member_list, name="member_list"),
     path("members/invite/", admin_views.member_invite, name="member_invite"),
     path("members/<int:pk>/edit/", admin_views.member_edit, name="member_edit"),
+    path("account/delete/", accounts.delete_my_account, name="account_delete"),
     path(
         "members/<int:pk>/deactivate/",
         admin_views.member_deactivate,

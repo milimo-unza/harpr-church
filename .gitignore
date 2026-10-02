@@ -68,7 +68,6 @@ db.sqlite3
 staticfiles/
 
 # Legacy (should not be committed)
-accounts/
 tasks/
 timeplanner/
 attached_assets/

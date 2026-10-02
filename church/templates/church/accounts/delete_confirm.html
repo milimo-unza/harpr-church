@@ -1,0 +1,33 @@
+{% extends "church/base.html" %}
+{% block title %}Delete account · Harpr Church{% endblock %}
+{% block content %}
+<div class="narrow-page">
+    <p class="eyebrow">Account</p>
+    <h1>Delete my account</h1>
+    <div class="card form-card">
+        <p class="muted">This soft-deletes your account and logs you out. Your data is kept intact, but the account
+            cannot sign in again until an admin re-activates it.</p>
+
+        {% if messages %}
+        {% for message in messages %}
+        <div class="form-errors">
+            <p>{{ message }}</p>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-row">
+                <label for="confirm-username">Type your username to confirm</label>
+                <input type="text" name="confirm" id="confirm-username" value="" required>
+            </div>
+            <p class="muted">Expected: <strong>{{ username }}</strong></p>
+            <div class="form-actions">
+                <a class="btn btn-ghost" href="{% url 'admin_dashboard' %}">Cancel</a>
+                <button class="btn btn-danger" type="submit">Delete account</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

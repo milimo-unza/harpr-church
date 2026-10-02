@@ -17,7 +17,11 @@
   <table class="data-table">
     <thead>
       <tr>
-        <th>Title</th><th>Type</th><th>Submitted</th><th>From</th><th></th>
+        <th>Title</th>
+        <th>Type</th>
+        <th>Submitted</th>
+        <th>From</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
@@ -33,7 +37,9 @@
         <td><button type="button" class="btn btn-small">Review</button></td>
       </tr>
       {% empty %}
-      <tr><td colspan="5" class="empty-state">Nothing pending.</td></tr>
+      <tr>
+        <td colspan="5" class="empty-state">Nothing pending.</td>
+      </tr>
       {% endfor %}
     </tbody>
   </table>
@@ -44,7 +50,11 @@
   <table class="data-table">
     <thead>
       <tr>
-        <th>Title</th><th>Type</th><th>Submitted</th><th>From</th><th></th>
+        <th>Title</th>
+        <th>Type</th>
+        <th>Submitted</th>
+        <th>From</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
@@ -57,7 +67,9 @@
         <td><button type="button" class="btn btn-small">View</button></td>
       </tr>
       {% empty %}
-      <tr><td colspan="5" class="empty-state">No approved requests.</td></tr>
+      <tr>
+        <td colspan="5" class="empty-state">No approved requests.</td>
+      </tr>
       {% endfor %}
     </tbody>
   </table>
@@ -68,7 +80,11 @@
   <table class="data-table">
     <thead>
       <tr>
-        <th>Title</th><th>Type</th><th>Submitted</th><th>From</th><th></th>
+        <th>Title</th>
+        <th>Type</th>
+        <th>Submitted</th>
+        <th>From</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
@@ -81,7 +97,9 @@
         <td><button type="button" class="btn btn-small">View</button></td>
       </tr>
       {% empty %}
-      <tr><td colspan="5" class="empty-state">No rejected requests.</td></tr>
+      <tr>
+        <td colspan="5" class="empty-state">No rejected requests.</td>
+      </tr>
       {% endfor %}
     </tbody>
   </table>

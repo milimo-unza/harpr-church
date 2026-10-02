@@ -40,8 +40,7 @@
       </a>
       {% endfor %}
       {% for event in day.events %}
-      <button type="button" class="event-chip"
-        data-edit-event="{{ event.pk }}">
+      <button type="button" class="event-chip" data-edit-event="{{ event.pk }}">
         <strong>{{ event.title }}</strong>
         <small>{{ event.get_event_type_display }} · {{ event.start_time|time:"H:i" }}</small>
       </button>
@@ -65,7 +64,8 @@
       <form method="post" action="{% url 'event_create' %}">
         {% csrf_token %}
         <div class="form-row"><label for="event-title">Title</label>
-          <input name="title" id="event-title" required></div>
+          <input name="title" id="event-title" required>
+        </div>
         <div class="form-row"><label for="event-type">Type</label>
           <select name="event_type" id="event-type">
             <option value="rehearsal">Rehearsal / Practice</option>
@@ -74,26 +74,33 @@
             <option value="outreach">Outreach</option>
             <option value="fellowship">Fellowship</option>
             <option value="other">Other</option>
-          </select></div>
+          </select>
+        </div>
         <div class="form-row"><label for="event-date">Date</label>
-          <input type="date" name="date" id="event-date" value="{% now 'Y-m-d' %}" required></div>
+          <input type="date" name="date" id="event-date" value="{% now 'Y-m-d' %}" required>
+        </div>
         <div class="form-row two-up">
           <div><label for="event-start">Start time</label>
-            <input type="time" name="start_time" id="event-start" required></div>
+            <input type="time" name="start_time" id="event-start" required>
+          </div>
           <div><label for="event-end">End time</label>
-            <input type="time" name="end_time" id="event-end" required></div>
+            <input type="time" name="end_time" id="event-end" required>
+          </div>
         </div>
         <div class="form-row"><label for="event-location">Location</label>
-          <input name="location" id="event-location"></div>
+          <input name="location" id="event-location">
+        </div>
         <div class="form-row"><label for="event-dept">Responsible department</label>
           <select name="responsible_department" id="event-dept">
             <option value="">— None —</option>
             {% for d in departments %}
             <option value="{{ d.pk }}">{{ d.name }}</option>
             {% endfor %}
-          </select></div>
+          </select>
+        </div>
         <div class="form-row"><label for="event-notes">Notes</label>
-          <textarea name="notes" id="event-notes" rows="3"></textarea></div>
+          <textarea name="notes" id="event-notes" rows="3"></textarea>
+        </div>
         <div class="form-actions">
           <button type="button" class="btn btn-ghost modal-close">Cancel</button>
           <button type="submit" class="btn btn-primary">Create event</button>
@@ -114,16 +121,19 @@
       <form method="post" action="{% url 'service_create' %}">
         {% csrf_token %}
         <div class="form-row"><label for="service-name">Name</label>
-          <input name="name" id="service-name" required></div>
+          <input name="name" id="service-name" required>
+        </div>
         <div class="form-row"><label for="service-date">Date</label>
-          <input type="date" name="date" id="service-date" required></div>
+          <input type="date" name="date" id="service-date" required>
+        </div>
         <div class="form-row"><label for="service-template">Template (optional)</label>
           <select name="template" id="service-template">
             <option value="">— None —</option>
             {% for t in service_templates %}
             <option value="{{ t.pk }}">{{ t.name }} ({{ t.get_day_of_week_display }})</option>
             {% endfor %}
-          </select></div>
+          </select>
+        </div>
         <div class="form-actions">
           <button type="button" class="btn btn-ghost modal-close">Cancel</button>
           <button type="submit" class="btn btn-primary">Create service</button>
@@ -145,7 +155,8 @@
       <form method="post" id="event-edit-form" hidden>
         {% csrf_token %}
         <div class="form-row"><label for="ee-title">Title</label>
-          <input name="title" id="ee-title" required></div>
+          <input name="title" id="ee-title" required>
+        </div>
         <div class="form-row"><label for="ee-type">Type</label>
           <select name="event_type" id="ee-type">
             <option value="rehearsal">Rehearsal / Practice</option>
@@ -154,26 +165,33 @@
             <option value="outreach">Outreach</option>
             <option value="fellowship">Fellowship</option>
             <option value="other">Other</option>
-          </select></div>
+          </select>
+        </div>
         <div class="form-row"><label for="ee-date">Date</label>
-          <input type="date" name="date" id="ee-date" required></div>
+          <input type="date" name="date" id="ee-date" required>
+        </div>
         <div class="form-row two-up">
           <div><label for="ee-start">Start time</label>
-            <input type="time" name="start_time" id="ee-start" required></div>
+            <input type="time" name="start_time" id="ee-start" required>
+          </div>
           <div><label for="ee-end">End time</label>
-            <input type="time" name="end_time" id="ee-end" required></div>
+            <input type="time" name="end_time" id="ee-end" required>
+          </div>
         </div>
         <div class="form-row"><label for="ee-location">Location</label>
-          <input name="location" id="ee-location"></div>
+          <input name="location" id="ee-location">
+        </div>
         <div class="form-row"><label for="ee-dept">Responsible department</label>
           <select name="responsible_department" id="ee-dept">
             <option value="">— None —</option>
             {% for d in departments %}
             <option value="{{ d.pk }}">{{ d.name }}</option>
             {% endfor %}
-          </select></div>
+          </select>
+        </div>
         <div class="form-row"><label for="ee-notes">Notes</label>
-          <textarea name="notes" id="ee-notes" rows="3"></textarea></div>
+          <textarea name="notes" id="ee-notes" rows="3"></textarea>
+        </div>
         <div class="form-errors" data-form-errors hidden></div>
         <div class="form-actions">
           <form method="post" id="event-edit-delete" style="margin-right:auto;">
@@ -299,7 +317,7 @@
           if (window.harprToast) window.harprToast("Event deleted.");
           window.location.reload();
         })
-        .catch(function () {});
+        .catch(function () { });
     });
   })();
 </script>
