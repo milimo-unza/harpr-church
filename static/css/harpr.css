@@ -1,4 +1,4 @@
-/* 1. Root custom properties */
+/* colours and spacing */
 :root {
   --page-bg: #faf6f1;
   --surface: #f3ece3;
@@ -58,7 +58,6 @@
   --warning-text: #f5d4a2;
 }
 
-/* 2. Reset and base */
 * {
   box-sizing: border-box;
 }
@@ -167,7 +166,7 @@ p {
   margin: 0 0 var(--space-4);
 }
 
-/* 3. Layout */
+/* page shell */
 .layout {
   display: flex;
   min-height: 100vh;
@@ -356,7 +355,7 @@ p {
   display: none;
 }
 
-/* 4. Sidebar internals */
+/* sidebar */
 .icon-btn {
   width: 2.2rem;
   height: 2.2rem;
@@ -427,7 +426,6 @@ p {
   background: transparent;
 }
 
-/* 5. Typography */
 .account-actions {
   margin-top: var(--space-6);
 }
@@ -501,7 +499,7 @@ p {
   color: var(--muted);
 }
 
-/* 6. Cards and containers */
+/* cards */
 .card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -610,7 +608,6 @@ p {
   font-size: 0.82rem;
 }
 
-/* 7. Tables */
 .announcement-list,
 .assignment-list,
 .activity-list,
@@ -717,7 +714,6 @@ p {
   text-align: center;
 }
 
-/* 8. Forms */
 .form-row,
 .form-section {
   margin-bottom: var(--space-4);
@@ -800,7 +796,6 @@ p {
   display: inline-block;
 }
 
-/* 9. Buttons */
 .btn,
 .auth-btn-primary,
 .auth-btn-outline {
@@ -859,7 +854,6 @@ p {
   width: 100%;
 }
 
-/* 10. Badges and status */
 .status-badge {
   display: inline-flex;
   align-items: center;
@@ -1014,7 +1008,6 @@ p {
   color: #fff;
 }
 
-/* 11. Modals */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -1063,7 +1056,6 @@ p {
   color: var(--muted);
 }
 
-/* 12. Toasts */
 .toast-stack {
   position: fixed;
   right: 1rem;
@@ -1110,7 +1102,6 @@ p {
   color: #34558a;
 }
 
-/* 13. Rosters */
 .roster-rows {
   display: flex;
   flex-direction: column;
@@ -1167,7 +1158,7 @@ p {
   gap: 0.45rem;
 }
 
-/* 14. Week grid */
+/* week grid */
 .week-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(140px, 1fr));
@@ -1215,7 +1206,7 @@ p {
   font-size: 0.8rem;
 }
 
-/* 15. Public pages */
+/* public pages */
 .public-body {
   background: var(--page-bg);
 }
@@ -1319,7 +1310,7 @@ p {
   margin-top: 0.85rem;
 }
 
-/* 16. Auth pages */
+/* login and signup */
 .auth-page {
   min-height: 100vh;
   background: var(--page-bg);
@@ -1459,7 +1450,7 @@ p {
   margin: var(--space-5) 0;
 }
 
-/* 17. Responsive media queries at the bottom */
+/* mobile */
 @media (min-width: 1025px) {
   .main {
     margin-left: 0;
