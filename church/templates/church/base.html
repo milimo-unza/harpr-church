@@ -26,8 +26,6 @@
 <body>
   <div class="layout">
     <aside class="sidebar">
-      <button class="sidebar-close" type="button" aria-label="Close menu"
-        onclick="document.body.classList.remove('sidebar-open')">✕</button>
       <a class="sidebar-brand" href="{% url 'home' %}">
         <span class="brand-mark" aria-hidden="true">H</span>
         <span class="brand-text">
@@ -112,8 +110,15 @@
     </aside>
 
     <main class="main">
-      <button class="sidebar-toggle" type="button" aria-label="Open menu"
-        onclick="document.body.classList.add('sidebar-open')">☰</button>
+      <div class="mobile-topbar">
+        <button class="icon-btn" type="button" aria-label="Open menu"
+          onclick="document.body.classList.add('sidebar-open')">☰</button>
+        <a class="mobile-topbar-brand" href="{% url 'home' %}">
+          <span class="brand-mark" aria-hidden="true">H</span>
+          <span class="brand-name">Harpr</span>
+        </a>
+        <div class="mobile-topbar-actions" data-mobile-actions></div>
+      </div>
       {% block content %}{% endblock %}
     </main>
   </div>
@@ -158,6 +163,30 @@
   </script>
 
   <script src="{% static 'js/notifications.js' %}"></script>
+
+  <script>
+    (function () {
+      var topbarActions = document.querySelector("[data-mobile-actions]");
+      if (!topbarActions) return;
+      var notifRoot = document.querySelector("[data-notification-root]");
+      var activityRoot = document.querySelector("[data-activity-root]");
+      var desktopSlot = document.querySelector(".footer-actions");
+      if (!notifRoot || !desktopSlot) return;
+
+      function place() {
+        if (window.matchMedia("(max-width: 899px)").matches) {
+          if (notifRoot) topbarActions.appendChild(notifRoot);
+          if (activityRoot) topbarActions.appendChild(activityRoot);
+        } else {
+          if (notifRoot) desktopSlot.appendChild(notifRoot);
+          if (activityRoot) desktopSlot.appendChild(activityRoot);
+        }
+      }
+
+      place();
+      window.matchMedia("(max-width: 899px)").addEventListener("change", place);
+    })();
+  </script>
 
   <script>
     (function () {

@@ -346,14 +346,19 @@ p {
   min-height: 100vh;
 }
 
+.mobile-topbar {
+  display: none;
+}
+
+.sidebar-toggle {
+  display: none;
+}
+
 .sidebar-overlay {
   display: none;
 }
 
 .sidebar-toggle,
-.sidebar-close {
-  display: none;
-}
 
 /* 4. Sidebar internals */
 .icon-btn {
@@ -1407,6 +1412,12 @@ p {
 }
 
 @media (max-width: 899px) {
+
+
+
+
+
+
   .layout {
     display: block;
   }
@@ -1414,16 +1425,16 @@ p {
   .sidebar {
     position: fixed;
     top: 0;
-    left: -260px;
+    left: 0;
     bottom: 0;
     width: 260px;
-    transition: left 0.25s ease;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
     z-index: var(--z-sidebar);
-    transform: none;
   }
 
   body.sidebar-open .sidebar {
-    left: 0;
+    transform: translateX(0);
   }
 
   .sidebar-overlay {
@@ -1447,37 +1458,7 @@ p {
     padding: var(--space-6) var(--space-5);
   }
 
-  .sidebar-toggle {
-    display: flex;
-    position: fixed;
-    top: 1rem;
-    left: 1rem;
-    z-index: var(--z-toggle);
-    width: 2.5rem;
-    height: 2.5rem;
-    align-items: center;
-    justify-content: center;
-    border-radius: 10px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    box-shadow: var(--shadow-sm);
-  }
 
-  .sidebar-close {
-    display: flex;
-    position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    width: 2.2rem;
-    height: 2.2rem;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    background: transparent;
-    color: var(--muted);
-    font-size: 1.1rem;
-  }
 
   .table-wrap {
     overflow-x: auto;
@@ -1539,25 +1520,118 @@ p {
     align-items: flex-start;
   }
 
+  .mobile-topbar {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: var(--space-2);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: var(--space-2) var(--space-3);
+    margin: calc(var(--space-6) * -1) calc(var(--space-5) * -1) var(--space-5);
+    position: sticky;
+    top: 0;
+    z-index: 60;
+  }
+  .mobile-topbar > .icon-btn {
+    flex: 0 0 auto;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 1px solid var(--border);
+    background: transparent;
+    border-radius: 8px;
+    font-size: 0.95rem;
+  }
+  .mobile-topbar-brand {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text);
+    text-decoration: none;
+  }
+  .mobile-topbar-brand .brand-mark {
+    width: 1.6rem;
+    height: 1.6rem;
+    font-size: 0.85rem;
+  }
+  .mobile-topbar-actions {
+    margin-left: auto;
+    display: inline-flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .mobile-topbar-actions .icon-btn {
+    flex: 0 0 auto;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    font-size: 0.95rem;
+  }
+  .mobile-topbar-actions .footer-popover {
+    position: static;
+    display: inline-flex;
+  }
+
+  /* Dropdowns as popovers anchored just under the topbar */
   .footer-dropdown {
     position: fixed !important;
-    left: 1rem;
-    right: 1rem;
-    bottom: 6rem;
-    top: auto;
+    top: calc(var(--space-6) + 3rem);
+    left: var(--space-3);
+    right: var(--space-3);
+    bottom: auto;
     width: auto;
     max-height: 60vh;
     overflow-y: auto;
-    z-index: 95;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+    z-index: 70;
   }
   .footer-dropdown-head {
     position: sticky;
     top: 0;
     background: var(--card);
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 700;
     z-index: 1;
   }
-  .footer-popover {
-    position: static;
+  .footer-dropdown-body {
+    padding: var(--space-3);
+  }
+  .notif-item,
+  .notif-item--static {
+    display: block;
+    padding: var(--space-3);
+    border-radius: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    margin-bottom: var(--space-2);
+    color: var(--text);
+    text-decoration: none;
+  }
+  .notif-item strong {
+    display: block;
+    margin-bottom: 0.2rem;
+    font-size: 0.88rem;
+  }
+  .notif-item small {
+    display: block;
+    color: var(--muted);
+    font-size: 0.78rem;
+    line-height: 1.4;
   }
 }
 
