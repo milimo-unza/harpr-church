@@ -44,7 +44,7 @@
         <td>{{ item.responsible_department.name|default:"—" }}</td>
         <td>
           {% for assignment in item.assignments.all %}
-            {{ assignment.person_name }}{% if not forloop.last %}, {% endif %}
+          {{ assignment.person_name }}{% if not forloop.last %}, {% endif %}
           {% empty %}<span class="muted">—</span>{% endfor %}
         </td>
         <td><span class="status-badge status-{{ item.status }}">{{ item.get_status_display }}</span></td>
@@ -53,12 +53,10 @@
             {% if service.status == "frozen" %}
             <span class="muted" style="font-size:0.78rem;">Locked</span>
             {% else %}
-            <button type="button" class="btn btn-small"
-              data-modal-open="item-edit-modal-{{ item.pk }}">Edit</button>
-            <button type="button" class="btn btn-small"
-              data-modal-open="item-assign-modal-{{ item.pk }}">+ Person</button>
-            <button type="button" class="btn btn-small"
-              data-modal-open="item-shift-modal-{{ item.pk }}">Shift</button>
+            <button type="button" class="btn btn-small" data-modal-open="item-edit-modal-{{ item.pk }}">Edit</button>
+            <button type="button" class="btn btn-small" data-modal-open="item-assign-modal-{{ item.pk }}">+
+              Person</button>
+            <button type="button" class="btn btn-small" data-modal-open="item-shift-modal-{{ item.pk }}">Shift</button>
             <button type="button" class="btn btn-small btn-danger"
               data-modal-open="item-delete-modal-{{ item.pk }}">×</button>
             {% endif %}
@@ -66,7 +64,9 @@
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="6" class="empty-state">No items yet.</td></tr>
+      <tr>
+        <td colspan="6" class="empty-state">No items yet.</td>
+      </tr>
       {% endfor %}
     </tbody>
   </table>
@@ -97,7 +97,8 @@
       <button type="button" class="icon-btn modal-close" aria-label="Close">✕</button>
     </div>
     <div class="modal-body">
-      <p>Deleting <strong>{{ service.name }}</strong> removes all of its items and assignments. This cannot be undone.</p>
+      <p>Deleting <strong>{{ service.name }}</strong> removes all of its items and assignments. This cannot be undone.
+      </p>
       <form method="post" action="{% url 'service_delete' service.pk %}">
         {% csrf_token %}
         <div class="form-actions">
@@ -186,7 +187,8 @@
           <select name="responsible_department" id="ei-dept-{{ item.pk }}">
             <option value="">— None —</option>
             {% for d in departments %}
-            <option value="{{ d.pk }}" {% if item.responsible_department_id == d.pk %}selected{% endif %}>{{ d.name }}</option>
+            <option value="{{ d.pk }}" {% if item.responsible_department_id == d.pk %}selected{% endif %}>{{ d.name }}
+            </option>
             {% endfor %}
           </select>
         </div>
@@ -261,8 +263,7 @@
         </div>
         <div class="form-row">
           <label for="shift-reason-{{ item.pk }}">Reason</label>
-          <input name="reason" id="shift-reason-{{ item.pk }}"
-            placeholder="e.g. Sermon ran 12 minutes over" required>
+          <input name="reason" id="shift-reason-{{ item.pk }}" placeholder="e.g. Sermon ran 12 minutes over" required>
         </div>
         <div class="form-actions">
           <button type="button" class="btn btn-ghost modal-close">Cancel</button>

@@ -261,7 +261,7 @@ def service_detail(request, pk):
         {
             "service": service,
             "assignment_form": AssignmentForm(),
-            "item_form": ServiceItemForm(church=request.church),
+            "item_form": ServiceItemForm(church=request.church, service=service),
             "departments": request.church.departments.all(),
         },
     )
@@ -272,7 +272,7 @@ def service_item_create(request, pk):
     service = get_object_or_404(request.church.services, pk=pk)
     if service.status == "frozen":
         return _frozen_response(request, service)
-    form = ServiceItemForm(request.POST or None, church=request.church)
+    form = ServiceItemForm(request.POST or None, church=request.church, service=service)
     if request.method == "POST" and form.is_valid():
         item = form.save(commit=False)
         item.service = service
@@ -315,7 +315,7 @@ def service_item_edit(request, pk, item_pk):
         return _frozen_response(request, service)
     item = get_object_or_404(service.items, pk=item_pk)
     form = ServiceItemForm(request.POST or None,
-                           instance=item, church=request.church)
+                           instance=item, church=request.church, service=service)
     if request.method == "POST" and form.is_valid():
         item = form.save()
         log_action(

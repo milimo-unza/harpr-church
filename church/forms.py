@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django import forms
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -55,12 +57,27 @@ class ServiceItemForm(forms.ModelForm):
             "notes": forms.Textarea(attrs={"rows": 3}),
         }
 
-    def __init__(self, *args, church=None, **kwargs):
+    def __init__(self, *args, church=None, service=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.service = service
         if not self.instance.pk:
-            self.fields["planned_start"].initial = timezone.localtime().strftime(
-                "%Y-%m-%dT%H:%M"
-            )
+            if self.service and self.service.items.exists():
+                last_item = self.service.items.order_by("-order").first()
+                if last_item:
+                    default_start = last_item.planned_start + timedelta(
+                        minutes=last_item.planned_duration_minutes or 0
+                    )
+                    self.fields["planned_start"].initial = default_start.strftime(
+                        "%Y-%m-%dT%H:%M"
+                    )
+                else:
+                    self.fields["planned_start"].initial = timezone.localtime().strftime(
+                        "%Y-%m-%dT%H:%M"
+                    )
+            else:
+                self.fields["planned_start"].initial = timezone.localtime().strftime(
+                    "%Y-%m-%dT%H:%M"
+                )
         self.fields["responsible_department"].queryset = (
             church.departments.all() if church else Department.objects.none()
         )
@@ -412,6 +429,8 @@ class PublicRequestForm(forms.ModelForm):
         return obj
 
 # Quick way to give every field the same css class without listing them
+
+
 def add_input_class(form):
     for f in form.fields.values():
         f.widget.attrs["class"] = "form-input"
