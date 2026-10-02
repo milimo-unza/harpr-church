@@ -45,7 +45,8 @@
 </div>
 
 {# ---------- Create modal ---------- #}
-<div class="modal-backdrop" id="department-create-modal" hidden>
+<div class="modal-backdrop" id="department-create-modal" {% if modal_open == 'department-create' %}style="display:block;"
+    {% else %}hidden{% endif %}>
     <div class="modal" role="dialog" aria-modal="true">
         <div class="modal-head">
             <h2>New department</h2>
@@ -54,13 +55,18 @@
         <div class="modal-body">
             <form method="post" action="{% url 'department_create' %}">
                 {% csrf_token %}
+                {% if form.non_field_errors %}
+                <div class="form-errors">{{ form.non_field_errors }}</div>
+                {% endif %}
                 <div class="form-row">
                     <label for="dept-name">Name</label>
-                    <input name="name" id="dept-name" required>
+                    <input name="name" id="dept-name" value="{{ form.name.value|default_if_none:'' }}" required>
+                    {% if form.name.errors %}<div class="form-errors">{{ form.name.errors }}</div>{% endif %}
                 </div>
                 <div class="form-row">
                     <label for="dept-slug">Slug</label>
-                    <input name="slug" id="dept-slug">
+                    <input name="slug" id="dept-slug" value="{{ form.slug.value|default_if_none:'' }}">
+                    {% if form.slug.errors %}<div class="form-errors">{{ form.slug.errors }}</div>{% endif %}
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn btn-ghost modal-close">Cancel</button>
@@ -70,6 +76,14 @@
         </div>
     </div>
 </div>
+{% if modal_open == 'department-create' %}
+<script>
+    window.addEventListener('DOMContentLoaded', function () {
+        var modal = document.getElementById('department-create-modal');
+        if (modal) modal.hidden = false;
+    });
+</script>
+{% endif %}
 
 {# ---------- Per-department edit modal ---------- #}
 {% for department in departments %}

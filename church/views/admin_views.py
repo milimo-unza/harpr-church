@@ -272,7 +272,8 @@ def service_item_create(request, pk):
     service = get_object_or_404(request.church.services, pk=pk)
     if service.status == "frozen":
         return _frozen_response(request, service)
-    form = ServiceItemForm(request.POST or None, church=request.church, service=service)
+    form = ServiceItemForm(request.POST or None,
+                           church=request.church, service=service)
     if request.method == "POST" and form.is_valid():
         item = form.save(commit=False)
         item.service = service
@@ -630,27 +631,32 @@ def request_respond(request, pk):
                 ev_date_raw = request.POST.get("event_date", "").strip()
                 ev_start_raw = request.POST.get("event_start", "").strip()
                 ev_end_raw = request.POST.get("event_end", "").strip()
-                location = request.POST.get("event_location", "").strip() or "Main church campus"
+                location = request.POST.get(
+                    "event_location", "").strip() or "Main church campus"
                 dept_id = request.POST.get("event_department", "").strip()
 
                 ev_start = ev_end = None
                 try:
-                    ev_date = _date.fromisoformat(ev_date_raw) if ev_date_raw else (church_request.start_date or timezone.localdate())
+                    ev_date = _date.fromisoformat(ev_date_raw) if ev_date_raw else (
+                        church_request.start_date or timezone.localdate())
                 except ValueError:
                     ev_date = church_request.start_date or timezone.localdate()
                 try:
-                    ev_start = _time.fromisoformat(ev_start_raw) if ev_start_raw else church_request.requested_start_time
+                    ev_start = _time.fromisoformat(
+                        ev_start_raw) if ev_start_raw else church_request.requested_start_time
                 except ValueError:
                     ev_start = church_request.requested_start_time
                 try:
-                    ev_end = _time.fromisoformat(ev_end_raw) if ev_end_raw else church_request.requested_end_time
+                    ev_end = _time.fromisoformat(
+                        ev_end_raw) if ev_end_raw else church_request.requested_end_time
                 except ValueError:
                     ev_end = church_request.requested_end_time
 
                 if ev_start and ev_end and ev_end > ev_start:
                     dept = None
                     if dept_id:
-                        dept = request.church.departments.filter(pk=dept_id).first()
+                        dept = request.church.departments.filter(
+                            pk=dept_id).first()
                     ChurchEvent.objects.create(
                         church=request.church,
                         title=church_request.title,
@@ -706,7 +712,8 @@ def request_respond(request, pk):
             if errs:
                 first_error = str(errs[0])
                 break
-        messages.error(request, first_error or "Could not process the request.")
+        messages.error(
+            request, first_error or "Could not process the request.")
         return redirect("request_list")
 
     # Non-POST (direct URL hit): the modal is the only interface now.
@@ -721,6 +728,7 @@ def department_list(request):
 
 @admin_required
 def department_create(request):
+    departments = request.church.departments.all()
     form = DepartmentForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         department = form.save(commit=False)
@@ -730,7 +738,15 @@ def department_create(request):
         return redirect("department_list")
     if request.method == "POST":
         messages.error(request, "Please correct the errors in the form.")
-        return redirect("department_list")
+        return render(
+            request,
+            "church/departments.html",
+            {
+                "departments": departments,
+                "form": form,
+                "modal_open": "department-create",
+            },
+        )
     return render(request, "church/department_form.html", {"form": form, "title": "New department"})
 
 
@@ -831,7 +847,8 @@ def member_edit(request, pk):
     if request.method == "POST" and form.is_valid():
         data = form.cleaned_data
         if membership.user == request.user and data["role"] != "admin":
-            messages.error(request, "You cannot change your own role from Administrator.")
+            messages.error(
+                request, "You cannot change your own role from Administrator.")
             return redirect("member_list")
         membership.role = data["role"]
         membership.department = data["department"]

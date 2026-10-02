@@ -103,7 +103,8 @@ class ServiceItemForm(forms.ModelForm):
                 overlaps.append(item.title)
 
         if overlaps:
-            raise forms.ValidationError(f"Overlaps with: {', '.join(overlaps)}")
+            raise forms.ValidationError(
+                f"Overlaps with: {', '.join(overlaps)}")
         return cleaned
 
 
@@ -176,13 +177,23 @@ class RequestApproveForm(forms.Form):
 class DepartmentForm(forms.ModelForm):
     class Meta:
         model = Department
-        fields = ["name", "slug", "description", "color"]
+        fields = ["name", "slug", "description"]
         widgets = {"description": forms.Textarea(
-            attrs={"rows": 3}), "color": forms.TextInput(attrs={"type": "color"})}
+            attrs={"rows": 3})}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         add_input_class(self)
+
+    def clean_name(self):
+        name = self.cleaned_data["name"].strip()
+        qs = Department.objects.filter(name__iexact=name)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError(
+                "A department with this name already exists.")
+        return name
 
 
 class MemberInviteForm(forms.Form):
